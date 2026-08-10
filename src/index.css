@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #16233F;        /* deep navy - primary */
+  --ink-soft: #2A3B5E;   /* lighter navy for hover states */
+  --parchment: #F5F1E6;  /* paper background */
+  --parchment-dim: #EBE4D2;
+  --wax: #A8322D;        /* wax seal red - accent */
+  --wax-dark: #7E2622;
+  --brass: #A9863F;      /* brass foil accent */
+  --slate: #5C6470;      /* secondary text */
+  --line: #D8D0BC;       /* hairline rule on parchment */
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.font-display { font-family: 'Fraunces', Georgia, serif; }
+.font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+::selection { background: var(--wax); color: var(--parchment); }
+
+:focus-visible {
+  outline: 2px solid var(--wax);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Wax seal stamp signature element */
+@keyframes stampDown {
+  0%   { transform: translateY(-40px) scale(1.15) rotate(-8deg); opacity: 0; }
+  55%  { transform: translateY(4px) scale(0.97) rotate(-2deg); opacity: 1; }
+  70%  { transform: translateY(-2px) scale(1.01) rotate(-3deg); }
+  100% { transform: translateY(0) scale(1) rotate(-3deg); opacity: 1; }
+}
+.stamp-anim { animation: stampDown 900ms cubic-bezier(.2,.8,.2,1) 200ms both; }
+
+@keyframes inkSpread {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.ink-spread { animation: inkSpread 600ms ease-out 900ms both; }
+
+.paper-texture {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(169,134,63,0.05) 0, transparent 45%),
+    radial-gradient(circle at 80% 60%, rgba(22,35,63,0.04) 0, transparent 50%);
+}
+
+.status-rail {
+  background-image: linear-gradient(to right, var(--line) 0, var(--line) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 2px;
+  background-position: center;
+}
