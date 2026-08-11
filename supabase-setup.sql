@@ -14,6 +14,9 @@ create table if not exists orders (
   file_path text not null,
   status text not null default 'received' check (status in ('received', 'in_process', 'ready', 'shipped')),
   ready_at timestamptz,
+  amount_cents integer not null default 0,
+  payment_status text not null default 'unpaid' check (payment_status in ('unpaid', 'paid', 'refunded')),
+  stripe_checkout_session_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -59,6 +62,11 @@ create policy "Users can insert their own orders"
 -- Note: clients should NOT be able to change status themselves —
 -- that's done by you (staff) from the Supabase Table Editor, or a
 -- future admin dashboard, using the service role key.
+--
+-- Note: clients also cannot set their own amount_cents or payment_status —
+-- those are only ever written by the create-checkout-session and
+-- stripe-webhook Edge Functions (using the service role key), so a
+-- client can never fake a payment or change their own price.
 
 -- 4. Contact messages — anyone can submit, nobody can read from the client
 alter table contact_messages enable row level security;

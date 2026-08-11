@@ -117,9 +117,14 @@ function OrderRow({ order }) {
           {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {order.status === 'shipped' && left != null && left > 0 && (
           <span className="font-mono text-xs text-[var(--brass)]">{left} day{left === 1 ? '' : 's'} left to access</span>
+        )}
+        {order.payment_status !== 'paid' && (
+          <span className="rounded-full bg-[var(--brass)]/20 px-3 py-1 font-mono text-xs uppercase text-[var(--brass)]">
+            Payment pending
+          </span>
         )}
         <StatusBadge status={order.status} />
       </div>

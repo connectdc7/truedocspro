@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import StatusTracker from '../components/StatusTracker'
 import { useAuth } from '../lib/AuthContext'
@@ -18,10 +18,14 @@ function daysLeft(readyAt) {
 export default function OrderDetail() {
   const { id } = useParams()
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const paymentResult = searchParams.get('payment') // 'success' | 'cancelled' | null
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState(null)
+  const [isFirstOrder, setIsFirstOrder] = useState(false)
+  const [retrying, setRetrying] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -40,6 +44,14 @@ export default function OrderDetail() {
         return
       }
       setOrder(data)
+
+      if (paymentResult === 'success') {
+        const { count } = await supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+        if (active) setIsFirstOrder((count ?? 0) <= 1)
+      }
 
       const left = daysLeft(data.ready_at)
       if (data.file_path && (data.status !== 'shipped' || left == null || left > 0)) {
@@ -80,6 +92,15 @@ export default function OrderDetail() {
   const left = daysLeft(order.ready_at)
   const expired = order.status === 'shipped' && left != null && left <= 0
 
+  const handlePayNow = async () => {
+    setRetrying(true)
+    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+      body: { order_id: order.id },
+    })
+    setRetrying(false)
+    if (!error && data?.url) window.location.href = data.url
+  }
+
   return (
     <Layout>
       <section className="mx-auto max-w-3xl px-6 py-16">
@@ -96,8 +117,61 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        <div className="mt-10 rounded-2xl border border-[var(--line)] bg-white/40 p-8">
-          <StatusTracker status={order.status} />
+        {paymentResult === 'success' && (
+          <div className="mt-6 rounded-xl border border-[var(--wax)]/40 bg-[var(--wax)]/10 p-5">
+            <p className="font-display text-lg font-semibold text-[var(--ink)]">Payment received.</p>
+            <p className="mt-1 text-sm text-[var(--slate)]">
+              We've got your document and your payment — you'll see status updates right here.
+            </p>
+          </div>
+        )}
+        {paymentResult === 'cancelled' && order.payment_status !== 'paid' && (
+          <div className="mt-6 rounded-xl border border-[var(--brass)]/40 bg-[var(--parchment-dim)] p-5">
+            <p className="font-display text-lg font-semibold text-[var(--ink)]">Payment not completed.</p>
+            <p className="mt-1 text-sm text-[var(--slate)]">
+              Your document was uploaded, but checkout was cancelled before payment finished.
+            </p>
+            <button
+              onClick={handlePayNow}
+              disabled={retrying}
+              className="mt-4 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
+            >
+              {retrying ? 'Loading…' : 'Complete payment'}
+            </button>
+          </div>
+        )}
+
+        {isFirstOrder && paymentResult === 'success' && (
+          <div className="mt-6 rounded-xl border border-[var(--ink)]/20 bg-[var(--ink)] p-6 text-[var(--parchment)]">
+            <p className="font-display text-lg font-semibold">Get the True Docs Pro app.</p>
+            <p className="mt-1 text-sm opacity-80">
+              Track this document, upload your next one, and download completed copies straight from your phone.
+            </p>
+            <Link
+              to="/app"
+              className="mt-4 inline-block rounded-full bg-[var(--parchment)] px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:bg-[var(--wax)] hover:text-[var(--parchment)] transition-colors"
+            >
+              Install the app
+            </Link>
+          </div>
+        )}
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-8">
+          <div className="mb-6 flex items-center justify-between">
+            <StatusTracker status={order.status} />
+          </div>
+          {order.payment_status !== 'paid' && paymentResult !== 'cancelled' && (
+            <div className="mt-6 flex items-center justify-between rounded-lg border border-[var(--brass)]/40 bg-[var(--parchment-dim)] px-4 py-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Payment pending</span>
+              <button
+                onClick={handlePayNow}
+                disabled={retrying}
+                className="rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-60"
+              >
+                {retrying ? 'Loading…' : 'Pay now'}
+              </button>
+            </div>
+          )}
         </div>
 
         {order.notes && (

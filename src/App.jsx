@@ -8,6 +8,7 @@ import Signup from './pages/Signup'
 import Portal from './pages/Portal'
 import NewOrder from './pages/NewOrder'
 import OrderDetail from './pages/OrderDetail'
+import InstallApp from './pages/InstallApp'
 import ProtectedRoute from './components/ProtectedRoute'
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
       <Route path="/services" element={<Services />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/app" element={<InstallApp />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route

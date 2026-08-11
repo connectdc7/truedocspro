@@ -5,9 +5,9 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 
 const SERVICES = [
-  { value: 'notary', label: 'Notary' },
-  { value: 'apostille', label: 'Apostille' },
-  { value: 'embassy', label: 'Embassy legalization' },
+  { value: 'notary', label: 'Notary', price: '$25' },
+  { value: 'apostille', label: 'Apostille', price: '$85' },
+  { value: 'embassy', label: 'Embassy legalization', price: '$150' },
 ]
 
 export default function NewOrder() {
@@ -38,17 +38,30 @@ export default function NewOrder() {
         .upload(path, file, { upsert: false })
       if (uploadError) throw uploadError
 
-      const { error: insertError } = await supabase.from('orders').insert({
-        user_id: user.id,
-        service,
-        document_name: documentName || file.name,
-        notes,
-        file_path: path,
-        status: 'received',
-      })
+      const { data: newOrder, error: insertError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          service,
+          document_name: documentName || file.name,
+          notes,
+          file_path: path,
+          status: 'received',
+        })
+        .select()
+        .single()
       if (insertError) throw insertError
 
-      navigate('/portal')
+      // Kick off payment — ask our Edge Function for a Stripe Checkout link
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
+        'create-checkout-session',
+        { body: { order_id: newOrder.id } }
+      )
+      if (sessionError) throw sessionError
+      if (!sessionData?.url) throw new Error('Could not start checkout — please try again.')
+
+      window.location.href = sessionData.url
+      return
     } catch (err) {
       setError(err.message)
     } finally {
@@ -80,9 +93,13 @@ export default function NewOrder() {
                   }`}
                 >
                   {s.label}
+                  <span className="block font-mono text-xs opacity-70">{s.price}</span>
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-xs text-[var(--slate)]">
+              You'll be taken to secure checkout to pay this amount right after submitting.
+            </p>
           </div>
 
           <div>
@@ -134,7 +151,7 @@ export default function NewOrder() {
             disabled={submitting}
             className="w-full rounded-full bg-[var(--wax)] px-6 py-3.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
           >
-            {submitting ? 'Uploading…' : 'Submit document'}
+            {submitting ? 'Uploading…' : 'Continue to payment'}
           </button>
         </form>
       </section>

@@ -33,6 +33,7 @@ export default function Navbar() {
           {user ? (
             <>
               <NavLink to="/portal" className={navLink}>Portal</NavLink>
+              <NavLink to="/app" className={navLink}>Get the app</NavLink>
               <button
                 onClick={handleSignOut}
                 className="rounded-full border border-[var(--ink)]/20 px-4 py-2 text-sm text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"

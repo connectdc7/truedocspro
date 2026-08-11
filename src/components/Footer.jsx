@@ -26,6 +26,7 @@ export default function Footer() {
             <li><Link to="/signup" className="hover:text-[var(--wax)]">Submit a document</Link></li>
             <li><Link to="/login" className="hover:text-[var(--wax)]">Track status</Link></li>
             <li><Link to="/login" className="hover:text-[var(--wax)]">My documents</Link></li>
+            <li><Link to="/app" className="hover:text-[var(--wax)]">Get the app</Link></li>
           </ul>
         </div>
         <div>
