@@ -9,7 +9,10 @@ import Portal from './pages/Portal'
 import NewOrder from './pages/NewOrder'
 import OrderDetail from './pages/OrderDetail'
 import InstallApp from './pages/InstallApp'
+import StaffDashboard from './pages/StaffDashboard'
+import StaffOrderDetail from './pages/StaffOrderDetail'
 import ProtectedRoute from './components/ProtectedRoute'
+import StaffRoute from './components/StaffRoute'
 
 export default function App() {
   return (
@@ -19,6 +22,22 @@ export default function App() {
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/app" element={<InstallApp />} />
+      <Route
+        path="/staff"
+        element={
+          <StaffRoute>
+            <StaffDashboard />
+          </StaffRoute>
+        }
+      />
+      <Route
+        path="/staff/orders/:id"
+        element={
+          <StaffRoute>
+            <StaffOrderDetail />
+          </StaffRoute>
+        }
+      />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route

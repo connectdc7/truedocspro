@@ -48,27 +48,73 @@ create table if not exists contact_messages (
   created_at timestamptz not null default now()
 );
 
--- 3. Row Level Security — clients can only ever see their own orders
+-- 2b. Profiles table — one row per user, tracks who is staff
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  is_staff boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- Automatically create a profile row whenever someone signs up
+create or replace function handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email)
+  values (new.id, new.email)
+  on conflict (id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- Backfill profiles for anyone who signed up before this script existed
+insert into public.profiles (id, email)
+select id, email from auth.users
+on conflict (id) do nothing;
+
+-- Helper function: checks if the currently logged-in user is staff.
+-- security definer so it can read profiles even though profiles has RLS.
+create or replace function is_staff()
+returns boolean as $$
+  select coalesce(
+    (select p.is_staff from public.profiles p where p.id = auth.uid()),
+    false
+  );
+$$ language sql security definer stable;
+
+alter table profiles enable row level security;
+
+drop policy if exists "Users can view their own profile" on profiles;
+create policy "Users can view their own profile"
+  on profiles for select
+  using (auth.uid() = id or is_staff());
+
+-- 3. Row Level Security — clients can only ever see their own orders,
+-- staff (you) can see and update every order.
 alter table orders enable row level security;
 
 drop policy if exists "Users can view their own orders" on orders;
 create policy "Users can view their own orders"
   on orders for select
-  using (auth.uid() = user_id);
+  using (auth.uid() = user_id or is_staff());
 
 drop policy if exists "Users can insert their own orders" on orders;
 create policy "Users can insert their own orders"
   on orders for insert
   with check (auth.uid() = user_id);
 
--- Note: clients should NOT be able to change status themselves —
--- that's done by you (staff) from the Supabase Table Editor, or a
--- future admin dashboard, using the service role key.
---
--- Note: clients also cannot set their own amount_cents or payment_status —
--- those are only ever written by the create-checkout-session and
--- stripe-webhook Edge Functions (using the service role key), so a
--- client can never fake a payment or change their own price.
+drop policy if exists "Staff can update any order" on orders;
+create policy "Staff can update any order"
+  on orders for update
+  using (is_staff());
+
+-- Note: clients cannot update status or payment fields themselves —
+-- only staff (is_staff = true) can, via the /staff dashboard in the app.
 
 -- 4. Contact messages — anyone can submit, nobody can read from the client
 alter table contact_messages enable row level security;
@@ -108,10 +154,26 @@ create policy "Users can read their own documents"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+-- Staff can read every client's documents
+drop policy if exists "Staff can read all documents" on storage.objects;
+create policy "Staff can read all documents"
+  on storage.objects for select
+  using (
+    bucket_id = 'client-documents'
+    and is_staff()
+  );
+
 -- ============================================================
--- Done. Staff workflow for updating a document's status:
--- Table Editor → orders → click a row → change "status" →
--- 'received' / 'in_process' / 'ready' / 'shipped' → Save.
--- The 30-day countdown starts automatically the moment a row
--- first becomes 'ready'.
+-- Done. One more manual step: make yourself a staff member so
+-- you can access the /staff dashboard in the app.
+--
+-- 1. Sign up for a normal account on the live website first
+--    (if you haven't already), using the email you want to log
+--    in with as staff.
+-- 2. Then run this, replacing the email with yours:
+--
+--    update profiles set is_staff = true
+--    where email = 'you@truedocspro.com';
+--
+-- After that, log in on the website and visit /staff.
 -- ============================================================

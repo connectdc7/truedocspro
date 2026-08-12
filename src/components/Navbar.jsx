@@ -8,7 +8,7 @@ const navLink = ({ isActive }) =>
   }`
 
 export default function Navbar() {
-  const { user, signOut } = useAuth()
+  const { user, isStaff, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -34,6 +34,11 @@ export default function Navbar() {
             <>
               <NavLink to="/portal" className={navLink}>Portal</NavLink>
               <NavLink to="/app" className={navLink}>Get the app</NavLink>
+              {isStaff && (
+                <NavLink to="/staff" className={navLink}>
+                  Staff
+                </NavLink>
+              )}
               <button
                 onClick={handleSignOut}
                 className="rounded-full border border-[var(--ink)]/20 px-4 py-2 text-sm text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
@@ -74,6 +79,9 @@ export default function Navbar() {
           {user ? (
             <>
               <NavLink to="/portal" className="py-2" onClick={() => setOpen(false)}>Portal</NavLink>
+              {isStaff && (
+                <NavLink to="/staff" className="py-2" onClick={() => setOpen(false)}>Staff</NavLink>
+              )}
               <button onClick={handleSignOut} className="py-2 text-left text-[var(--wax)]">Sign out</button>
             </>
           ) : (

@@ -6,21 +6,45 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isStaff, setIsStaff] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    let active = true
+
+    async function loadStaffFlag(userId) {
+      if (!userId) {
+        setIsStaff(false)
+        return
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_staff')
+        .eq('id', userId)
+        .maybeSingle()
+      if (active) setIsStaff(Boolean(data?.is_staff))
+    }
+
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
-      setLoading(false)
+      await loadStaffFlag(data.session?.user?.id)
+      if (active) setLoading(false)
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession)
+      await loadStaffFlag(newSession?.user?.id)
     })
-    return () => listener.subscription.unsubscribe()
+
+    return () => {
+      active = false
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
   const value = {
     session,
     user: session?.user ?? null,
+    isStaff,
     loading,
     signOut: () => supabase.auth.signOut(),
   }
