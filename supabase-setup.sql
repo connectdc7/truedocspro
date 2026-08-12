@@ -51,10 +51,12 @@ create table if not exists contact_messages (
 -- 3. Row Level Security — clients can only ever see their own orders
 alter table orders enable row level security;
 
+drop policy if exists "Users can view their own orders" on orders;
 create policy "Users can view their own orders"
   on orders for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own orders" on orders;
 create policy "Users can insert their own orders"
   on orders for insert
   with check (auth.uid() = user_id);
@@ -71,6 +73,7 @@ create policy "Users can insert their own orders"
 -- 4. Contact messages — anyone can submit, nobody can read from the client
 alter table contact_messages enable row level security;
 
+drop policy if exists "Anyone can submit a contact message" on contact_messages;
 create policy "Anyone can submit a contact message"
   on contact_messages for insert
   with check (true);
@@ -88,6 +91,7 @@ values ('client-documents', 'client-documents', false)
 on conflict (id) do nothing;
 
 -- Clients can upload only into a folder named after their own user id
+drop policy if exists "Users can upload their own documents" on storage.objects;
 create policy "Users can upload their own documents"
   on storage.objects for insert
   with check (
@@ -96,6 +100,7 @@ create policy "Users can upload their own documents"
   );
 
 -- Clients can only read files inside their own folder
+drop policy if exists "Users can read their own documents" on storage.objects;
 create policy "Users can read their own documents"
   on storage.objects for select
   using (

@@ -32,7 +32,7 @@ export default function Footer() {
         <div>
           <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Contact</h4>
           <ul className="mt-3 space-y-2 text-sm text-[var(--slate)]">
-            <li>hello@truedocspro.com</li>
+            <li><a href="mailto:info@truedocspro.com" className="hover:text-[var(--wax)]">info@truedocspro.com</a></li>
             <li><Link to="/contact" className="hover:text-[var(--wax)]">Contact form</Link></li>
           </ul>
         </div>
