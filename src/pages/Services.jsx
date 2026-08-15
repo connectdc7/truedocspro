@@ -6,6 +6,7 @@ const DETAIL = [
     id: 'notary',
     name: 'Notary',
     price: 'From $25 / document',
+    expedited: 'Expedited (within 2 hours): +$15',
     desc: 'A licensed notary public witnesses your signature and verifies your identity — in person at a partner location or remotely online, depending on your state.',
     good: ['Powers of attorney', 'Affidavits', 'Loan and property documents', 'Consent letters'],
   },
@@ -13,6 +14,7 @@ const DETAIL = [
     id: 'apostille',
     name: 'Apostille',
     price: 'From $85 / document',
+    expedited: 'Expedited (1–2 business days): +$40',
     desc: 'An apostille is a single certificate recognized by every Hague Apostille Convention member country — no embassy visit required. We handle the state-level authentication for you.',
     good: ['Birth, marriage, and death certificates', 'Diplomas and transcripts', 'Corporate documents', 'FBI background checks'],
   },
@@ -20,6 +22,7 @@ const DETAIL = [
     id: 'embassy',
     name: 'Embassy legalization',
     price: 'From $150 / document',
+    expedited: 'Expedited (5–7 business days): +$75',
     desc: 'For countries outside the Hague Convention, documents need a full chain of authentication: county or state, then the U.S. Department of State, then the destination country\u2019s embassy or consulate.',
     good: ['Documents bound for non-Hague countries', 'Commercial invoices and certificates of origin', 'Adoption paperwork', 'Multi-country document chains'],
   },
@@ -41,6 +44,7 @@ export default function Services() {
             <div>
               <h2 className="font-display text-2xl font-semibold text-[var(--ink)]">{s.name}</h2>
               <p className="mt-2 font-mono text-sm text-[var(--brass)]">{s.price}</p>
+              <p className="mt-1 font-mono text-xs text-[var(--slate)]">{s.expedited}</p>
               <Link
                 to="/signup"
                 className="mt-6 inline-block rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"

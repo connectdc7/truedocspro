@@ -88,7 +88,14 @@ export default function StaffOrderDetail() {
           ← All documents
         </Link>
 
-        <h1 className="font-display mt-4 text-3xl font-semibold text-[var(--ink)]">{order.document_name}</h1>
+        <h1 className="font-display mt-4 text-3xl font-semibold text-[var(--ink)]">
+          {order.document_name}
+          {order.is_expedited && (
+            <span className="ml-3 rounded-full bg-[var(--brass)]/20 px-3 py-1 align-middle font-mono text-xs uppercase text-[var(--brass)]">
+              Expedited
+            </span>
+          )}
+        </h1>
         <p className="mt-1 font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
           {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>

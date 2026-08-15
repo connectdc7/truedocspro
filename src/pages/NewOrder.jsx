@@ -1,24 +1,29 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import Layout from '../components/Layout'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 
 const SERVICES = [
-  { value: 'notary', label: 'Notary', price: '$25' },
-  { value: 'apostille', label: 'Apostille', price: '$85' },
-  { value: 'embassy', label: 'Embassy legalization', price: '$150' },
+  { value: 'notary', label: 'Notary', price: 25, expedite: 15, standardTurnaround: 'Same day', expeditedTurnaround: 'Within 2 hours' },
+  { value: 'apostille', label: 'Apostille', price: 85, expedite: 40, standardTurnaround: '3–7 business days', expeditedTurnaround: '1–2 business days' },
+  { value: 'embassy', label: 'Embassy legalization', price: 150, expedite: 75, standardTurnaround: '2–4 weeks', expeditedTurnaround: '5–7 business days' },
 ]
 
 export default function NewOrder() {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const [service, setService] = useState('notary')
+  const [expedited, setExpedited] = useState(false)
   const [documentName, setDocumentName] = useState('')
   const [notes, setNotes] = useState('')
   const [file, setFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const selected = SERVICES.find((s) => s.value === service)
+  const total = useMemo(
+    () => selected.price + (expedited ? selected.expedite : 0),
+    [selected, expedited]
+  )
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,6 +48,7 @@ export default function NewOrder() {
         .insert({
           user_id: user.id,
           service,
+          is_expedited: expedited,
           document_name: documentName || file.name,
           notes,
           file_path: path,
@@ -93,13 +99,34 @@ export default function NewOrder() {
                   }`}
                 >
                   {s.label}
-                  <span className="block font-mono text-xs opacity-70">{s.price}</span>
+                  <span className="block font-mono text-xs opacity-70">${s.price}</span>
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-[var(--slate)]">
-              You'll be taken to secure checkout to pay this amount right after submitting.
-            </p>
+          </div>
+
+          <div
+            className={`rounded-xl border p-4 transition-colors ${
+              expedited ? 'border-[var(--brass)] bg-[var(--brass)]/10' : 'border-[var(--line)]'
+            }`}
+          >
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={expedited}
+                onChange={(e) => setExpedited(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-[var(--brass)]"
+              />
+              <span>
+                <span className="block text-sm font-medium text-[var(--ink)]">
+                  Expedited processing — +${selected.expedite}
+                </span>
+                <span className="mt-1 block text-xs text-[var(--slate)]">
+                  {expedited ? selected.expeditedTurnaround : selected.standardTurnaround} turnaround
+                  {expedited ? '' : ` — or ${selected.expeditedTurnaround} if expedited`}
+                </span>
+              </span>
+            </label>
           </div>
 
           <div>
@@ -145,6 +172,11 @@ export default function NewOrder() {
           </div>
 
           {error && <p className="text-sm text-[var(--wax)]">{error}</p>}
+
+          <div className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-3">
+            <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Total due at checkout</span>
+            <span className="font-display text-lg font-semibold text-[var(--ink)]">${total}</span>
+          </div>
 
           <button
             type="submit"

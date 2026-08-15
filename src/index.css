@@ -69,3 +69,18 @@ body {
   background-size: 100% 2px;
   background-position: center;
 }
+
+.prose-blog {
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.75;
+}
+.prose-blog p { margin: 0 0 1.25em; }
+.prose-blog strong { color: var(--ink); font-weight: 600; }
+.prose-blog ul, .prose-blog ol { margin: 0 0 1.25em; padding-left: 1.4em; }
+.prose-blog li { margin-bottom: 0.4em; }
+.prose-blog h2 { font-family: 'Fraunces', Georgia, serif; font-size: 1.35em; font-weight: 600; margin: 1.6em 0 0.6em; color: var(--ink); }
+.prose-blog h3 { font-family: 'Fraunces', Georgia, serif; font-size: 1.15em; font-weight: 600; margin: 1.4em 0 0.5em; color: var(--ink); }
+.prose-blog a { color: var(--wax); text-decoration: underline; }
+.prose-blog em { color: var(--slate); }
+.prose-blog blockquote { border-left: 3px solid var(--wax); padding-left: 1em; color: var(--slate); font-style: italic; }

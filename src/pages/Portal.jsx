@@ -112,7 +112,14 @@ function OrderRow({ order }) {
       className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-white/40 px-5 py-4 hover:border-[var(--wax)] transition-colors"
     >
       <div>
-        <p className="font-medium text-[var(--ink)]">{order.document_name}</p>
+        <p className="font-medium text-[var(--ink)]">
+          {order.document_name}
+          {order.is_expedited && (
+            <span className="ml-2 rounded-full bg-[var(--brass)]/20 px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--brass)]">
+              Expedited
+            </span>
+          )}
+        </p>
         <p className="font-mono text-xs text-[var(--slate)]">
           {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>

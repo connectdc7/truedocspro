@@ -13,6 +13,12 @@ const PRICE_CENTS: Record<string, number> = {
   embassy: 15000,
 }
 
+const EXPEDITE_SURCHARGE_CENTS: Record<string, number> = {
+  notary: 1500,
+  apostille: 4000,
+  embassy: 7500,
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -75,7 +81,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    const amount = PRICE_CENTS[order.service] ?? 0
+    const baseAmount = PRICE_CENTS[order.service] ?? 0
+    const surcharge = order.is_expedited ? (EXPEDITE_SURCHARGE_CENTS[order.service] ?? 0) : 0
+    const amount = baseAmount + surcharge
     if (amount <= 0) {
       return new Response(JSON.stringify({ error: 'Unknown service or price' }), {
         status: 400,
@@ -87,6 +95,11 @@ Deno.serve(async (req) => {
       apiVersion: '2024-06-20',
     })
 
+    const serviceLabel = order.service.charAt(0).toUpperCase() + order.service.slice(1)
+    const productName = order.is_expedited
+      ? `${serviceLabel} (Expedited) — ${order.document_name}`
+      : `${serviceLabel} — ${order.document_name}`
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -97,7 +110,7 @@ Deno.serve(async (req) => {
             currency: 'usd',
             unit_amount: amount,
             product_data: {
-              name: `${order.service.charAt(0).toUpperCase() + order.service.slice(1)} — ${order.document_name}`,
+              name: productName,
             },
           },
           quantity: 1,

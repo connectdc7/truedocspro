@@ -52,9 +52,17 @@ export default function StaffDashboard() {
   return (
     <Layout>
       <section className="border-b border-[var(--line)] px-6 py-10">
-        <div className="mx-auto max-w-6xl">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Staff</p>
-          <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Staff</p>
+            <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
+          </div>
+          <Link
+            to="/staff/blog"
+            className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+          >
+            Manage blog
+          </Link>
         </div>
       </section>
 
@@ -111,7 +119,14 @@ export default function StaffDashboard() {
                       {o.profiles?.email ?? '—'}
                     </Link>
                   </td>
-                  <td className="px-4 py-3">{o.document_name}</td>
+                  <td className="px-4 py-3">
+                    {o.document_name}
+                    {o.is_expedited && (
+                      <span className="ml-2 rounded-full bg-[var(--brass)]/20 px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--brass)]">
+                        Expedited
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{SERVICE_LABEL[o.service]}</td>
                   <td className="px-4 py-3">
                     <span className={o.payment_status === 'paid' ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}>

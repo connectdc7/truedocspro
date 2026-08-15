@@ -11,6 +11,10 @@ import OrderDetail from './pages/OrderDetail'
 import InstallApp from './pages/InstallApp'
 import StaffDashboard from './pages/StaffDashboard'
 import StaffOrderDetail from './pages/StaffOrderDetail'
+import BlogList from './pages/BlogList'
+import BlogPost from './pages/BlogPost'
+import StaffBlogList from './pages/StaffBlogList'
+import StaffBlogEditor from './pages/StaffBlogEditor'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffRoute from './components/StaffRoute'
 
@@ -21,7 +25,25 @@ export default function App() {
       <Route path="/services" element={<Services />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/blog" element={<BlogList />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
       <Route path="/app" element={<InstallApp />} />
+      <Route
+        path="/staff/blog"
+        element={
+          <StaffRoute>
+            <StaffBlogList />
+          </StaffRoute>
+        }
+      />
+      <Route
+        path="/staff/blog/:id"
+        element={
+          <StaffRoute>
+            <StaffBlogEditor />
+          </StaffRoute>
+        }
+      />
       <Route
         path="/staff"
         element={

@@ -18,6 +18,7 @@ export default function Footer() {
             <li><Link to="/services#notary" className="hover:text-[var(--wax)]">Notary</Link></li>
             <li><Link to="/services#apostille" className="hover:text-[var(--wax)]">Apostille</Link></li>
             <li><Link to="/services#embassy" className="hover:text-[var(--wax)]">Embassy legalization</Link></li>
+            <li><Link to="/blog" className="hover:text-[var(--wax)]">Blog &amp; updates</Link></li>
           </ul>
         </div>
         <div>
