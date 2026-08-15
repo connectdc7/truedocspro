@@ -121,10 +121,17 @@ Deno.serve(async (req) => {
       cancel_url: cancel_url || `${req.headers.get('origin')}/portal/orders/${order.id}?payment=cancelled`,
     })
 
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('orders')
       .update({ amount_cents: amount, stripe_checkout_session_id: session.id })
       .eq('id', order.id)
+
+    if (updateError) {
+      return new Response(JSON.stringify({ error: `Could not save order: ${updateError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

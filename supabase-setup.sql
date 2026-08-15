@@ -22,6 +22,25 @@ create table if not exists orders (
   updated_at timestamptz not null default now()
 );
 
+-- Add any columns that were introduced after the table was first created.
+-- (CREATE TABLE IF NOT EXISTS above only fires the very first time this
+-- script runs — these ALTER statements are what actually apply new
+-- columns to an orders table that already existed.)
+alter table orders add column if not exists amount_cents integer not null default 0;
+alter table orders add column if not exists is_expedited boolean not null default false;
+alter table orders add column if not exists payment_status text not null default 'unpaid';
+alter table orders add column if not exists stripe_checkout_session_id text;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'orders_payment_status_check'
+  ) then
+    alter table orders add constraint orders_payment_status_check
+      check (payment_status in ('unpaid', 'paid', 'refunded'));
+  end if;
+end $$;
+
 -- Automatically stamp ready_at the first time a document reaches "ready"
 -- (this is what starts the 30-day access countdown)
 create or replace function set_ready_at()
@@ -140,6 +159,11 @@ create policy "Staff can update any order"
   on orders for update
   using (is_staff());
 
+drop policy if exists "Staff can delete any order" on orders;
+create policy "Staff can delete any order"
+  on orders for delete
+  using (is_staff());
+
 -- 3b. Blog posts — anyone can read published posts, only staff can write
 alter table posts enable row level security;
 
@@ -221,6 +245,15 @@ create policy "Users can read their own documents"
 drop policy if exists "Staff can read all documents" on storage.objects;
 create policy "Staff can read all documents"
   on storage.objects for select
+  using (
+    bucket_id = 'client-documents'
+    and is_staff()
+  );
+
+-- Staff can delete documents (used when deleting an order)
+drop policy if exists "Staff can delete documents" on storage.objects;
+create policy "Staff can delete documents"
+  on storage.objects for delete
   using (
     bucket_id = 'client-documents'
     and is_staff()

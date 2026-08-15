@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 
@@ -13,12 +13,14 @@ const STATUSES = [
 
 export default function StaffOrderDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     load()
@@ -60,6 +62,28 @@ export default function StaffOrderDetail() {
     }
   }
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `Permanently delete "${order.document_name}"? This removes the order and the uploaded file. This can't be undone.`
+    )
+    if (!confirmed) return
+
+    setDeleting(true)
+    setError('')
+
+    if (order.file_path) {
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove([order.file_path])
+    }
+    const { error } = await supabase.from('orders').delete().eq('id', id)
+
+    setDeleting(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      navigate('/staff')
+    }
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -88,14 +112,23 @@ export default function StaffOrderDetail() {
           ← All documents
         </Link>
 
-        <h1 className="font-display mt-4 text-3xl font-semibold text-[var(--ink)]">
-          {order.document_name}
-          {order.is_expedited && (
-            <span className="ml-3 rounded-full bg-[var(--brass)]/20 px-3 py-1 align-middle font-mono text-xs uppercase text-[var(--brass)]">
-              Expedited
-            </span>
-          )}
-        </h1>
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+          <h1 className="font-display text-3xl font-semibold text-[var(--ink)]">
+            {order.document_name}
+            {order.is_expedited && (
+              <span className="ml-3 rounded-full bg-[var(--brass)]/20 px-3 py-1 align-middle font-mono text-xs uppercase text-[var(--brass)]">
+                Expedited
+              </span>
+            )}
+          </h1>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-full border border-[var(--wax)]/40 px-4 py-2 font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors disabled:opacity-50"
+          >
+            {deleting ? 'Deleting…' : 'Delete order'}
+          </button>
+        </div>
         <p className="mt-1 font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
           {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>
