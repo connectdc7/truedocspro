@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Layout from '../components/Layout'
+import CountrySelect from '../components/CountrySelect'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 
@@ -137,13 +138,10 @@ export default function NewOrder() {
                 <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="destinationCountry">
                   Country of use
                 </label>
-                <input
+                <CountrySelect
                   id="destinationCountry"
-                  required
-                  placeholder="Where this document will be used"
                   value={destinationCountry}
-                  onChange={(e) => setDestinationCountry(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                  onChange={setDestinationCountry}
                 />
               </div>
               <div className="sm:col-span-2">
