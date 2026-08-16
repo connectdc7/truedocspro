@@ -11,6 +11,11 @@ const SERVICES = [
 
 export default function NewOrder() {
   const { user } = useAuth()
+  const [contactName, setContactName] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [destinationCountry, setDestinationCountry] = useState('')
+  const [neededByDate, setNeededByDate] = useState('')
   const [service, setService] = useState('notary')
   const [expedited, setExpedited] = useState(false)
   const [documentName, setDocumentName] = useState('')
@@ -53,6 +58,11 @@ export default function NewOrder() {
           notes,
           file_path: path,
           status: 'received',
+          contact_name: contactName,
+          company_name: companyName || null,
+          contact_phone: contactPhone,
+          destination_country: destinationCountry,
+          needed_by_date: neededByDate || null,
         })
         .select()
         .single()
@@ -84,6 +94,74 @@ export default function NewOrder() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--parchment-dim)] p-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Your details</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="contactName">
+                  Contact name
+                </label>
+                <input
+                  id="contactName"
+                  required
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                />
+              </div>
+              <div>
+                <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="companyName">
+                  Company name <span className="normal-case text-[var(--slate)]">(if applicable)</span>
+                </label>
+                <input
+                  id="companyName"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                />
+              </div>
+              <div>
+                <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="contactPhone">
+                  Contact number
+                </label>
+                <input
+                  id="contactPhone"
+                  type="tel"
+                  required
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                />
+              </div>
+              <div>
+                <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="destinationCountry">
+                  Country of use
+                </label>
+                <input
+                  id="destinationCountry"
+                  required
+                  placeholder="Where this document will be used"
+                  value={destinationCountry}
+                  onChange={(e) => setDestinationCountry(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="neededByDate">
+                  Requested completion date
+                </label>
+                <input
+                  id="neededByDate"
+                  type="date"
+                  required
+                  value={neededByDate}
+                  onChange={(e) => setNeededByDate(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Service</label>
             <div className="mt-2 grid grid-cols-3 gap-2">

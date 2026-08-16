@@ -30,6 +30,23 @@ alter table orders add column if not exists amount_cents integer not null defaul
 alter table orders add column if not exists is_expedited boolean not null default false;
 alter table orders add column if not exists payment_status text not null default 'unpaid';
 alter table orders add column if not exists stripe_checkout_session_id text;
+alter table orders add column if not exists requested_documents text;
+alter table orders add column if not exists request_status text not null default 'none';
+alter table orders add column if not exists contact_name text;
+alter table orders add column if not exists company_name text;
+alter table orders add column if not exists contact_phone text;
+alter table orders add column if not exists destination_country text;
+alter table orders add column if not exists needed_by_date date;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'orders_request_status_check'
+  ) then
+    alter table orders add constraint orders_request_status_check
+      check (request_status in ('none', 'requested', 'fulfilled'));
+  end if;
+end $$;
 
 do $$
 begin
@@ -93,6 +110,17 @@ create table if not exists posts (
 create table if not exists subscribers (
   id uuid primary key default gen_random_uuid(),
   email text unique not null,
+  created_at timestamptz not null default now()
+);
+
+-- 2e. Extra supporting documents — used when staff requests something
+-- additional from a client, and the client uploads it in response.
+create table if not exists order_attachments (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references orders(id) on delete cascade,
+  file_path text not null,
+  file_name text,
+  uploaded_by text not null check (uploaded_by in ('client', 'staff')),
   created_at timestamptz not null default now()
 );
 
@@ -200,6 +228,40 @@ create policy "Staff can view subscribers"
   on subscribers for select
   using (is_staff());
 
+-- 3d. Order attachments — client sees/uploads only for their own orders,
+-- staff sees and uploads for every order.
+alter table order_attachments enable row level security;
+
+drop policy if exists "Users can view attachments on their own orders" on order_attachments;
+create policy "Users can view attachments on their own orders"
+  on order_attachments for select
+  using (
+    is_staff()
+    or exists (
+      select 1 from orders o where o.id = order_attachments.order_id and o.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Users can upload attachments to their own orders" on order_attachments;
+create policy "Users can upload attachments to their own orders"
+  on order_attachments for insert
+  with check (
+    uploaded_by = 'client'
+    and exists (
+      select 1 from orders o where o.id = order_attachments.order_id and o.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Staff can upload attachments to any order" on order_attachments;
+create policy "Staff can upload attachments to any order"
+  on order_attachments for insert
+  with check (is_staff());
+
+drop policy if exists "Staff can delete attachments" on order_attachments;
+create policy "Staff can delete attachments"
+  on order_attachments for delete
+  using (is_staff());
+
 -- Note: clients cannot update status or payment fields themselves —
 -- only staff (is_staff = true) can, via the /staff dashboard in the app.
 
@@ -255,6 +317,16 @@ drop policy if exists "Staff can delete documents" on storage.objects;
 create policy "Staff can delete documents"
   on storage.objects for delete
   using (
+    bucket_id = 'client-documents'
+    and is_staff()
+  );
+
+-- Staff can upload documents into any client's folder (e.g. attaching
+-- something on a client's behalf)
+drop policy if exists "Staff can upload documents" on storage.objects;
+create policy "Staff can upload documents"
+  on storage.objects for insert
+  with check (
     bucket_id = 'client-documents'
     and is_staff()
   );

@@ -21,11 +21,15 @@ export default function OrderDetail() {
   const [searchParams] = useSearchParams()
   const paymentResult = searchParams.get('payment') // 'success' | 'cancelled' | null
   const [order, setOrder] = useState(null)
+  const [attachments, setAttachments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState(null)
   const [isFirstOrder, setIsFirstOrder] = useState(false)
   const [retrying, setRetrying] = useState(false)
+
+  const [responseFile, setResponseFile] = useState(null)
+  const [uploadingResponse, setUploadingResponse] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -60,11 +64,58 @@ export default function OrderDetail() {
           .createSignedUrl(data.file_path, 60 * 5)
         if (active && signed) setDownloadUrl(signed.signedUrl)
       }
+
+      await loadAttachments(active)
       setLoading(false)
     }
     load()
     return () => { active = false }
   }, [id, user.id])
+
+  async function loadAttachments(active = true) {
+    const { data } = await supabase
+      .from('order_attachments')
+      .select('*')
+      .eq('order_id', id)
+      .order('created_at', { ascending: false })
+
+    const withUrls = await Promise.all(
+      (data ?? []).map(async (a) => {
+        const { data: signed } = await supabase.storage
+          .from(DOCUMENTS_BUCKET)
+          .createSignedUrl(a.file_path, 60 * 5)
+        return { ...a, url: signed?.signedUrl }
+      })
+    )
+    if (active) setAttachments(withUrls)
+  }
+
+  const uploadResponseFile = async () => {
+    if (!responseFile) return
+    setUploadingResponse(true)
+    setError('')
+    try {
+      const ext = responseFile.name.split('.').pop()
+      const path = `${user.id}/attachments/${crypto.randomUUID()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(path, responseFile)
+      if (uploadError) throw uploadError
+
+      const { error: insertError } = await supabase.from('order_attachments').insert({
+        order_id: id,
+        file_path: path,
+        file_name: responseFile.name,
+        uploaded_by: 'client',
+      })
+      if (insertError) throw insertError
+
+      setResponseFile(null)
+      await loadAttachments()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setUploadingResponse(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -163,6 +214,27 @@ export default function OrderDetail() {
           </div>
         )}
 
+        {order.request_status === 'requested' && (
+          <div className="mt-6 rounded-xl border border-[var(--wax)] bg-[var(--wax)]/10 p-6">
+            <p className="font-display text-lg font-semibold text-[var(--ink)]">We need one more thing from you.</p>
+            <p className="mt-2 text-sm text-[var(--ink)]/85">{order.requested_documents}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <input
+                type="file"
+                onChange={(e) => setResponseFile(e.target.files?.[0] ?? null)}
+                className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
+              />
+              <button
+                onClick={uploadResponseFile}
+                disabled={!responseFile || uploadingResponse}
+                className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+              >
+                {uploadingResponse ? 'Uploading…' : 'Upload document'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-8">
           <div className="mb-6 flex items-center justify-between">
             <StatusTracker status={order.status} />
@@ -181,10 +253,42 @@ export default function OrderDetail() {
           )}
         </div>
 
+        <div className="mt-6 grid grid-cols-2 gap-4 rounded-xl border border-[var(--line)] p-5 sm:grid-cols-3">
+          {order.contact_name && <MiniField label="Contact" value={order.contact_name} />}
+          {order.company_name && <MiniField label="Company" value={order.company_name} />}
+          {order.contact_phone && <MiniField label="Phone" value={order.contact_phone} />}
+          {order.destination_country && <MiniField label="Country of use" value={order.destination_country} />}
+          {order.needed_by_date && (
+            <MiniField label="Needed by" value={new Date(order.needed_by_date).toLocaleDateString()} />
+          )}
+        </div>
+
         {order.notes && (
           <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
             <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Your notes</p>
             <p className="mt-2 text-sm text-[var(--ink)]/85">{order.notes}</p>
+          </div>
+        )}
+
+        {attachments.length > 0 && (
+          <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
+            <div className="mt-3 space-y-2">
+              {attachments.map((a) => (
+                <a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-2.5 hover:border-[var(--wax)] transition-colors"
+                >
+                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Document'}</span>
+                  <span className="font-mono text-xs text-[var(--slate)]">
+                    {new Date(a.created_at).toLocaleDateString()}
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
         )}
 
@@ -217,5 +321,14 @@ export default function OrderDetail() {
         </div>
       </section>
     </Layout>
+  )
+}
+
+function MiniField({ label, value }) {
+  return (
+    <div>
+      <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">{label}</p>
+      <p className="mt-0.5 text-sm text-[var(--ink)]">{value}</p>
+    </div>
   )
 }
