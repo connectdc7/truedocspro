@@ -4,6 +4,11 @@ import Layout from '../components/Layout'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 
 const SERVICE_LABEL = { notary: 'Notary', apostille: 'Apostille', embassy: 'Embassy legalization' }
+const SERVICES = [
+  { value: 'notary', label: 'Notary' },
+  { value: 'apostille', label: 'Apostille' },
+  { value: 'embassy', label: 'Embassy legalization' },
+]
 const STATUSES = [
   { value: 'received', label: 'Received' },
   { value: 'in_process', label: 'In process' },
@@ -22,6 +27,11 @@ export default function StaffOrderDetail() {
   const [saved, setSaved] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState(null)
   const [deleting, setDeleting] = useState(false)
+
+  const [editName, setEditName] = useState('')
+  const [editService, setEditService] = useState('notary')
+  const [savingDetails, setSavingDetails] = useState(false)
+  const [detailsSaved, setDetailsSaved] = useState(false)
 
   const [requestNote, setRequestNote] = useState('')
   const [sendingRequest, setSendingRequest] = useState(false)
@@ -46,6 +56,8 @@ export default function StaffOrderDetail() {
     }
     setOrder(data)
     setRequestNote(data.requested_documents || '')
+    setEditName(data.document_name || '')
+    setEditService(data.service || 'notary')
 
     if (data.file_path) {
       const { data: signed } = await supabase.storage
@@ -85,6 +97,23 @@ export default function StaffOrderDetail() {
       setOrder((prev) => ({ ...prev, status: newStatus }))
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+    } else {
+      setError(error.message)
+    }
+  }
+
+  const saveDetails = async () => {
+    setSavingDetails(true)
+    setDetailsSaved(false)
+    const { error } = await supabase
+      .from('orders')
+      .update({ document_name: editName, service: editService })
+      .eq('id', id)
+    setSavingDetails(false)
+    if (!error) {
+      setOrder((prev) => ({ ...prev, document_name: editName, service: editService }))
+      setDetailsSaved(true)
+      setTimeout(() => setDetailsSaved(false), 2000)
     } else {
       setError(error.message)
     }
@@ -209,8 +238,55 @@ export default function StaffOrderDetail() {
           </button>
         </div>
         <p className="mt-1 font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
-          {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
+          Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Document details</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="editName">
+                Document name
+              </label>
+              <input
+                id="editName"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="editService">
+                Service
+              </label>
+              <select
+                id="editService"
+                value={editService}
+                onChange={(e) => setEditService(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+              >
+                {SERVICES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              onClick={saveDetails}
+              disabled={savingDetails || (editName === order.document_name && editService === order.service)}
+              className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {savingDetails ? 'Saving…' : 'Save changes'}
+            </button>
+            {detailsSaved && <p className="font-mono text-xs text-[var(--brass)]">Saved.</p>}
+          </div>
+          {editService !== order.service && (
+            <p className="mt-3 text-xs text-[var(--slate)]">
+              Note: changing the service doesn't adjust what was already charged — handle any price difference with the client directly if needed.
+            </p>
+          )}
+        </div>
 
         <div className="mt-8 grid grid-cols-2 gap-4">
           <InfoBlock label="Client" value={order.profiles?.email ?? '—'} />

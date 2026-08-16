@@ -108,6 +108,7 @@ export default function StaffDashboard() {
                 <th className="px-4 py-3">Service</th>
                 <th className="px-4 py-3">Payment</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Requested completion</th>
                 <th className="px-4 py-3">Submitted</th>
               </tr>
             </thead>
@@ -135,6 +136,9 @@ export default function StaffDashboard() {
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-[var(--slate)]">
+                    {o.needed_by_date ? new Date(o.needed_by_date).toLocaleDateString() : '—'}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-[var(--slate)]">
                     {new Date(o.created_at).toLocaleDateString()}
