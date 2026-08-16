@@ -29,9 +29,12 @@ Deno.serve(async (req) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
-    const orderId = session.metadata?.order_id
+    const orderIds = (session.metadata?.order_ids ?? session.metadata?.order_id ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
 
-    if (orderId) {
+    if (orderIds.length > 0) {
       const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -39,7 +42,7 @@ Deno.serve(async (req) => {
       await supabaseAdmin
         .from('orders')
         .update({ payment_status: 'paid' })
-        .eq('id', orderId)
+        .in('id', orderIds)
         .eq('stripe_checkout_session_id', session.id)
     }
   }

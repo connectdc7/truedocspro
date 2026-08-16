@@ -3,13 +3,13 @@
 :root {
   --ink: #16233F;        /* deep navy - primary */
   --ink-soft: #2A3B5E;   /* lighter navy for hover states */
-  --parchment: #F5F1E6;  /* paper background */
-  --parchment-dim: #EBE4D2;
+  --parchment: #FFFFFF;  /* page background */
+  --parchment-dim: #F4F4F2;
   --wax: #A8322D;        /* wax seal red - accent */
   --wax-dark: #7E2622;
   --brass: #A9863F;      /* brass foil accent */
   --slate: #5C6470;      /* secondary text */
-  --line: #D8D0BC;       /* hairline rule on parchment */
+  --line: #E2E2DE;       /* hairline rule */
 }
 
 * { box-sizing: border-box; }

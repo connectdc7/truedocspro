@@ -14,7 +14,7 @@ export default defineConfig({
         short_name: 'True Docs Pro',
         description: 'Notary, apostille, and embassy legalization — submit, track, and pay for documents from your phone.',
         theme_color: '#16233F',
-        background_color: '#F5F1E6',
+        background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/portal',
         scope: '/',

@@ -30,9 +30,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { order_id, success_url, cancel_url } = await req.json()
-    if (!order_id) {
-      return new Response(JSON.stringify({ error: 'order_id is required' }), {
+    const { order_id, order_ids, success_url, cancel_url } = await req.json()
+    const ids = order_ids && Array.isArray(order_ids) ? order_ids : order_id ? [order_id] : []
+    if (ids.length === 0) {
+      return new Response(JSON.stringify({ error: 'order_id or order_ids is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -60,32 +61,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data: order, error: orderError } = await supabaseAdmin
+    const { data: orders, error: orderError } = await supabaseAdmin
       .from('orders')
       .select('*')
-      .eq('id', order_id)
+      .in('id', ids)
       .eq('user_id', userData.user.id)
-      .single()
 
-    if (orderError || !order) {
-      return new Response(JSON.stringify({ error: 'Order not found' }), {
+    if (orderError || !orders || orders.length !== ids.length) {
+      return new Response(JSON.stringify({ error: 'One or more orders not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    if (order.payment_status === 'paid') {
-      return new Response(JSON.stringify({ error: 'Order is already paid' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const baseAmount = PRICE_CENTS[order.service] ?? 0
-    const surcharge = order.is_expedited ? (EXPEDITE_SURCHARGE_CENTS[order.service] ?? 0) : 0
-    const amount = baseAmount + surcharge
-    if (amount <= 0) {
-      return new Response(JSON.stringify({ error: 'Unknown service or price' }), {
+    if (orders.some((o) => o.payment_status === 'paid')) {
+      return new Response(JSON.stringify({ error: 'One or more orders are already paid' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -95,42 +85,55 @@ Deno.serve(async (req) => {
       apiVersion: '2024-06-20',
     })
 
-    const serviceLabel = order.service.charAt(0).toUpperCase() + order.service.slice(1)
-    const productName = order.is_expedited
-      ? `${serviceLabel} (Expedited) — ${order.document_name}`
-      : `${serviceLabel} — ${order.document_name}`
+    const lineItems = orders.map((order) => {
+      const baseAmount = PRICE_CENTS[order.service] ?? 0
+      const surcharge = order.is_expedited ? (EXPEDITE_SURCHARGE_CENTS[order.service] ?? 0) : 0
+      const amount = baseAmount + surcharge
+      const serviceLabel = order.service.charAt(0).toUpperCase() + order.service.slice(1)
+      const productName = order.is_expedited
+        ? `${serviceLabel} (Expedited) — ${order.document_name}`
+        : `${serviceLabel} — ${order.document_name}`
+      return { order, amount, lineItem: {
+        price_data: {
+          currency: 'usd',
+          unit_amount: amount,
+          product_data: { name: productName },
+        },
+        quantity: 1,
+      }}
+    })
+
+    if (lineItems.some((li) => li.amount <= 0)) {
+      return new Response(JSON.stringify({ error: 'Unknown service or price' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const primaryOrder = orders[0]
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       customer_email: userData.user.email,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: amount,
-            product_data: {
-              name: productName,
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: { order_id: order.id },
-      success_url: success_url || `${req.headers.get('origin')}/portal/orders/${order.id}?payment=success`,
-      cancel_url: cancel_url || `${req.headers.get('origin')}/portal/orders/${order.id}?payment=cancelled`,
+      line_items: lineItems.map((li) => li.lineItem),
+      metadata: { order_ids: ids.join(',') },
+      success_url: success_url || `${req.headers.get('origin')}/portal/orders/${primaryOrder.id}?payment=success`,
+      cancel_url: cancel_url || `${req.headers.get('origin')}/portal/orders/${primaryOrder.id}?payment=cancelled`,
     })
 
-    const { error: updateError } = await supabaseAdmin
-      .from('orders')
-      .update({ amount_cents: amount, stripe_checkout_session_id: session.id })
-      .eq('id', order.id)
+    for (const { order, amount } of lineItems) {
+      const { error: updateError } = await supabaseAdmin
+        .from('orders')
+        .update({ amount_cents: amount, stripe_checkout_session_id: session.id })
+        .eq('id', order.id)
 
-    if (updateError) {
-      return new Response(JSON.stringify({ error: `Could not save order: ${updateError.message}` }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      if (updateError) {
+        return new Response(JSON.stringify({ error: `Could not save order: ${updateError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
 
     return new Response(JSON.stringify({ url: session.url }), {

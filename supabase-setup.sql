@@ -38,25 +38,27 @@ alter table orders add column if not exists contact_phone text;
 alter table orders add column if not exists destination_country text;
 alter table orders add column if not exists needed_by_date date;
 
--- Internal 4-stage processing pipeline (staff-only, not shown to clients)
-alter table orders add column if not exists notary_stage_status text not null default 'in_progress';
-alter table orders add column if not exists notary_stage_date date;
+-- Internal processing pipeline (staff-only, not shown to clients).
+-- A document is only ever actively "in" one stage at a time (current_stage,
+-- 1-4), but staff can pre-fill dates/selections for stages it hasn't
+-- reached yet.
+alter table orders add column if not exists current_stage integer not null default 1;
+alter table orders add column if not exists notary_start_date date;
+alter table orders add column if not exists notary_complete_date date;
 alter table orders add column if not exists sos_stage_state text;
-alter table orders add column if not exists sos_stage_date date;
-alter table orders add column if not exists state_dept_stage_status text not null default 'in_progress';
-alter table orders add column if not exists state_dept_stage_date date;
+alter table orders add column if not exists sos_start_date date;
+alter table orders add column if not exists sos_complete_date date;
+alter table orders add column if not exists state_dept_start_date date;
+alter table orders add column if not exists state_dept_complete_date date;
 alter table orders add column if not exists embassy_stage_country text;
-alter table orders add column if not exists embassy_stage_date date;
+alter table orders add column if not exists embassy_start_date date;
+alter table orders add column if not exists embassy_complete_date date;
 
 do $$
 begin
-  if not exists (select 1 from pg_constraint where conname = 'orders_notary_stage_status_check') then
-    alter table orders add constraint orders_notary_stage_status_check
-      check (notary_stage_status in ('in_progress', 'completed'));
-  end if;
-  if not exists (select 1 from pg_constraint where conname = 'orders_state_dept_stage_status_check') then
-    alter table orders add constraint orders_state_dept_stage_status_check
-      check (state_dept_stage_status in ('in_progress', 'completed'));
+  if not exists (select 1 from pg_constraint where conname = 'orders_current_stage_check') then
+    alter table orders add constraint orders_current_stage_check
+      check (current_stage between 1 and 4);
   end if;
 end $$;
 

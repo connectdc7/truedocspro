@@ -19,60 +19,79 @@ export default function NewOrder() {
   const [neededByDate, setNeededByDate] = useState('')
   const [service, setService] = useState('notary')
   const [expedited, setExpedited] = useState(false)
-  const [documentName, setDocumentName] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [documents, setDocuments] = useState([{ name: '', file: null }])
   const [notes, setNotes] = useState('')
-  const [file, setFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const selected = SERVICES.find((s) => s.value === service)
   const total = useMemo(
-    () => selected.price + (expedited ? selected.expedite : 0),
-    [selected, expedited]
+    () => (selected.price + (expedited ? selected.expedite : 0)) * quantity,
+    [selected, expedited, quantity]
   )
+
+  const setQty = (n) => {
+    const clamped = Math.max(1, Math.min(10, n))
+    setQuantity(clamped)
+    setDocuments((prev) => {
+      const next = [...prev]
+      while (next.length < clamped) next.push({ name: '', file: null })
+      return next.slice(0, clamped)
+    })
+  }
+
+  const updateDoc = (index, patch) => {
+    setDocuments((prev) => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!file) {
-      setError('Please attach a scan or photo of your document.')
+    if (documents.some((d) => !d.file)) {
+      setError('Please attach a file for each document.')
       return
     }
     setSubmitting(true)
     setError('')
 
     try {
-      const ext = file.name.split('.').pop()
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const orderIds = []
+      for (const doc of documents) {
+        const ext = doc.file.name.split('.').pop()
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from(DOCUMENTS_BUCKET)
-        .upload(path, file, { upsert: false })
-      if (uploadError) throw uploadError
+        const { error: uploadError } = await supabase.storage
+          .from(DOCUMENTS_BUCKET)
+          .upload(path, doc.file, { upsert: false })
+        if (uploadError) throw uploadError
 
-      const { data: newOrder, error: insertError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          service,
-          is_expedited: expedited,
-          document_name: documentName || file.name,
-          notes,
-          file_path: path,
-          status: 'received',
-          contact_name: contactName,
-          company_name: companyName || null,
-          contact_phone: contactPhone,
-          destination_country: destinationCountry,
-          needed_by_date: neededByDate || null,
-        })
-        .select()
-        .single()
-      if (insertError) throw insertError
+        const { data: newOrder, error: insertError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            service,
+            is_expedited: expedited,
+            document_name: doc.name || doc.file.name,
+            notes,
+            file_path: path,
+            status: 'received',
+            contact_name: contactName,
+            company_name: companyName || null,
+            contact_phone: contactPhone,
+            destination_country: destinationCountry,
+            needed_by_date: neededByDate || null,
+          })
+          .select()
+          .single()
+        if (insertError) throw insertError
+        orderIds.push(newOrder.id)
+      }
 
       // Kick off payment — ask our Edge Function for a Stripe Checkout link
+      // covering all documents submitted in this batch
       const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
         'create-checkout-session',
-        { body: { order_id: newOrder.id } }
+        { body: { order_ids: orderIds } }
       )
       if (sessionError) throw sessionError
       if (!sessionData?.url) throw new Error('Could not start checkout — please try again.')
@@ -206,31 +225,63 @@ export default function NewOrder() {
           </div>
 
           <div>
-            <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="documentName">
-              Document name
-            </label>
-            <input
-              id="documentName"
-              placeholder="e.g. Birth certificate"
-              value={documentName}
-              onChange={(e) => setDocumentName(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
-            />
+            <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Number of documents</label>
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQty(quantity - 1)}
+                className="h-9 w-9 rounded-full border border-[var(--line)] text-[var(--ink)] hover:border-[var(--wax)]"
+              >
+                −
+              </button>
+              <span className="font-display w-8 text-center text-lg text-[var(--ink)]">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQty(quantity + 1)}
+                className="h-9 w-9 rounded-full border border-[var(--line)] text-[var(--ink)] hover:border-[var(--wax)]"
+              >
+                +
+              </button>
+              <span className="text-xs text-[var(--slate)]">
+                {quantity === 1 ? 'One document' : `${quantity} documents, same service`}
+              </span>
+            </div>
           </div>
 
-          <div>
-            <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="file">
-              Upload file
-            </label>
-            <input
-              id="file"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              required
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none file:mr-4 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-4 file:py-2 file:text-[var(--parchment)] file:text-xs"
-            />
-            <p className="mt-1.5 text-xs text-[var(--slate)]">PDF, JPG, or PNG.</p>
+          <div className="space-y-4">
+            {documents.map((doc, i) => (
+              <div key={i} className="rounded-xl border border-[var(--line)] p-4">
+                <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+                  Document {i + 1} of {quantity}
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+                      Document name
+                    </label>
+                    <input
+                      placeholder="e.g. Birth certificate"
+                      value={doc.name}
+                      onChange={(e) => updateDoc(i, { name: e.target.value })}
+                      className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+                      Upload file
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      required
+                      onChange={(e) => updateDoc(i, { file: e.target.files?.[0] ?? null })}
+                      className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-3 py-2.5 text-xs outline-none file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-[var(--slate)]">PDF, JPG, or PNG for each document.</p>
           </div>
 
           <div>
@@ -250,7 +301,9 @@ export default function NewOrder() {
           {error && <p className="text-sm text-[var(--wax)]">{error}</p>}
 
           <div className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Total due at checkout</span>
+            <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+              Total due at checkout {quantity > 1 && `(${quantity} documents)`}
+            </span>
             <span className="font-display text-lg font-semibold text-[var(--ink)]">${total}</span>
           </div>
 
