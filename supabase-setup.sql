@@ -182,6 +182,11 @@ create policy "Users can insert their own orders"
   on orders for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete their own orders" on orders;
+create policy "Users can delete their own orders"
+  on orders for delete
+  using (auth.uid() = user_id and status = 'received');
+
 drop policy if exists "Staff can update any order" on orders;
 create policy "Staff can update any order"
   on orders for update
@@ -298,6 +303,16 @@ create policy "Users can upload their own documents"
 drop policy if exists "Users can read their own documents" on storage.objects;
 create policy "Users can read their own documents"
   on storage.objects for select
+  using (
+    bucket_id = 'client-documents'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Clients can delete files inside their own folder (used when deleting
+-- their own order/document from the portal)
+drop policy if exists "Users can delete their own documents" on storage.objects;
+create policy "Users can delete their own documents"
+  on storage.objects for delete
   using (
     bucket_id = 'client-documents'
     and (storage.foldername(name))[1] = auth.uid()::text

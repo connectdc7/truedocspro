@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import StatusTracker from '../components/StatusTracker'
 import { useAuth } from '../lib/AuthContext'
@@ -18,6 +18,7 @@ function daysLeft(readyAt) {
 export default function OrderDetail() {
   const { id } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const paymentResult = searchParams.get('payment') // 'success' | 'cancelled' | null
   const [order, setOrder] = useState(null)
@@ -30,6 +31,9 @@ export default function OrderDetail() {
 
   const [responseFile, setResponseFile] = useState(null)
   const [uploadingResponse, setUploadingResponse] = useState(false)
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -117,6 +121,28 @@ export default function OrderDetail() {
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    setError('')
+
+    // Clean up any supporting document files too
+    if (attachments.length > 0) {
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove(attachments.map((a) => a.file_path))
+    }
+    if (order.file_path) {
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove([order.file_path])
+    }
+    const { error } = await supabase.from('orders').delete().eq('id', id)
+
+    setDeleting(false)
+    if (error) {
+      setError(error.message)
+      setConfirmingDelete(false)
+    } else {
+      navigate('/portal')
+    }
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -173,7 +199,44 @@ export default function OrderDetail() {
               {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
             </p>
           </div>
+          {order.status === 'received' ? (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="rounded-full border border-[var(--wax)]/40 px-4 py-2 font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors"
+            >
+              Delete document
+            </button>
+          ) : (
+            <p className="max-w-[220px] text-right font-mono text-[10px] uppercase tracking-wide text-[var(--slate)]">
+              Can't be deleted once processing has started — contact us if you need this removed.
+            </p>
+          )}
         </div>
+
+        {confirmingDelete && (
+          <div className="mt-6 rounded-xl border border-[var(--wax)] bg-[var(--wax)]/10 p-6">
+            <p className="font-display text-lg font-semibold text-[var(--ink)]">Delete this document?</p>
+            <p className="mt-2 text-sm text-[var(--ink)]/85">
+              This permanently removes "{order.document_name}" and your uploaded file. This can't be undone.
+            </p>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--ink)] transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Yes, permanently delete'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {paymentResult === 'success' && (
           <div className="mt-6 rounded-xl border border-[var(--wax)]/40 bg-[var(--wax)]/10 p-5">
