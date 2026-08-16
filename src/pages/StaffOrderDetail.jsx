@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
+import { US_STATES, EMBASSY_COUNTRIES } from '../lib/countries'
 
 const SERVICE_LABEL = { notary: 'Notary', apostille: 'Apostille', embassy: 'Embassy legalization' }
 const SERVICES = [
@@ -33,6 +34,19 @@ export default function StaffOrderDetail() {
   const [savingDetails, setSavingDetails] = useState(false)
   const [detailsSaved, setDetailsSaved] = useState(false)
 
+  const [queues, setQueues] = useState({
+    notary_stage_status: 'in_progress',
+    notary_stage_date: '',
+    sos_stage_state: '',
+    sos_stage_date: '',
+    state_dept_stage_status: 'in_progress',
+    state_dept_stage_date: '',
+    embassy_stage_country: '',
+    embassy_stage_date: '',
+  })
+  const [savingQueues, setSavingQueues] = useState(false)
+  const [queuesSaved, setQueuesSaved] = useState(false)
+
   const [requestNote, setRequestNote] = useState('')
   const [sendingRequest, setSendingRequest] = useState(false)
   const [staffFile, setStaffFile] = useState(null)
@@ -58,6 +72,16 @@ export default function StaffOrderDetail() {
     setRequestNote(data.requested_documents || '')
     setEditName(data.document_name || '')
     setEditService(data.service || 'notary')
+    setQueues({
+      notary_stage_status: data.notary_stage_status || 'in_progress',
+      notary_stage_date: data.notary_stage_date || '',
+      sos_stage_state: data.sos_stage_state || '',
+      sos_stage_date: data.sos_stage_date || '',
+      state_dept_stage_status: data.state_dept_stage_status || 'in_progress',
+      state_dept_stage_date: data.state_dept_stage_date || '',
+      embassy_stage_country: data.embassy_stage_country || '',
+      embassy_stage_date: data.embassy_stage_date || '',
+    })
 
     if (data.file_path) {
       const { data: signed } = await supabase.storage
@@ -114,6 +138,30 @@ export default function StaffOrderDetail() {
       setOrder((prev) => ({ ...prev, document_name: editName, service: editService }))
       setDetailsSaved(true)
       setTimeout(() => setDetailsSaved(false), 2000)
+    } else {
+      setError(error.message)
+    }
+  }
+
+  const saveQueues = async () => {
+    setSavingQueues(true)
+    setQueuesSaved(false)
+    const payload = {
+      notary_stage_status: queues.notary_stage_status,
+      notary_stage_date: queues.notary_stage_date || null,
+      sos_stage_state: queues.sos_stage_state || null,
+      sos_stage_date: queues.sos_stage_date || null,
+      state_dept_stage_status: queues.state_dept_stage_status,
+      state_dept_stage_date: queues.state_dept_stage_date || null,
+      embassy_stage_country: queues.embassy_stage_country || null,
+      embassy_stage_date: queues.embassy_stage_date || null,
+    }
+    const { error } = await supabase.from('orders').update(payload).eq('id', id)
+    setSavingQueues(false)
+    if (!error) {
+      setOrder((prev) => ({ ...prev, ...payload }))
+      setQueuesSaved(true)
+      setTimeout(() => setQueuesSaved(false), 2000)
     } else {
       setError(error.message)
     }
@@ -361,6 +409,98 @@ export default function StaffOrderDetail() {
           )}
         </div>
 
+        {/* Internal processing queues */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+            Internal processing queues <span className="normal-case text-[var(--slate)]">(staff only — clients don't see this)</span>
+          </p>
+
+          <div className="mt-4 space-y-4">
+            <QueueRow label="1. Notary">
+              <select
+                value={queues.notary_stage_status}
+                onChange={(e) => setQueues((q) => ({ ...q, notary_stage_status: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              >
+                <option value="in_progress">In progress</option>
+                <option value="completed">Completed</option>
+              </select>
+              <input
+                type="date"
+                value={queues.notary_stage_date}
+                onChange={(e) => setQueues((q) => ({ ...q, notary_stage_date: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </QueueRow>
+
+            <QueueRow label="2. Secretary of State">
+              <select
+                value={queues.sos_stage_state}
+                onChange={(e) => setQueues((q) => ({ ...q, sos_stage_state: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              >
+                <option value="">Select a state…</option>
+                {US_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                value={queues.sos_stage_date}
+                onChange={(e) => setQueues((q) => ({ ...q, sos_stage_date: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </QueueRow>
+
+            <QueueRow label="3. U.S. State Department">
+              <select
+                value={queues.state_dept_stage_status}
+                onChange={(e) => setQueues((q) => ({ ...q, state_dept_stage_status: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              >
+                <option value="in_progress">In progress</option>
+                <option value="completed">Completed</option>
+              </select>
+              <input
+                type="date"
+                value={queues.state_dept_stage_date}
+                onChange={(e) => setQueues((q) => ({ ...q, state_dept_stage_date: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </QueueRow>
+
+            <QueueRow label="4. Embassy">
+              <select
+                value={queues.embassy_stage_country}
+                onChange={(e) => setQueues((q) => ({ ...q, embassy_stage_country: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              >
+                <option value="">Select an embassy…</option>
+                {EMBASSY_COUNTRIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                value={queues.embassy_stage_date}
+                onChange={(e) => setQueues((q) => ({ ...q, embassy_stage_date: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </QueueRow>
+          </div>
+
+          <div className="mt-5 flex items-center gap-3">
+            <button
+              onClick={saveQueues}
+              disabled={savingQueues}
+              className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {savingQueues ? 'Saving…' : 'Save queue updates'}
+            </button>
+            {queuesSaved && <p className="font-mono text-xs text-[var(--brass)]">Saved.</p>}
+          </div>
+        </div>
+
         {/* Attachments */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
@@ -429,6 +569,15 @@ export default function StaffOrderDetail() {
         </div>
       </section>
     </Layout>
+  )
+}
+
+function QueueRow({ label, children }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-[140px_1fr_1fr] sm:items-center">
+      <p className="text-sm font-medium text-[var(--ink)]">{label}</p>
+      {children}
+    </div>
   )
 }
 

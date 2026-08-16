@@ -37,3 +37,20 @@ export const NON_HAGUE_COUNTRIES = [
   'Thailand', 'Timor-Leste', 'Togo', 'Turkmenistan', 'Uganda',
   'United Arab Emirates', 'Vietnam (until Sept 2026)', 'Yemen', 'Zambia', 'Zimbabwe',
 ].sort()
+
+// Every embassy this business might route an embassy-legalization order through —
+// same country set as above, combined, for the "Embassy stage" queue.
+export const EMBASSY_COUNTRIES = [...HAGUE_COUNTRIES, ...NON_HAGUE_COUNTRIES].sort()
+
+// U.S. states + DC, for the "Secretary of State" queue — this is the state-level
+// authentication office handling the document before it moves further down the chain.
+export const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+  'Delaware', 'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois',
+  'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland',
+  'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana',
+  'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
+  'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
+  'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah',
+  'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
+]
