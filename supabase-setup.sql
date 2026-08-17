@@ -53,6 +53,7 @@ alter table orders add column if not exists state_dept_complete_date date;
 alter table orders add column if not exists embassy_stage_country text;
 alter table orders add column if not exists embassy_start_date date;
 alter table orders add column if not exists embassy_complete_date date;
+alter table orders add column if not exists mail_in boolean not null default false;
 
 do $$
 begin
@@ -147,6 +148,16 @@ create table if not exists order_attachments (
   uploaded_by text not null check (uploaded_by in ('client', 'staff')),
   created_at timestamptz not null default now()
 );
+
+alter table order_attachments add column if not exists category text not null default 'supporting';
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'order_attachments_category_check') then
+    alter table order_attachments add constraint order_attachments_category_check
+      check (category in ('supporting', 'return_label'));
+  end if;
+end $$;
 
 -- Automatically create a profile row whenever someone signs up
 create or replace function handle_new_user()

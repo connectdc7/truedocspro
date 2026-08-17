@@ -10,6 +10,9 @@ const SERVICES = [
   { value: 'embassy', label: 'Embassy legalization', price: 150, expedite: 75, standardTurnaround: '2–4 weeks', expeditedTurnaround: '5–7 business days' },
 ]
 
+// TODO: replace with your real mailing address before going live.
+const MAILING_ADDRESS = 'True Docs Pro\n[Street Address]\n[City, State ZIP]'
+
 export default function NewOrder() {
   const { user } = useAuth()
   const [contactName, setContactName] = useState('')
@@ -20,7 +23,7 @@ export default function NewOrder() {
   const [service, setService] = useState('notary')
   const [expedited, setExpedited] = useState(false)
   const [quantity, setQuantity] = useState(1)
-  const [documents, setDocuments] = useState([{ name: '', file: null }])
+  const [documents, setDocuments] = useState([{ name: '', file: null, mailIn: false }])
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -36,7 +39,7 @@ export default function NewOrder() {
     setQuantity(clamped)
     setDocuments((prev) => {
       const next = [...prev]
-      while (next.length < clamped) next.push({ name: '', file: null })
+      while (next.length < clamped) next.push({ name: '', file: null, mailIn: false })
       return next.slice(0, clamped)
     })
   }
@@ -47,8 +50,12 @@ export default function NewOrder() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (documents.some((d) => !d.file)) {
-      setError('Please attach a file for each document.')
+    if (documents.some((d) => !d.mailIn && !d.file)) {
+      setError('Please attach a file for each document, or check "I\'ll mail this in" instead.')
+      return
+    }
+    if (documents.some((d) => d.mailIn && !d.name.trim())) {
+      setError('Please name each document you plan to mail in.')
       return
     }
     setSubmitting(true)
@@ -57,13 +64,16 @@ export default function NewOrder() {
     try {
       const orderIds = []
       for (const doc of documents) {
-        const ext = doc.file.name.split('.').pop()
-        const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+        let path = null
+        if (!doc.mailIn) {
+          const ext = doc.file.name.split('.').pop()
+          path = `${user.id}/${crypto.randomUUID()}.${ext}`
 
-        const { error: uploadError } = await supabase.storage
-          .from(DOCUMENTS_BUCKET)
-          .upload(path, doc.file, { upsert: false })
-        if (uploadError) throw uploadError
+          const { error: uploadError } = await supabase.storage
+            .from(DOCUMENTS_BUCKET)
+            .upload(path, doc.file, { upsert: false })
+          if (uploadError) throw uploadError
+        }
 
         const { data: newOrder, error: insertError } = await supabase
           .from('orders')
@@ -71,9 +81,10 @@ export default function NewOrder() {
             user_id: user.id,
             service,
             is_expedited: expedited,
-            document_name: doc.name || doc.file.name,
+            document_name: doc.name || doc.file?.name,
             notes,
             file_path: path,
+            mail_in: doc.mailIn,
             status: 'received',
             contact_name: contactName,
             company_name: companyName || null,
@@ -266,19 +277,44 @@ export default function NewOrder() {
                       className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
                     />
                   </div>
-                  <div>
-                    <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
-                      Upload file
-                    </label>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      required
-                      onChange={(e) => updateDoc(i, { file: e.target.files?.[0] ?? null })}
-                      className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-3 py-2.5 text-xs outline-none file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
-                    />
-                  </div>
+                  {!doc.mailIn && (
+                    <div>
+                      <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+                        Upload file
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        required={!doc.mailIn}
+                        onChange={(e) => updateDoc(i, { file: e.target.files?.[0] ?? null })}
+                        className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-3 py-2.5 text-xs outline-none file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
+                      />
+                    </div>
+                  )}
                 </div>
+
+                <label className="mt-3 flex cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={doc.mailIn}
+                    onChange={(e) => updateDoc(i, { mailIn: e.target.checked, file: e.target.checked ? null : doc.file })}
+                    className="mt-0.5 h-4 w-4 accent-[var(--brass)]"
+                  />
+                  <span className="text-xs text-[var(--ink)]">
+                    I'll mail in the physical document instead of uploading it
+                  </span>
+                </label>
+
+                {doc.mailIn && (
+                  <div className="mt-3 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-4">
+                    <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Mail your document to</p>
+                    <p className="mt-2 whitespace-pre-line text-sm text-[var(--ink)]">{MAILING_ADDRESS}</p>
+                    <p className="mt-2 text-xs text-[var(--slate)]">
+                      Include your name and this order's document name on the outside of the envelope.
+                      We'll start processing once it arrives.
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
             <p className="text-xs text-[var(--slate)]">PDF, JPG, or PNG for each document.</p>

@@ -127,6 +127,11 @@ export default function StaffDashboard() {
                         Expedited
                       </span>
                     )}
+                    {o.mail_in && (
+                      <span className="ml-2 rounded-full bg-[var(--line)] px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--slate)]">
+                        Mail-in
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">{SERVICE_LABEL[o.service]}</td>
                   <td className="px-4 py-3">

@@ -216,6 +216,7 @@ export default function StaffOrderDetail() {
         file_path: path,
         file_name: staffFile.name,
         uploaded_by: 'staff',
+        category: 'supporting',
       })
       if (insertError) throw insertError
 
@@ -369,7 +370,7 @@ export default function StaffOrderDetail() {
           </div>
         )}
 
-        {downloadUrl && (
+        {downloadUrl ? (
           <a
             href={downloadUrl}
             target="_blank"
@@ -378,7 +379,12 @@ export default function StaffOrderDetail() {
           >
             View uploaded document
           </a>
-        )}
+        ) : order.mail_in ? (
+          <div className="mt-6 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 px-4 py-3">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Mail-in document</p>
+            <p className="mt-1 text-sm text-[var(--ink)]">Client is mailing the physical document — no file uploaded.</p>
+          </div>
+        ) : null}
 
         {/* Request supporting documents */}
         <div className="mt-10 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
@@ -520,15 +526,38 @@ export default function StaffOrderDetail() {
           </div>
         </div>
 
+        {/* Return shipping label */}
+        {attachments.filter((a) => a.category === 'return_label').length > 0 && (
+          <div className="mt-6 rounded-2xl border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-6">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Return shipping label</p>
+            <div className="mt-3 space-y-2">
+              {attachments.filter((a) => a.category === 'return_label').map((a) => (
+                <a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-lg border border-[var(--brass)]/40 bg-white/40 px-4 py-2.5 hover:border-[var(--brass)] transition-colors"
+                >
+                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Return label'}</span>
+                  <span className="font-mono text-xs text-[var(--brass)]">
+                    Uploaded {new Date(a.created_at).toLocaleDateString()}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Attachments */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
 
-          {attachments.length === 0 ? (
+          {attachments.filter((a) => a.category !== 'return_label').length === 0 ? (
             <p className="mt-3 text-sm text-[var(--slate)]">None uploaded yet.</p>
           ) : (
             <div className="mt-3 space-y-2">
-              {attachments.map((a) => (
+              {attachments.filter((a) => a.category !== 'return_label').map((a) => (
                 <a
                   key={a.id}
                   href={a.url}

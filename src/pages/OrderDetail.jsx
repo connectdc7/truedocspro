@@ -32,6 +32,9 @@ export default function OrderDetail() {
   const [responseFile, setResponseFile] = useState(null)
   const [uploadingResponse, setUploadingResponse] = useState(false)
 
+  const [returnLabelFile, setReturnLabelFile] = useState(null)
+  const [uploadingReturnLabel, setUploadingReturnLabel] = useState(false)
+
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -109,6 +112,7 @@ export default function OrderDetail() {
         file_path: path,
         file_name: responseFile.name,
         uploaded_by: 'client',
+        category: 'supporting',
       })
       if (insertError) throw insertError
 
@@ -140,6 +144,34 @@ export default function OrderDetail() {
       setConfirmingDelete(false)
     } else {
       navigate('/portal')
+    }
+  }
+
+  const uploadReturnLabel = async () => {
+    if (!returnLabelFile) return
+    setUploadingReturnLabel(true)
+    setError('')
+    try {
+      const ext = returnLabelFile.name.split('.').pop()
+      const path = `${user.id}/return-labels/${crypto.randomUUID()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(path, returnLabelFile)
+      if (uploadError) throw uploadError
+
+      const { error: insertError } = await supabase.from('order_attachments').insert({
+        order_id: id,
+        file_path: path,
+        file_name: returnLabelFile.name,
+        uploaded_by: 'client',
+        category: 'return_label',
+      })
+      if (insertError) throw insertError
+
+      setReturnLabelFile(null)
+      await loadAttachments()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setUploadingReturnLabel(false)
     }
   }
 
@@ -333,11 +365,11 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {attachments.length > 0 && (
+        {attachments.filter((a) => a.category !== 'return_label').length > 0 && (
           <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
             <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
             <div className="mt-3 space-y-2">
-              {attachments.map((a) => (
+              {attachments.filter((a) => a.category !== 'return_label').map((a) => (
                 <a
                   key={a.id}
                   href={a.url}
@@ -355,8 +387,49 @@ export default function OrderDetail() {
           </div>
         )}
 
+        <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Return shipping label</p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            If you'd like us to mail your completed document back with your own prepaid label, upload it here.
+          </p>
+          {attachments.filter((a) => a.category === 'return_label').length > 0 && (
+            <div className="mt-3 space-y-2">
+              {attachments.filter((a) => a.category === 'return_label').map((a) => (
+                <a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 px-4 py-2.5 hover:border-[var(--brass)] transition-colors"
+                >
+                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Return label'}</span>
+                  <span className="font-mono text-xs text-[var(--brass)]">Uploaded</span>
+                </a>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              type="file"
+              onChange={(e) => setReturnLabelFile(e.target.files?.[0] ?? null)}
+              className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
+            />
+            <button
+              onClick={uploadReturnLabel}
+              disabled={!returnLabelFile || uploadingReturnLabel}
+              className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {uploadingReturnLabel ? 'Uploading…' : 'Upload label'}
+            </button>
+          </div>
+        </div>
+
         <div className="mt-6 rounded-xl border border-[var(--line)] p-6">
-          {expired ? (
+          {order.mail_in && !order.file_path ? (
+            <p className="font-mono text-sm text-[var(--slate)]">
+              You chose to mail this document to us — we'll update its status once it arrives.
+            </p>
+          ) : expired ? (
             <p className="font-mono text-sm text-[var(--slate)]">
               The 30-day access window for this document has closed. Contact us if you need a copy re-issued.
             </p>
