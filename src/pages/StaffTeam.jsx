@@ -37,13 +37,22 @@ export default function StaffTeam() {
     setLoading(false)
   }
 
+  const [promoteError, setPromoteError] = useState('')
+
   const toggleStaff = async (profile) => {
+    const promoting = !profile.is_staff
     const { error } = await supabase
       .from('profiles')
-      .update({ is_staff: !profile.is_staff })
+      .update({ is_staff: promoting })
       .eq('id', profile.id)
     if (!error) {
-      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, is_staff: !p.is_staff } : p)))
+      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, is_staff: promoting } : p)))
+      if (promoting) {
+        const { error: emailError } = await supabase.functions.invoke('notify-new-staff', {
+          body: { profile_id: profile.id },
+        })
+        if (emailError) setPromoteError('Staff access granted, but the welcome email failed to send.')
+      }
     } else {
       setError(error.message)
     }
@@ -95,6 +104,7 @@ export default function StaffTeam() {
 
         {loading && <p className="mt-8 font-mono text-sm text-[var(--slate)]">Loading…</p>}
         {error && <p className="mt-4 text-sm text-[var(--wax)]">{error}</p>}
+        {promoteError && <p className="mt-4 text-sm text-[var(--wax)]">{promoteError}</p>}
 
         <div className="mt-6 space-y-3">
           {filtered.map((p) => {

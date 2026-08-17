@@ -121,6 +121,9 @@ create table if not exists profiles (
 alter table profiles add column if not exists full_name text;
 alter table profiles add column if not exists title text;
 
+-- Now that profiles exists, add the order assignment column (references it)
+alter table orders add column if not exists assigned_to uuid references profiles(id) on delete set null;
+
 -- 2c. Blog posts
 create table if not exists posts (
   id uuid primary key default gen_random_uuid(),

@@ -36,6 +36,9 @@ export default function StaffOrderDetail() {
   const [savingDetails, setSavingDetails] = useState(false)
   const [detailsSaved, setDetailsSaved] = useState(false)
 
+  const [staffList, setStaffList] = useState([])
+  const [assigning, setAssigning] = useState(false)
+
   const [queues, setQueues] = useState({
     current_stage: 1,
     notary_start_date: '',
@@ -59,7 +62,17 @@ export default function StaffOrderDetail() {
 
   useEffect(() => {
     load()
+    loadStaffList()
   }, [id])
+
+  async function loadStaffList() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('is_staff', true)
+      .order('full_name', { ascending: true })
+    setStaffList(data ?? [])
+  }
 
   async function load() {
     setLoading(true)
@@ -165,6 +178,17 @@ export default function StaffOrderDetail() {
       setOrder((prev) => ({ ...prev, document_name: editName, service: editService }))
       setDetailsSaved(true)
       setTimeout(() => setDetailsSaved(false), 2000)
+    } else {
+      setError(error.message)
+    }
+  }
+
+  const assignOrder = async (staffId) => {
+    setAssigning(true)
+    const { error } = await supabase.from('orders').update({ assigned_to: staffId || null }).eq('id', id)
+    setAssigning(false)
+    if (!error) {
+      setOrder((prev) => ({ ...prev, assigned_to: staffId || null }))
     } else {
       setError(error.message)
     }
@@ -383,6 +407,24 @@ export default function StaffOrderDetail() {
               Note: changing the service doesn't adjust what was already charged — handle any price difference with the client directly if needed.
             </p>
           )}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Assigned to</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <select
+              value={order.assigned_to || ''}
+              onChange={(e) => assignOrder(e.target.value)}
+              disabled={assigning}
+              className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+            >
+              <option value="">Unassigned</option>
+              {staffList.map((s) => (
+                <option key={s.id} value={s.id}>{s.full_name || s.email}</option>
+              ))}
+            </select>
+            {assigning && <span className="font-mono text-xs text-[var(--slate)]">Saving…</span>}
+          </div>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-4">

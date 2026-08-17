@@ -9,6 +9,7 @@ const TABS = ['all', 'received', 'in_process', 'ready', 'shipped']
 
 export default function StaffDashboard() {
   const [orders, setOrders] = useState([])
+  const [staffList, setStaffList] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [tab, setTab] = useState('all')
@@ -16,17 +17,38 @@ export default function StaffDashboard() {
 
   useEffect(() => {
     load()
+    loadStaffList()
   }, [])
 
   async function load() {
     setLoading(true)
     const { data, error } = await supabase
       .from('orders')
-      .select('*, profiles:user_id (email)')
+      .select('*, profiles:user_id (email), assignee:assigned_to (id, email, full_name)')
       .order('created_at', { ascending: false })
     if (error) setError(error.message)
     else setOrders(data)
     setLoading(false)
+  }
+
+  async function loadStaffList() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('is_staff', true)
+      .order('full_name', { ascending: true })
+    setStaffList(data ?? [])
+  }
+
+  const assignOrder = async (orderId, staffId) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ assigned_to: staffId || null })
+      .eq('id', orderId)
+    if (!error) {
+      const assignee = staffId ? staffList.find((s) => s.id === staffId) : null
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, assigned_to: staffId || null, assignee } : o)))
+    }
   }
 
   const filtered = useMemo(() => {
@@ -116,6 +138,7 @@ export default function StaffDashboard() {
                 <th className="px-4 py-3">Service</th>
                 <th className="px-4 py-3">Payment</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Assigned to</th>
                 <th className="px-4 py-3">Requested completion</th>
                 <th className="px-4 py-3">Submitted</th>
               </tr>
@@ -149,6 +172,19 @@ export default function StaffDashboard() {
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={o.assigned_to || ''}
+                      onChange={(e) => assignOrder(o.id, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded-lg border border-[var(--line)] bg-white/70 px-2 py-1.5 text-xs outline-none focus:border-[var(--wax)]"
+                    >
+                      <option value="">Unassigned</option>
+                      {staffList.map((s) => (
+                        <option key={s.id} value={s.id}>{s.full_name || s.email}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-[var(--slate)]">
                     {o.needed_by_date ? new Date(o.needed_by_date).toLocaleDateString() : '—'}
