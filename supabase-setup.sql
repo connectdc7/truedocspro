@@ -382,6 +382,20 @@ create policy "Staff can upload documents"
   );
 
 -- ============================================================
+-- Enable live updates: when staff changes an order, clients
+-- viewing that order see it update instantly without refreshing.
+-- ============================================================
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table orders;
+  end if;
+end $$;
+
+-- ============================================================
 -- Seed a few starter blog posts so the blog isn't empty on launch.
 -- Safe to re-run — skips any slug that already exists.
 -- ============================================================

@@ -79,6 +79,32 @@ export default function OrderDetail() {
     return () => { active = false }
   }, [id, user.id])
 
+  // Live-update this order if staff changes it while the client has it open
+  useEffect(() => {
+    const channel = supabase
+      .channel(`order-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
+        (payload) => {
+          setOrder((prev) => (prev ? { ...prev, ...payload.new } : prev))
+          if (payload.new.file_path && !downloadUrl) {
+            supabase.storage
+              .from(DOCUMENTS_BUCKET)
+              .createSignedUrl(payload.new.file_path, 60 * 5)
+              .then(({ data: signed }) => {
+                if (signed) setDownloadUrl(signed.signedUrl)
+              })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [id])
+
   async function loadAttachments(active = true) {
     const { data } = await supabase
       .from('order_attachments')

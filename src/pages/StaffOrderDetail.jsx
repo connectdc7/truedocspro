@@ -10,6 +10,7 @@ const SERVICES = [
   { value: 'apostille', label: 'Apostille' },
   { value: 'embassy', label: 'Embassy legalization' },
 ]
+const STATUS_LABEL = { received: 'Received', in_process: 'In process', ready: 'Ready', shipped: 'Shipped / Returned' }
 const STATUSES = [
   { value: 'received', label: 'Received' },
   { value: 'in_process', label: 'In process' },
@@ -119,6 +120,21 @@ export default function StaffOrderDetail() {
     setAttachments(withUrls)
   }
 
+  const [manualSubject, setManualSubject] = useState('')
+  const [manualMessage, setManualMessage] = useState('')
+  const [sendingManual, setSendingManual] = useState(false)
+  const [manualSent, setManualSent] = useState(false)
+  const [notifyError, setNotifyError] = useState('')
+
+  const notifyClient = async (subject, message) => {
+    setNotifyError('')
+    const { error } = await supabase.functions.invoke('notify-client', {
+      body: { order_id: id, subject, message },
+    })
+    if (error) setNotifyError('Update saved, but the email notification failed to send.')
+    return !error
+  }
+
   const updateStatus = async (newStatus) => {
     setSaving(true)
     setSaved(false)
@@ -128,6 +144,10 @@ export default function StaffOrderDetail() {
       setOrder((prev) => ({ ...prev, status: newStatus }))
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+      await notifyClient(
+        `Your document is now: ${STATUS_LABEL[newStatus]}`,
+        `Hi ${order.contact_name || 'there'},\n\nYour document "${order.document_name}" has moved to a new status: ${STATUS_LABEL[newStatus]}.\n\nYou can see full details and any next steps in your portal.`
+      )
     } else {
       setError(error.message)
     }
@@ -187,6 +207,10 @@ export default function StaffOrderDetail() {
     setSendingRequest(false)
     if (!error) {
       setOrder((prev) => ({ ...prev, requested_documents: requestNote, request_status: 'requested' }))
+      await notifyClient(
+        'We need one more thing from you',
+        `Hi ${order.contact_name || 'there'},\n\nWe need something additional for "${order.document_name}":\n\n${requestNote}\n\nYou can upload it directly from your portal.`
+      )
     } else {
       setError(error.message)
     }
@@ -226,6 +250,20 @@ export default function StaffOrderDetail() {
       setError(err.message)
     } finally {
       setUploadingStaffFile(false)
+    }
+  }
+
+  const sendManualEmail = async () => {
+    if (!manualSubject.trim() || !manualMessage.trim()) return
+    setSendingManual(true)
+    setManualSent(false)
+    const ok = await notifyClient(manualSubject, manualMessage)
+    setSendingManual(false)
+    if (ok) {
+      setManualSent(true)
+      setManualSubject('')
+      setManualMessage('')
+      setTimeout(() => setManualSent(false), 3000)
     }
   }
 
@@ -361,6 +399,43 @@ export default function StaffOrderDetail() {
           {order.needed_by_date && (
             <InfoBlock label="Requested completion" value={new Date(order.needed_by_date).toLocaleDateString()} />
           )}
+        </div>
+
+        {notifyError && (
+          <p className="mt-3 text-xs text-[var(--wax)]">{notifyError}</p>
+        )}
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email the client</p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            Status changes and document requests email the client automatically. Use this for anything else —
+            a rename, a service change, or a general note.
+          </p>
+          <div className="mt-3 space-y-2">
+            <input
+              placeholder="Subject"
+              value={manualSubject}
+              onChange={(e) => setManualSubject(e.target.value)}
+              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+            />
+            <textarea
+              rows={3}
+              placeholder="Message"
+              value={manualMessage}
+              onChange={(e) => setManualMessage(e.target.value)}
+              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+            />
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              onClick={sendManualEmail}
+              disabled={sendingManual || !manualSubject.trim() || !manualMessage.trim()}
+              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {sendingManual ? 'Sending…' : 'Send email'}
+            </button>
+            {manualSent && <p className="font-mono text-xs text-[var(--brass)]">Sent.</p>}
+          </div>
         </div>
 
         {order.notes && (
