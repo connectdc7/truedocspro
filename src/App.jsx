@@ -15,6 +15,7 @@ import BlogList from './pages/BlogList'
 import BlogPost from './pages/BlogPost'
 import StaffBlogList from './pages/StaffBlogList'
 import StaffBlogEditor from './pages/StaffBlogEditor'
+import StaffTeam from './pages/StaffTeam'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffRoute from './components/StaffRoute'
 
@@ -41,6 +42,14 @@ export default function App() {
         element={
           <StaffRoute>
             <StaffBlogEditor />
+          </StaffRoute>
+        }
+      />
+      <Route
+        path="/staff/team"
+        element={
+          <StaffRoute>
+            <StaffTeam />
           </StaffRoute>
         }
       />

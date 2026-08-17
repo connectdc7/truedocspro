@@ -118,6 +118,9 @@ create table if not exists profiles (
   created_at timestamptz not null default now()
 );
 
+alter table profiles add column if not exists full_name text;
+alter table profiles add column if not exists title text;
+
 -- 2c. Blog posts
 create table if not exists posts (
   id uuid primary key default gen_random_uuid(),
@@ -202,6 +205,11 @@ drop policy if exists "Users can view their own profile" on profiles;
 create policy "Users can view their own profile"
   on profiles for select
   using (auth.uid() = id or is_staff());
+
+drop policy if exists "Staff can update any profile" on profiles;
+create policy "Staff can update any profile"
+  on profiles for update
+  using (is_staff());
 
 -- 3. Row Level Security — clients can only ever see their own orders,
 -- staff (you) can see and update every order.

@@ -57,12 +57,20 @@ export default function StaffDashboard() {
             <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Staff</p>
             <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
           </div>
-          <Link
-            to="/staff/blog"
-            className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-          >
-            Manage blog
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/staff/team"
+              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Team
+            </Link>
+            <Link
+              to="/staff/blog"
+              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Manage blog
+            </Link>
+          </div>
         </div>
       </section>
 
