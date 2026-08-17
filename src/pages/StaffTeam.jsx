@@ -39,6 +39,36 @@ export default function StaffTeam() {
 
   const [promoteError, setPromoteError] = useState('')
 
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteName, setInviteName] = useState('')
+  const [inviteTitle, setInviteTitle] = useState('')
+  const [inviting, setInviting] = useState(false)
+  const [inviteResult, setInviteResult] = useState(null) // { ok, message }
+
+  const sendInvite = async (e) => {
+    e.preventDefault()
+    setInviting(true)
+    setInviteResult(null)
+    const { data, error } = await supabase.functions.invoke('invite-staff', {
+      body: { email: inviteEmail, full_name: inviteName || undefined, title: inviteTitle || undefined },
+    })
+    setInviting(false)
+    if (error || data?.error) {
+      setInviteResult({ ok: false, message: data?.error || error.message })
+    } else {
+      setInviteResult({
+        ok: true,
+        message: data.new_account
+          ? `Invite sent to ${inviteEmail} — they'll get an email to set up their login.`
+          : `${inviteEmail} already had an account and is now staff.`,
+      })
+      setInviteEmail('')
+      setInviteName('')
+      setInviteTitle('')
+      await load()
+    }
+  }
+
   const toggleStaff = async (profile) => {
     const promoting = !profile.is_staff
     const { error } = await supabase
@@ -94,12 +124,61 @@ export default function StaffTeam() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-10">
+        <div className="rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Invite a new staff member</p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            Works with any email — if they don't have an account yet, we'll create one and send them a link
+            to set up their login.
+          </p>
+          <form onSubmit={sendInvite} className="mt-4 grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:items-end">
+            <div>
+              <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Email</label>
+              <input
+                type="email"
+                required
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Name (optional)</label>
+              <input
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </div>
+            <div>
+              <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Title (optional)</label>
+              <input
+                value={inviteTitle}
+                onChange={(e) => setInviteTitle(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={inviting}
+              className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+            >
+              {inviting ? 'Sending…' : 'Invite'}
+            </button>
+          </form>
+          {inviteResult && (
+            <p className={`mt-3 text-sm ${inviteResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+              {inviteResult.message}
+            </p>
+          )}
+        </div>
+
         <input
           type="text"
           placeholder="Search by email or name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm rounded-lg border border-[var(--line)] bg-white/60 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+          className="mt-8 w-full max-w-sm rounded-lg border border-[var(--line)] bg-white/60 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
         />
 
         {loading && <p className="mt-8 font-mono text-sm text-[var(--slate)]">Loading…</p>}
