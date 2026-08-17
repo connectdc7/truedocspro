@@ -9,24 +9,24 @@ import { supabase } from '../lib/supabaseClient'
 // refresh these every so often with the latest coverage.
 const NEWS_LINKS = [
   {
-    title: 'Algeria to Join Hague Apostille Convention in 2026',
-    source: 'Envoy Global',
-    url: 'https://www.envoyglobal.com/news-alert/algeria-to-join-hague-apostille-convention-in-2026/',
+    title: 'US Begins Issuing Electronic Apostilles (e-Apostilles)',
+    source: 'VisaMet',
+    url: 'https://visamet.com/guides/apostille-document-legalization-visa-guide-2026',
   },
   {
-    title: 'Vietnam Joins Apostille Convention Effective September 2026',
-    source: 'Erickson Immigration Group',
-    url: 'https://eiglaw.com/vietnam-joins-apostille-convention-effective-september-2026/',
+    title: 'Hague Apostille Convention: 2026 Certification Guide — 130 Member Countries',
+    source: 'Mayo Law',
+    url: 'https://mayo.law/hague-apostille-convention/',
+  },
+  {
+    title: 'Remote Online Notarization Laws by State (2026)',
+    source: 'NotaryLive',
+    url: 'https://notarylive.com/blog/does-my-state-allow-remote-online-notarization',
   },
   {
     title: 'USCIS Policy Memoranda — official updates',
     source: 'USCIS.gov',
     url: 'https://www.uscis.gov/laws-and-policy/policy-memoranda',
-  },
-  {
-    title: 'Hague Convention Countries List — 2026 Updated Members',
-    source: 'ApostilleHub.help',
-    url: 'https://apostillehub.help/blog/hague-convention-countries-list-2026-updates/',
   },
 ]
 

@@ -445,6 +445,47 @@ If you''re not sure which category your destination country falls into, that''s 
 )
 on conflict (slug) do nothing;
 
+insert into posts (slug, title, excerpt, content, author, published) values
+(
+  'electronic-apostilles-2026',
+  'The State Department Now Issues Electronic Apostilles — Here''s What That Means',
+  'As of mid-2026, U.S. federal apostilles can be issued digitally, with a verifiable electronic seal. It runs alongside the paper process, not instead of it — here''s when each one applies.',
+  'A quietly significant change landed this year: as of mid-2026, the U.S. Department of State began issuing **electronic apostilles (e-Apostilles)** — a digital version of the traditional paper certificate, carrying a secure digital signature and an electronic seal that the receiving country can verify online.
+
+**What hasn''t changed:** this runs alongside the existing paper apostille process, not in place of it. Most state-level apostilles (the ones issued by a Secretary of State''s office for documents like birth certificates or diplomas) are still paper-only for now — e-Apostilles apply specifically to federal-level documents processed through the State Department.
+
+**What to check before relying on one:** not every destination country or receiving authority accepts the electronic version yet. If you''re submitting a document for a visa application, a university, or a government office abroad, it''s worth confirming with them directly whether they''ll accept an e-Apostille before treating it as a substitute for the paper original.
+
+**Why this matters for planning:** the U.S. Department of State''s Office of Authentications has historically had faster turnaround for straightforward cases once a document is correctly prepared. As e-Apostilles roll out more broadly, that speed advantage may extend further — but only for the federal documents this currently covers.
+
+If you''re not sure whether your document qualifies for the electronic process or needs the traditional paper apostille, that''s exactly the kind of thing we sort out when you submit it with us.
+
+*Source: VisaMet, 2026 Apostille & Document Legalization Guide*',
+  'True Docs Pro Team',
+  true
+),
+(
+  'remote-online-notarization-2026',
+  'Remote Online Notarization Is Now Legal Almost Everywhere — Is It Right for Your Document?',
+  'Nearly every state now permits notarizing a document over video call instead of in person. Convenient, but not universally accepted — here''s what to know before you rely on it.',
+  'Remote online notarization (RON) — getting a document notarized over a live video call instead of in person — has gone from a pandemic-era workaround to standard practice almost everywhere.
+
+**Where things stand in 2026:** depending on the source, somewhere between 47 and 49 states plus Washington, D.C. now permit some form of RON, with California phasing in its own program through 2030 as the last major holdout. In practice, that means the overwhelming majority of the country now allows it in at least some circumstances.
+
+**How it actually works:** you appear before a commissioned online notary via real-time audio-video, verify your identity (often through knowledge-based questions, ID document analysis, or biometric verification), and the notary completes the notarization digitally — with the entire session recorded and retained as required by law.
+
+**The catch:** "legal in your state" doesn''t automatically mean "accepted for your specific document or by the receiving party." Real estate closings, certain court filings, and documents headed to a receiving party unfamiliar with RON can still run into friction — some banks, courts, or foreign authorities simply aren''t set up to accept it yet, regardless of what your state allows.
+
+**Worth watching:** a federal bill, the SECURE Notarization Act, is currently working its way through Congress. If passed, it would set national minimum standards and require every state to recognize RON notarizations performed anywhere else — effectively closing the remaining gaps in one move.
+
+**Our take:** RON is genuinely convenient for straightforward documents, but if yours is headed to an embassy, a foreign government office, or anywhere with strict authentication chains, an in-person notarization is still the safer starting point. If you''re not sure which applies to you, ask us before you book anything.
+
+*Sources: NotaryLive, Finest Closing Services*',
+  'True Docs Pro Team',
+  true
+)
+on conflict (slug) do nothing;
+
 -- ============================================================
 -- Done. One more manual step: make yourself a staff member so
 -- you can access the /staff dashboard in the app.
