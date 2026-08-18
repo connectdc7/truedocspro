@@ -21,8 +21,11 @@ export default function OrderDetail() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const paymentResult = searchParams.get('payment') // 'success' | 'cancelled' | null
+  const feesResult = searchParams.get('fees') // 'success' | 'cancelled' | null
   const [order, setOrder] = useState(null)
   const [attachments, setAttachments] = useState([])
+  const [fees, setFees] = useState([])
+  const [payingFees, setPayingFees] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState(null)
@@ -73,6 +76,7 @@ export default function OrderDetail() {
       }
 
       await loadAttachments(active)
+      await loadFees(active)
       setLoading(false)
     }
     load()
@@ -121,6 +125,26 @@ export default function OrderDetail() {
       })
     )
     if (active) setAttachments(withUrls)
+  }
+
+  async function loadFees(active = true) {
+    const { data } = await supabase
+      .from('order_fees')
+      .select('*')
+      .eq('order_id', id)
+      .order('created_at', { ascending: true })
+    if (active) setFees(data ?? [])
+  }
+
+  const payFees = async () => {
+    const unpaidIds = fees.filter((f) => !f.paid).map((f) => f.id)
+    if (unpaidIds.length === 0) return
+    setPayingFees(true)
+    const { data, error } = await supabase.functions.invoke('create-fee-checkout-session', {
+      body: { fee_ids: unpaidIds },
+    })
+    setPayingFees(false)
+    if (!error && data?.url) window.location.href = data.url
   }
 
   const uploadResponseFile = async () => {
@@ -373,6 +397,42 @@ export default function OrderDetail() {
             </div>
           )}
         </div>
+
+        {fees.length > 0 && (
+          <div className="mt-6 rounded-xl border border-[var(--brass)]/40 bg-[var(--brass)]/5 p-6">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Additional fees</p>
+            <p className="mt-1 text-xs text-[var(--slate)]">
+              Costs like Secretary of State or embassy fees, separate from what you already paid.
+            </p>
+            <div className="mt-3 space-y-2">
+              {fees.map((fee) => (
+                <div key={fee.id} className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-white/50 px-4 py-2.5">
+                  <span className="text-sm text-[var(--ink)]">{fee.description}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm text-[var(--ink)]">${(fee.amount_cents / 100).toFixed(2)}</span>
+                    <span className={`rounded-full px-2 py-0.5 font-mono text-[10px] uppercase ${fee.paid ? 'bg-[var(--wax)]/15 text-[var(--wax)]' : 'bg-[var(--line)] text-[var(--slate)]'}`}>
+                      {fee.paid ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {fees.some((f) => !f.paid) && (
+              <button
+                onClick={payFees}
+                disabled={payingFees}
+                className="mt-4 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
+              >
+                {payingFees
+                  ? 'Loading…'
+                  : `Pay $${(fees.filter((f) => !f.paid).reduce((sum, f) => sum + f.amount_cents, 0) / 100).toFixed(2)} in fees`}
+              </button>
+            )}
+            {feesResult === 'success' && (
+              <p className="mt-3 font-mono text-xs text-[var(--brass)]">Payment received — thank you.</p>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-2 gap-4 rounded-xl border border-[var(--line)] p-5 sm:grid-cols-3">
           {order.contact_name && <MiniField label="Contact" value={order.contact_name} />}

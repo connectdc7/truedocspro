@@ -33,16 +33,29 @@ Deno.serve(async (req) => {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
+    const feeIds = (session.metadata?.fee_ids ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
 
     if (orderIds.length > 0) {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      )
       await supabaseAdmin
         .from('orders')
         .update({ payment_status: 'paid' })
         .in('id', orderIds)
+        .eq('stripe_checkout_session_id', session.id)
+    }
+
+    if (feeIds.length > 0) {
+      await supabaseAdmin
+        .from('order_fees')
+        .update({ paid: true })
+        .in('id', feeIds)
         .eq('stripe_checkout_session_id', session.id)
     }
   }

@@ -24,6 +24,13 @@ export default function StaffOrderDetail() {
   const navigate = useNavigate()
   const [order, setOrder] = useState(null)
   const [attachments, setAttachments] = useState([])
+  const [fees, setFees] = useState([])
+  const [newFeeDesc, setNewFeeDesc] = useState('')
+  const [newFeeAmount, setNewFeeAmount] = useState('')
+  const [addingFee, setAddingFee] = useState(false)
+  const [editingFeeId, setEditingFeeId] = useState(null)
+  const [editFeeDesc, setEditFeeDesc] = useState('')
+  const [editFeeAmount, setEditFeeAmount] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -112,6 +119,7 @@ export default function StaffOrderDetail() {
     }
 
     await loadAttachments()
+    await loadFees()
     setLoading(false)
   }
 
@@ -131,6 +139,15 @@ export default function StaffOrderDetail() {
       })
     )
     setAttachments(withUrls)
+  }
+
+  async function loadFees() {
+    const { data } = await supabase
+      .from('order_fees')
+      .select('*')
+      .eq('order_id', id)
+      .order('created_at', { ascending: true })
+    setFees(data ?? [])
   }
 
   const [manualSubject, setManualSubject] = useState('')
@@ -291,6 +308,57 @@ export default function StaffOrderDetail() {
     }
   }
 
+  const addFee = async () => {
+    const amount = Math.round(parseFloat(newFeeAmount) * 100)
+    if (!newFeeDesc.trim() || !amount || amount <= 0) return
+    setAddingFee(true)
+    const { error } = await supabase.from('order_fees').insert({
+      order_id: id,
+      description: newFeeDesc.trim(),
+      amount_cents: amount,
+    })
+    setAddingFee(false)
+    if (!error) {
+      setNewFeeDesc('')
+      setNewFeeAmount('')
+      await loadFees()
+      await notifyClient(
+        'An additional fee has been added to your order',
+        `Hi ${order.contact_name || 'there'},\n\nWe've added an additional fee to "${order.document_name}":\n\n${newFeeDesc.trim()} — $${(amount / 100).toFixed(2)}\n\nYou can review and pay it from your portal.`
+      )
+    } else {
+      setError(error.message)
+    }
+  }
+
+  const startEditFee = (fee) => {
+    setEditingFeeId(fee.id)
+    setEditFeeDesc(fee.description)
+    setEditFeeAmount((fee.amount_cents / 100).toFixed(2))
+  }
+
+  const saveEditFee = async (feeId) => {
+    const amount = Math.round(parseFloat(editFeeAmount) * 100)
+    if (!editFeeDesc.trim() || !amount || amount <= 0) return
+    const { error } = await supabase
+      .from('order_fees')
+      .update({ description: editFeeDesc.trim(), amount_cents: amount })
+      .eq('id', feeId)
+    if (!error) {
+      setEditingFeeId(null)
+      await loadFees()
+    } else {
+      setError(error.message)
+    }
+  }
+
+  const deleteFee = async (feeId) => {
+    if (!window.confirm('Remove this fee?')) return
+    const { error } = await supabase.from('order_fees').delete().eq('id', feeId)
+    if (!error) await loadFees()
+    else setError(error.message)
+  }
+
   const handleDelete = async () => {
     const confirmed = window.confirm(
       `Permanently delete "${order.document_name}"? This removes the order and the uploaded file. This can't be undone.`
@@ -424,6 +492,91 @@ export default function StaffOrderDetail() {
               ))}
             </select>
             {assigning && <span className="font-mono text-xs text-[var(--slate)]">Saving…</span>}
+          </div>
+        </div>
+
+        {/* Additional fees */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+            Additional fees <span className="normal-case">(Secretary of State, embassy, etc.)</span>
+          </p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            These are separate from your handling fee — the client is emailed and can pay them from their portal.
+          </p>
+
+          {fees.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {fees.map((fee) =>
+                editingFeeId === fee.id ? (
+                  <div key={fee.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--wax)] p-3">
+                    <input
+                      value={editFeeDesc}
+                      onChange={(e) => setEditFeeDesc(e.target.value)}
+                      className="flex-1 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFeeAmount}
+                      onChange={(e) => setEditFeeAmount(e.target.value)}
+                      className="w-24 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
+                    />
+                    <button
+                      onClick={() => saveEditFee(fee.id)}
+                      className="rounded-full bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)]"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingFeeId(null)}
+                      className="rounded-full border border-[var(--line)] px-3 py-2 text-xs text-[var(--ink)]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div key={fee.id} className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-2.5">
+                    <div>
+                      <span className="text-sm text-[var(--ink)]">{fee.description}</span>
+                      <span className="ml-2 font-mono text-sm text-[var(--brass)]">${(fee.amount_cents / 100).toFixed(2)}</span>
+                      <span className={`ml-2 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase ${fee.paid ? 'bg-[var(--wax)]/15 text-[var(--wax)]' : 'bg-[var(--line)] text-[var(--slate)]'}`}>
+                        {fee.paid ? 'Paid' : 'Unpaid'}
+                      </span>
+                    </div>
+                    {!fee.paid && (
+                      <div className="flex gap-2">
+                        <button onClick={() => startEditFee(fee)} className="text-xs text-[var(--ink)] hover:text-[var(--wax)]">Edit</button>
+                        <button onClick={() => deleteFee(fee.id)} className="text-xs text-[var(--wax)] hover:underline">Remove</button>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <input
+              placeholder="e.g. Texas Secretary of State fee"
+              value={newFeeDesc}
+              onChange={(e) => setNewFeeDesc(e.target.value)}
+              className="flex-1 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Amount ($)"
+              value={newFeeAmount}
+              onChange={(e) => setNewFeeAmount(e.target.value)}
+              className="w-32 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+            />
+            <button
+              onClick={addFee}
+              disabled={addingFee || !newFeeDesc.trim() || !newFeeAmount}
+              className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+            >
+              {addingFee ? 'Adding…' : 'Add fee'}
+            </button>
           </div>
         </div>
 

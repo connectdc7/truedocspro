@@ -75,6 +75,10 @@ Deno.serve(async (req) => {
       // built-in invite email (sets password, then logs them in)
       const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: `${Deno.env.get('SITE_URL') || 'https://truedocspro.com'}/login`,
+        data: {
+          full_name: full_name || null,
+          title: title || null,
+        },
       })
       if (inviteError || !invited?.user) {
         return new Response(JSON.stringify({ error: `Could not invite: ${inviteError?.message}` }), {

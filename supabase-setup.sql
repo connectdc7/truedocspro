@@ -155,6 +155,19 @@ create table if not exists order_attachments (
   created_at timestamptz not null default now()
 );
 
+-- 2f. Additional pass-through fees (Secretary of State, embassy, etc.)
+-- added by staff after the order is submitted, since these vary and
+-- aren't known at checkout time. Billed to the client separately.
+create table if not exists order_fees (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references orders(id) on delete cascade,
+  description text not null,
+  amount_cents integer not null,
+  paid boolean not null default false,
+  stripe_checkout_session_id text,
+  created_at timestamptz not null default now()
+);
+
 alter table order_attachments add column if not exists category text not null default 'supporting';
 
 do $$
@@ -313,6 +326,23 @@ create policy "Staff can delete attachments"
   on order_attachments for delete
   using (is_staff());
 
+-- 3e. Additional fees — staff manage them fully, clients can view (and
+-- later pay) fees on their own orders only.
+alter table order_fees enable row level security;
+
+drop policy if exists "Staff can manage fees" on order_fees;
+create policy "Staff can manage fees"
+  on order_fees for all
+  using (is_staff())
+  with check (is_staff());
+
+drop policy if exists "Users can view fees on their own orders" on order_fees;
+create policy "Users can view fees on their own orders"
+  on order_fees for select
+  using (
+    exists (select 1 from orders o where o.id = order_fees.order_id and o.user_id = auth.uid())
+  );
+
 -- Note: clients cannot update status or payment fields themselves —
 -- only staff (is_staff = true) can, via the /staff dashboard in the app.
 
@@ -403,6 +433,12 @@ begin
     where pubname = 'supabase_realtime' and tablename = 'orders'
   ) then
     alter publication supabase_realtime add table orders;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'order_fees'
+  ) then
+    alter publication supabase_realtime add table order_fees;
   end if;
 end $$;
 
