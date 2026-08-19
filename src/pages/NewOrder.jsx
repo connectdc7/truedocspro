@@ -3,7 +3,8 @@ import Layout from '../components/Layout'
 import CountrySelect from '../components/CountrySelect'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
-import { HAGUE_COUNTRIES } from '../lib/countries'
+import { HAGUE_COUNTRIES, US_STATES } from '../lib/countries'
+import LegalizationPath from '../components/LegalizationPath'
 
 const SERVICES = [
   { value: 'notary', label: 'Notary', price: 25, expedite: 15, standardTurnaround: 'Same day', expeditedTurnaround: 'Within 2 hours' },
@@ -31,6 +32,26 @@ export default function NewOrder() {
 
   const isHagueCountry = HAGUE_COUNTRIES.includes(destinationCountry)
   const [embassyFees, setEmbassyFees] = useState({ personal: null, business: null })
+  const [originState, setOriginState] = useState('')
+  const [sosFeeCents, setSosFeeCents] = useState(0)
+
+  useEffect(() => {
+    if (!originState) {
+      setSosFeeCents(0)
+      return
+    }
+    supabase
+      .from('sos_fees')
+      .select('fee_cents')
+      .eq('state', originState)
+      .maybeSingle()
+      .then(({ data }) => setSosFeeCents(data?.fee_cents || 0))
+  }, [originState])
+
+  useEffect(() => {
+    if (!destinationCountry) return
+    setService(isHagueCountry ? 'apostille' : 'embassy')
+  }, [destinationCountry, isHagueCountry])
 
   useEffect(() => {
     if (!destinationCountry || isHagueCountry) {
@@ -62,7 +83,11 @@ export default function NewOrder() {
       return sum + (feeCents ? feeCents / 100 : 0)
     }, 0)
   }, [documents, embassyFees, isHagueCountry])
-  const total = baseTotal + embassyFeeTotal
+  const sosFeeTotal = useMemo(() => {
+    if (!originState || !sosFeeCents) return 0
+    return (sosFeeCents / 100) * quantity
+  }, [originState, sosFeeCents, quantity])
+  const total = baseTotal + embassyFeeTotal + sosFeeTotal
 
   const setQty = (n) => {
     const clamped = Math.max(1, Math.min(10, n))
@@ -125,6 +150,8 @@ export default function NewOrder() {
             contact_phone: contactPhone,
             destination_country: destinationCountry,
             needed_by_date: neededByDate || null,
+            origin_state: originState || null,
+            sos_fee_cents: sosFeeCents,
           })
           .select()
           .single()
@@ -230,6 +257,31 @@ export default function NewOrder() {
                   </p>
                 )}
               </div>
+
+              <div>
+                <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="originState">
+                  State where document originates
+                </label>
+                <select
+                  id="originState"
+                  value={originState}
+                  onChange={(e) => setOriginState(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+                >
+                  <option value="">Select a state…</option>
+                  {US_STATES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                {originState && (
+                  <p className="mt-1.5 text-xs text-[var(--slate)]">
+                    {sosFeeCents > 0
+                      ? `Secretary of State fee: $${(sosFeeCents / 100).toFixed(2)} per document`
+                      : `We'll confirm the exact Secretary of State fee for ${originState} after you submit.`}
+                  </p>
+                )}
+              </div>
+
               <div className="sm:col-span-2">
                 <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="neededByDate">
                   Requested completion date
@@ -244,6 +296,12 @@ export default function NewOrder() {
                 />
               </div>
             </div>
+
+            {destinationCountry && (
+              <div className="mt-4">
+                <LegalizationPath isHague={isHagueCountry} country={destinationCountry} />
+              </div>
+            )}
           </div>
 
           <div>
@@ -415,12 +473,48 @@ export default function NewOrder() {
 
           {error && <p className="text-sm text-[var(--wax)]">{error}</p>}
 
-          <div className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
-              Total due at checkout {quantity > 1 && `(${quantity} documents)`}
-              {embassyFeeTotal > 0 && ` incl. $${embassyFeeTotal.toFixed(2)} embassy fees`}
-            </span>
-            <span className="font-display text-lg font-semibold text-[var(--ink)]">${total.toFixed(2)}</span>
+          <div className="rounded-lg border border-[var(--line)] p-4">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+              Preliminary invoice {quantity > 1 && `(${quantity} documents)`}
+            </p>
+            <div className="mt-3 space-y-1.5 text-sm">
+              <div className="flex justify-between text-[var(--ink)]/85">
+                <span>{selected.label} handling fee{quantity > 1 ? ` × ${quantity}` : ''}</span>
+                <span>${(selected.price * quantity).toFixed(2)}</span>
+              </div>
+              {expedited && (
+                <div className="flex justify-between text-[var(--ink)]/85">
+                  <span>Expedited processing{quantity > 1 ? ` × ${quantity}` : ''}</span>
+                  <span>${(selected.expedite * quantity).toFixed(2)}</span>
+                </div>
+              )}
+              {sosFeeTotal > 0 && (
+                <div className="flex justify-between text-[var(--ink)]/85">
+                  <span>Secretary of State fee ({originState}){quantity > 1 ? ` × ${quantity}` : ''}</span>
+                  <span>${sosFeeTotal.toFixed(2)}</span>
+                </div>
+              )}
+              {embassyFeeTotal > 0 && (
+                <div className="flex justify-between text-[var(--ink)]/85">
+                  <span>Embassy legalization fee ({destinationCountry})</span>
+                  <span>${embassyFeeTotal.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+            <div className="mt-3 flex items-center justify-between border-t border-[var(--line)] pt-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Total due now</span>
+              <span className="font-display text-lg font-semibold text-[var(--ink)]">${total.toFixed(2)}</span>
+            </div>
+            {!isHagueCountry && !embassyFeeTotal && destinationCountry && (
+              <p className="mt-2 text-xs text-[var(--slate)]">
+                Embassy fee for {destinationCountry} not yet set — we'll follow up with the exact amount.
+              </p>
+            )}
+            {originState && !sosFeeTotal && (
+              <p className="mt-2 text-xs text-[var(--slate)]">
+                Secretary of State fee for {originState} not yet set — we'll follow up with the exact amount.
+              </p>
+            )}
           </div>
 
           <button

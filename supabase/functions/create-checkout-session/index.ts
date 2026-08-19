@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
       const baseAmount = PRICE_CENTS[order.service] ?? 0
       const surcharge = order.is_expedited ? (EXPEDITE_SURCHARGE_CENTS[order.service] ?? 0) : 0
       const embassyFee = order.embassy_fee_cents ?? 0
-      const amount = baseAmount + surcharge + embassyFee
+      const sosFee = order.sos_fee_cents ?? 0
+      const amount = baseAmount + surcharge + embassyFee + sosFee
       const serviceLabel = order.service.charAt(0).toUpperCase() + order.service.slice(1)
       const productName = order.is_expedited
         ? `${serviceLabel} (Expedited) — ${order.document_name}`

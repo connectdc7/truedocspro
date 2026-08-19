@@ -591,6 +591,10 @@ export default function StaffOrderDetail() {
           {order.company_name && <InfoBlock label="Company" value={order.company_name} />}
           {order.contact_phone && <InfoBlock label="Phone" value={order.contact_phone} />}
           {order.destination_country && <InfoBlock label="Country of use" value={order.destination_country} />}
+          {order.origin_state && <InfoBlock label="State of origin" value={order.origin_state} />}
+          {order.sos_fee_cents > 0 && (
+            <InfoBlock label="SOS fee charged" value={`$${(order.sos_fee_cents / 100).toFixed(2)}`} />
+          )}
           <InfoBlock label="Document type" value={order.document_type === 'business' ? 'Business' : 'Personal'} />
           {order.embassy_fee_cents > 0 && (
             <InfoBlock label="Embassy fee charged" value={`$${(order.embassy_fee_cents / 100).toFixed(2)}`} />

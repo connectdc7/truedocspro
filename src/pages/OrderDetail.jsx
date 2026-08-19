@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import StatusTracker from '../components/StatusTracker'
+import LegalizationPath from '../components/LegalizationPath'
+import { HAGUE_COUNTRIES } from '../lib/countries'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 
@@ -380,6 +382,15 @@ export default function OrderDetail() {
           </div>
         )}
 
+        {order.destination_country && (
+          <div className="mt-6">
+            <LegalizationPath
+              isHague={HAGUE_COUNTRIES.includes(order.destination_country)}
+              country={order.destination_country}
+            />
+          </div>
+        )}
+
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-8">
           <div className="mb-6 flex items-center justify-between">
             <StatusTracker status={order.status} />
@@ -439,6 +450,10 @@ export default function OrderDetail() {
           {order.company_name && <MiniField label="Company" value={order.company_name} />}
           {order.contact_phone && <MiniField label="Phone" value={order.contact_phone} />}
           {order.destination_country && <MiniField label="Country of use" value={order.destination_country} />}
+          {order.origin_state && <MiniField label="State of origin" value={order.origin_state} />}
+          {order.sos_fee_cents > 0 && (
+            <MiniField label="SOS fee" value={`$${(order.sos_fee_cents / 100).toFixed(2)}`} />
+          )}
           <MiniField label="Document type" value={order.document_type === 'business' ? 'Business' : 'Personal'} />
           {order.embassy_fee_cents > 0 && (
             <MiniField label="Embassy fee" value={`$${(order.embassy_fee_cents / 100).toFixed(2)}`} />

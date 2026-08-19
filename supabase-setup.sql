@@ -125,6 +125,8 @@ alter table profiles add column if not exists title text;
 alter table orders add column if not exists assigned_to uuid references profiles(id) on delete set null;
 alter table orders add column if not exists document_type text not null default 'personal';
 alter table orders add column if not exists embassy_fee_cents integer not null default 0;
+alter table orders add column if not exists origin_state text;
+alter table orders add column if not exists sos_fee_cents integer not null default 0;
 
 do $$
 begin
@@ -133,6 +135,13 @@ begin
       check (document_type in ('personal', 'business'));
   end if;
 end $$;
+
+-- Secretary of State fee schedule — one fee per state, staff-maintained.
+create table if not exists sos_fees (
+  state text primary key,
+  fee_cents integer not null default 0,
+  updated_at timestamptz not null default now()
+);
 
 -- Embassy fee schedule — staff-maintained, since these vary by country,
 -- by personal vs. business document, and change over time. Clients see
@@ -326,6 +335,20 @@ create policy "Anyone can view embassy fees"
 drop policy if exists "Staff can manage embassy fees" on embassy_fees;
 create policy "Staff can manage embassy fees"
   on embassy_fees for all
+  using (is_staff())
+  with check (is_staff());
+
+-- 3c-c. Secretary of State fee schedule — same pattern as embassy fees.
+alter table sos_fees enable row level security;
+
+drop policy if exists "Anyone can view sos fees" on sos_fees;
+create policy "Anyone can view sos fees"
+  on sos_fees for select
+  using (true);
+
+drop policy if exists "Staff can manage sos fees" on sos_fees;
+create policy "Staff can manage sos fees"
+  on sos_fees for all
   using (is_staff())
   with check (is_staff());
 
