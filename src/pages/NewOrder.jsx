@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Layout from '../components/Layout'
 import CountrySelect from '../components/CountrySelect'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
+import { HAGUE_COUNTRIES } from '../lib/countries'
 
 const SERVICES = [
   { value: 'notary', label: 'Notary', price: 25, expedite: 15, standardTurnaround: 'Same day', expeditedTurnaround: 'Within 2 hours' },
@@ -23,23 +24,52 @@ export default function NewOrder() {
   const [service, setService] = useState('notary')
   const [expedited, setExpedited] = useState(false)
   const [quantity, setQuantity] = useState(1)
-  const [documents, setDocuments] = useState([{ name: '', file: null, mailIn: false }])
+  const [documents, setDocuments] = useState([{ name: '', file: null, mailIn: false, documentType: 'personal' }])
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  const isHagueCountry = HAGUE_COUNTRIES.includes(destinationCountry)
+  const [embassyFees, setEmbassyFees] = useState({ personal: null, business: null })
+
+  useEffect(() => {
+    if (!destinationCountry || isHagueCountry) {
+      setEmbassyFees({ personal: null, business: null })
+      return
+    }
+    supabase
+      .from('embassy_fees')
+      .select('document_type, fee_cents')
+      .eq('country', destinationCountry)
+      .then(({ data }) => {
+        const next = { personal: null, business: null }
+        ;(data ?? []).forEach((f) => {
+          if (f.fee_cents > 0) next[f.document_type] = f.fee_cents
+        })
+        setEmbassyFees(next)
+      })
+  }, [destinationCountry, isHagueCountry])
+
   const selected = SERVICES.find((s) => s.value === service)
-  const total = useMemo(
+  const baseTotal = useMemo(
     () => (selected.price + (expedited ? selected.expedite : 0)) * quantity,
     [selected, expedited, quantity]
   )
+  const embassyFeeTotal = useMemo(() => {
+    if (isHagueCountry) return 0
+    return documents.reduce((sum, doc) => {
+      const feeCents = embassyFees[doc.documentType]
+      return sum + (feeCents ? feeCents / 100 : 0)
+    }, 0)
+  }, [documents, embassyFees, isHagueCountry])
+  const total = baseTotal + embassyFeeTotal
 
   const setQty = (n) => {
     const clamped = Math.max(1, Math.min(10, n))
     setQuantity(clamped)
     setDocuments((prev) => {
       const next = [...prev]
-      while (next.length < clamped) next.push({ name: '', file: null, mailIn: false })
+      while (next.length < clamped) next.push({ name: '', file: null, mailIn: false, documentType: 'personal' })
       return next.slice(0, clamped)
     })
   }
@@ -75,6 +105,8 @@ export default function NewOrder() {
           if (uploadError) throw uploadError
         }
 
+        const embassyFeeForDoc = !isHagueCountry && embassyFees[doc.documentType] ? embassyFees[doc.documentType] : 0
+
         const { data: newOrder, error: insertError } = await supabase
           .from('orders')
           .insert({
@@ -82,6 +114,8 @@ export default function NewOrder() {
             service,
             is_expedited: expedited,
             document_name: doc.name || doc.file?.name,
+            document_type: doc.documentType,
+            embassy_fee_cents: embassyFeeForDoc,
             notes,
             file_path: path,
             mail_in: doc.mailIn,
@@ -173,6 +207,28 @@ export default function NewOrder() {
                   value={destinationCountry}
                   onChange={setDestinationCountry}
                 />
+                {destinationCountry && isHagueCountry && (
+                  <p className="mt-2 rounded-lg bg-[var(--brass)]/10 px-3 py-2 text-xs text-[var(--brass)]">
+                    This is a Hague Convention country — you'll need an apostille, not embassy legalization.
+                    Secretary of State fees vary by state and will be added to your order after we determine
+                    the exact amount.
+                  </p>
+                )}
+                {destinationCountry && !isHagueCountry && (embassyFees.personal || embassyFees.business) && (
+                  <p className="mt-2 rounded-lg bg-[var(--wax)]/10 px-3 py-2 text-xs text-[var(--wax)]">
+                    Embassy legalization fee for {destinationCountry}:{' '}
+                    {embassyFees.personal && `Personal $${(embassyFees.personal / 100).toFixed(2)}`}
+                    {embassyFees.personal && embassyFees.business && ' · '}
+                    {embassyFees.business && `Business $${(embassyFees.business / 100).toFixed(2)}`}
+                    {' '}— added to your total below based on each document's type.
+                  </p>
+                )}
+                {destinationCountry && !isHagueCountry && !embassyFees.personal && !embassyFees.business && (
+                  <p className="mt-2 rounded-lg bg-[var(--parchment-dim)] px-3 py-2 text-xs text-[var(--slate)]">
+                    This is not a Hague Convention country — embassy legalization is required. We'll follow up
+                    with the exact embassy fee for {destinationCountry} after you submit.
+                  </p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="neededByDate">
@@ -293,6 +349,29 @@ export default function NewOrder() {
                   )}
                 </div>
 
+                {!isHagueCountry && destinationCountry && (
+                  <div className="mt-3">
+                    <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Document type</label>
+                    <div className="mt-2 flex gap-2">
+                      {['personal', 'business'].map((t) => (
+                        <button
+                          type="button"
+                          key={t}
+                          onClick={() => updateDoc(i, { documentType: t })}
+                          className={`rounded-lg border px-3 py-2 text-xs capitalize transition-colors ${
+                            doc.documentType === t
+                              ? 'border-[var(--wax)] bg-[var(--wax)]/10 text-[var(--wax)]'
+                              : 'border-[var(--line)] text-[var(--ink)] hover:border-[var(--wax)]'
+                          }`}
+                        >
+                          {t}
+                          {embassyFees[t] ? ` — $${(embassyFees[t] / 100).toFixed(2)}` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <label className="mt-3 flex cursor-pointer items-start gap-2">
                   <input
                     type="checkbox"
@@ -339,8 +418,9 @@ export default function NewOrder() {
           <div className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-3">
             <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
               Total due at checkout {quantity > 1 && `(${quantity} documents)`}
+              {embassyFeeTotal > 0 && ` incl. $${embassyFeeTotal.toFixed(2)} embassy fees`}
             </span>
-            <span className="font-display text-lg font-semibold text-[var(--ink)]">${total}</span>
+            <span className="font-display text-lg font-semibold text-[var(--ink)]">${total.toFixed(2)}</span>
           </div>
 
           <button

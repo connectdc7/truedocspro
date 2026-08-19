@@ -123,6 +123,28 @@ alter table profiles add column if not exists title text;
 
 -- Now that profiles exists, add the order assignment column (references it)
 alter table orders add column if not exists assigned_to uuid references profiles(id) on delete set null;
+alter table orders add column if not exists document_type text not null default 'personal';
+alter table orders add column if not exists embassy_fee_cents integer not null default 0;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'orders_document_type_check') then
+    alter table orders add constraint orders_document_type_check
+      check (document_type in ('personal', 'business'));
+  end if;
+end $$;
+
+-- Embassy fee schedule — staff-maintained, since these vary by country,
+-- by personal vs. business document, and change over time. Clients see
+-- and get charged whatever staff has entered here. (RLS policies for
+-- this are set further below, once the is_staff() helper exists.)
+create table if not exists embassy_fees (
+  country text not null,
+  document_type text not null check (document_type in ('personal', 'business')),
+  fee_cents integer not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (country, document_type)
+);
 
 -- 2c. Blog posts
 create table if not exists posts (
@@ -291,6 +313,21 @@ drop policy if exists "Staff can view subscribers" on subscribers;
 create policy "Staff can view subscribers"
   on subscribers for select
   using (is_staff());
+
+-- 3c-b. Embassy fee schedule — anyone can read it (needed at checkout
+-- time before an order even exists), only staff can edit it.
+alter table embassy_fees enable row level security;
+
+drop policy if exists "Anyone can view embassy fees" on embassy_fees;
+create policy "Anyone can view embassy fees"
+  on embassy_fees for select
+  using (true);
+
+drop policy if exists "Staff can manage embassy fees" on embassy_fees;
+create policy "Staff can manage embassy fees"
+  on embassy_fees for all
+  using (is_staff())
+  with check (is_staff());
 
 -- 3d. Order attachments — client sees/uploads only for their own orders,
 -- staff sees and uploads for every order.

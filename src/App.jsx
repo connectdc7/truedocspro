@@ -16,6 +16,7 @@ import BlogPost from './pages/BlogPost'
 import StaffBlogList from './pages/StaffBlogList'
 import StaffBlogEditor from './pages/StaffBlogEditor'
 import StaffTeam from './pages/StaffTeam'
+import StaffEmbassyFees from './pages/StaffEmbassyFees'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffRoute from './components/StaffRoute'
 
@@ -50,6 +51,14 @@ export default function App() {
         element={
           <StaffRoute>
             <StaffTeam />
+          </StaffRoute>
+        }
+      />
+      <Route
+        path="/staff/embassy-fees"
+        element={
+          <StaffRoute>
+            <StaffEmbassyFees />
           </StaffRoute>
         }
       />

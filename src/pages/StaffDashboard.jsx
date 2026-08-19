@@ -81,6 +81,12 @@ export default function StaffDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              to="/staff/embassy-fees"
+              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Embassy fees
+            </Link>
+            <Link
               to="/staff/team"
               className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
             >

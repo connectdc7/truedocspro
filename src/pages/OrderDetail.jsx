@@ -439,6 +439,10 @@ export default function OrderDetail() {
           {order.company_name && <MiniField label="Company" value={order.company_name} />}
           {order.contact_phone && <MiniField label="Phone" value={order.contact_phone} />}
           {order.destination_country && <MiniField label="Country of use" value={order.destination_country} />}
+          <MiniField label="Document type" value={order.document_type === 'business' ? 'Business' : 'Personal'} />
+          {order.embassy_fee_cents > 0 && (
+            <MiniField label="Embassy fee" value={`$${(order.embassy_fee_cents / 100).toFixed(2)}`} />
+          )}
           {order.needed_by_date && (
             <MiniField label="Needed by" value={new Date(order.needed_by_date).toLocaleDateString()} />
           )}
