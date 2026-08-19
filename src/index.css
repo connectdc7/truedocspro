@@ -4,7 +4,7 @@
   --ink: #0F1B33;        /* rich deep navy - primary */
   --ink-soft: #24365C;   /* lighter navy for hover states */
   --parchment: #FFFFFF;  /* page background */
-  --parchment-dim: #F2F4F7;
+  --parchment-dim: #FAFAFB;
   --wax: #C9A227;        /* gold - primary accent */
   --wax-dark: #A3821A;   /* darker gold for hover */
   --brass: #B08D57;      /* muted bronze-gold - secondary accents */
@@ -58,9 +58,7 @@ body {
 .ink-spread { animation: inkSpread 600ms ease-out 900ms both; }
 
 .paper-texture {
-  background-image:
-    radial-gradient(circle at 20% 20%, rgba(169,134,63,0.05) 0, transparent 45%),
-    radial-gradient(circle at 80% 60%, rgba(22,35,63,0.04) 0, transparent 50%);
+  /* intentionally flat white — no background texture */
 }
 
 .status-rail {
