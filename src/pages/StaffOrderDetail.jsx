@@ -38,11 +38,6 @@ export default function StaffOrderDetail() {
   const [downloadUrl, setDownloadUrl] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
-  const [editName, setEditName] = useState('')
-  const [editService, setEditService] = useState('notary')
-  const [savingDetails, setSavingDetails] = useState(false)
-  const [detailsSaved, setDetailsSaved] = useState(false)
-
   const [staffList, setStaffList] = useState([])
   const [assigning, setAssigning] = useState(false)
 
@@ -95,8 +90,6 @@ export default function StaffOrderDetail() {
     }
     setOrder(data)
     setRequestNote(data.requested_documents || '')
-    setEditName(data.document_name || '')
-    setEditService(data.service || 'notary')
     setQueues({
       current_stage: data.current_stage || 1,
       notary_start_date: data.notary_start_date || '',
@@ -178,23 +171,6 @@ export default function StaffOrderDetail() {
         `Your document is now: ${STATUS_LABEL[newStatus]}`,
         `Hi ${order.contact_name || 'there'},\n\nYour document "${order.document_name}" has moved to a new status: ${STATUS_LABEL[newStatus]}.\n\nYou can see full details and any next steps in your portal.`
       )
-    } else {
-      setError(error.message)
-    }
-  }
-
-  const saveDetails = async () => {
-    setSavingDetails(true)
-    setDetailsSaved(false)
-    const { error } = await supabase
-      .from('orders')
-      .update({ document_name: editName, service: editService })
-      .eq('id', id)
-    setSavingDetails(false)
-    if (!error) {
-      setOrder((prev) => ({ ...prev, document_name: editName, service: editService }))
-      setDetailsSaved(true)
-      setTimeout(() => setDetailsSaved(false), 2000)
     } else {
       setError(error.message)
     }
@@ -429,53 +405,6 @@ export default function StaffOrderDetail() {
         <p className="mt-1 font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
           Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>
-
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Document details</p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="editName">
-                Document name
-              </label>
-              <input
-                id="editName"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
-              />
-            </div>
-            <div>
-              <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]" htmlFor="editService">
-                Service
-              </label>
-              <select
-                id="editService"
-                value={editService}
-                onChange={(e) => setEditService(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
-              >
-                {SERVICES.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={saveDetails}
-              disabled={savingDetails || (editName === order.document_name && editService === order.service)}
-              className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
-            >
-              {savingDetails ? 'Saving…' : 'Save changes'}
-            </button>
-            {detailsSaved && <p className="font-mono text-xs text-[var(--brass)]">Saved.</p>}
-          </div>
-          {editService !== order.service && (
-            <p className="mt-3 text-xs text-[var(--slate)]">
-              Note: changing the service doesn't adjust what was already charged — handle any price difference with the client directly if needed.
-            </p>
-          )}
-        </div>
 
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Assigned to</p>

@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #16233F;        /* deep navy - primary */
-  --ink-soft: #2A3B5E;   /* lighter navy for hover states */
+  --ink: #0F1B33;        /* rich deep navy - primary */
+  --ink-soft: #24365C;   /* lighter navy for hover states */
   --parchment: #FFFFFF;  /* page background */
-  --parchment-dim: #F4F4F2;
-  --wax: #A8322D;        /* wax seal red - accent */
-  --wax-dark: #7E2622;
-  --brass: #A9863F;      /* brass foil accent */
-  --slate: #5C6470;      /* secondary text */
-  --line: #E2E2DE;       /* hairline rule */
+  --parchment-dim: #F2F4F7;
+  --wax: #C9A227;        /* gold - primary accent */
+  --wax-dark: #A3821A;   /* darker gold for hover */
+  --brass: #B08D57;      /* muted bronze-gold - secondary accents */
+  --slate: #57616F;      /* secondary text */
+  --line: #E1E4EA;       /* hairline rule */
 }
 
 * { box-sizing: border-box; }

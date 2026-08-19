@@ -3,23 +3,41 @@ export default function WaxSeal({ label = 'CERTIFIED', className = '' }) {
     <div className={`stamp-anim ${className}`}>
       <svg viewBox="0 0 220 220" width="220" height="220" role="img" aria-label={`${label} seal`}>
         <defs>
-          <radialGradient id="waxGrad" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#C24A42" />
-            <stop offset="55%" stopColor="#A8322D" />
-            <stop offset="100%" stopColor="#7E2622" />
+          <radialGradient id="navyGrad" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stopColor="#24365C" />
+            <stop offset="60%" stopColor="#0F1B33" />
+            <stop offset="100%" stopColor="#081020" />
           </radialGradient>
+          <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#E4C766" />
+            <stop offset="50%" stopColor="#C9A227" />
+            <stop offset="100%" stopColor="#A3821A" />
+          </linearGradient>
         </defs>
-        <circle cx="110" cy="110" r="98" fill="url(#waxGrad)" />
-        <circle cx="110" cy="110" r="98" fill="none" stroke="#7E2622" strokeWidth="1" opacity="0.5" />
-        <circle cx="110" cy="110" r="82" fill="none" stroke="#F5F1E6" strokeWidth="1.5" strokeDasharray="1,5" opacity="0.85" />
-        <circle cx="110" cy="110" r="70" fill="none" stroke="#F5F1E6" strokeWidth="1" opacity="0.5" />
+
+        {/* outer gold ring */}
+        <circle cx="110" cy="110" r="100" fill="url(#goldRing)" />
+        {/* navy medallion face */}
+        <circle cx="110" cy="110" r="92" fill="url(#navyGrad)" />
+        {/* inner gold rings */}
+        <circle cx="110" cy="110" r="80" fill="none" stroke="#C9A227" strokeWidth="1.25" opacity="0.9" />
+        <circle cx="110" cy="110" r="72" fill="none" stroke="#C9A227" strokeWidth="1" strokeDasharray="1,4" opacity="0.7" />
+
+        {/* small trust marks around the ring */}
+        {Array.from({ length: 16 }).map((_, i) => {
+          const angle = (i / 16) * Math.PI * 2
+          const x = 110 + Math.cos(angle) * 86
+          const y = 110 + Math.sin(angle) * 86
+          return <circle key={i} cx={x} cy={y} r="1.4" fill="#E4C766" opacity="0.8" />
+        })}
+
         <text
           x="110" y="102"
           textAnchor="middle"
           fontFamily="Fraunces, Georgia, serif"
           fontSize="30"
           fontWeight="600"
-          fill="#F5F1E6"
+          fill="#E4C766"
         >
           TDP
         </text>
@@ -29,16 +47,11 @@ export default function WaxSeal({ label = 'CERTIFIED', className = '' }) {
           fontFamily="'IBM Plex Mono', monospace"
           fontSize="11"
           letterSpacing="3"
-          fill="#F5F1E6"
-          opacity="0.9"
+          fill="#C9A227"
+          opacity="0.95"
         >
           {label}
         </text>
-        {/* irregular wax edge */}
-        <path
-          d="M110 12 C 130 14, 128 26, 112 24 C 96 22, 98 13, 110 12 Z"
-          fill="#7E2622" opacity="0.4"
-        />
       </svg>
     </div>
   )
