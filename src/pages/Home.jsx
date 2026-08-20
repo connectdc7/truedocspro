@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
-import WaxSeal from '../components/WaxSeal'
 import HeroGraphic from '../components/HeroGraphic'
 
 const SERVICES = [
@@ -30,7 +29,7 @@ export default function Home() {
       {/* Hero */}
       <section className="paper-texture relative overflow-hidden border-b border-[var(--line)]">
         <HeroGraphic className="right-[-120px] top-[-80px] hidden md:block" />
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 md:grid-cols-2 md:py-28">
+        <div className="mx-auto max-w-3xl px-6 py-20 md:py-28">
           <div>
             <p className="ink-spread font-mono text-xs uppercase tracking-[0.2em] text-[var(--wax)]">
               Notary · Apostille · Embassy Legalization
@@ -57,9 +56,6 @@ export default function Home() {
                 See services
               </Link>
             </div>
-          </div>
-          <div className="flex justify-center md:justify-end">
-            <WaxSeal label="TRUE • VERIFIED" />
           </div>
         </div>
       </section>

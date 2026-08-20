@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../lib/AuthContext'
 
-const SIZE = 72
+const SIZE = 96
 const SPEED = 1.8
+const START_DELAY_MS = 900
 
 export default function BouncingSeal() {
-  const { user } = useAuth()
   const wrapRef = useRef(null)
-  const posRef = useRef({ x: 40, y: 120 })
+  const posRef = useRef({ x: 0, y: 0 })
   const velRef = useRef({ x: SPEED, y: SPEED * 0.8 })
   const pausedRef = useRef(false)
   const [, forceRender] = useState(0)
@@ -16,23 +15,22 @@ export default function BouncingSeal() {
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    // start somewhere reasonable, avoiding the very top nav area
-    posRef.current = {
-      x: Math.random() * (window.innerWidth - SIZE - 40) + 20,
-      y: Math.random() * (window.innerHeight * 0.5) + 120,
-    }
+    // Start roughly where the hero seal used to sit: right side, below the nav.
+    const startX = Math.max(window.innerWidth - SIZE - 80, window.innerWidth * 0.62)
+    const startY = 130
+    posRef.current = { x: startX, y: startY }
     forceRender((n) => n + 1)
-
-    if (prefersReducedMotion) {
-      if (wrapRef.current) {
-        wrapRef.current.style.transform = `translate(${posRef.current.x}px, ${posRef.current.y}px)`
-      }
-      return
+    if (wrapRef.current) {
+      wrapRef.current.style.transform = `translate(${startX}px, ${startY}px)`
     }
+
+    if (prefersReducedMotion) return
 
     let frame
+    let started = false
+
     const step = () => {
-      if (!pausedRef.current) {
+      if (started && !pausedRef.current) {
         const pos = posRef.current
         const vel = velRef.current
         const maxX = window.innerWidth - SIZE
@@ -65,6 +63,8 @@ export default function BouncingSeal() {
     }
     frame = requestAnimationFrame(step)
 
+    const startTimer = setTimeout(() => { started = true }, START_DELAY_MS)
+
     const handleResize = () => {
       posRef.current = {
         x: Math.min(posRef.current.x, window.innerWidth - SIZE),
@@ -75,15 +75,14 @@ export default function BouncingSeal() {
 
     return () => {
       cancelAnimationFrame(frame)
+      clearTimeout(startTimer)
       window.removeEventListener('resize', handleResize)
     }
   }, [])
 
-  const destination = user ? '/portal/new' : '/signup'
-
   return (
     <Link
-      to={destination}
+      to="/portal/new"
       ref={wrapRef}
       onMouseEnter={() => { pausedRef.current = true }}
       onMouseLeave={() => { pausedRef.current = false }}
@@ -98,8 +97,8 @@ export default function BouncingSeal() {
         willChange: 'transform',
       }}
       className="drop-shadow-lg transition-transform hover:scale-110"
-      aria-label={user ? 'Submit a document' : 'Sign up'}
-      title={user ? 'Submit a document' : 'Sign up free'}
+      aria-label="Submit a document"
+      title="Submit a document"
     >
       <svg viewBox="0 0 220 220" width={SIZE} height={SIZE} role="img" aria-hidden="true">
         <defs>
@@ -135,7 +134,7 @@ export default function BouncingSeal() {
           letterSpacing="2"
           fill="#C9A227"
         >
-          {user ? 'SUBMIT' : 'JOIN'}
+          SUBMIT
         </text>
       </svg>
     </Link>
