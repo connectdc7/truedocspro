@@ -18,7 +18,13 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--parchment);
+  background-color: var(--parchment);
+  background-image:
+    radial-gradient(ellipse 900px 550px at 88% -8%, rgba(15,27,51,0.065), transparent 62%),
+    radial-gradient(ellipse 750px 550px at -8% 108%, rgba(201,162,39,0.05), transparent 60%),
+    radial-gradient(ellipse 1000px 700px at 50% 45%, rgba(15,27,51,0.025), transparent 70%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--ink);
   font-family: 'Inter', system-ui, sans-serif;
 }
