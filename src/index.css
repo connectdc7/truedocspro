@@ -83,7 +83,7 @@ body {
 .prose-blog em { color: var(--slate); }
 .prose-blog blockquote { border-left: 3px solid var(--wax); padding-left: 1em; color: var(--slate); font-style: italic; }
 
-/* Logo entrance + subtle recurring shimmer on the gold "Pro" */
+/* Logo entrance — a simple, crisp fade-in on load */
 @keyframes logoEntrance {
   0% { opacity: 0; transform: translateY(-6px) scale(0.96); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -91,63 +91,8 @@ body {
 .logo-entrance {
   animation: logoEntrance 700ms cubic-bezier(.2,.8,.2,1) both;
 }
-
-@keyframes goldShimmer {
-  0%, 88% { background-position: -140% 0; }
-  100% { background-position: 240% 0; }
-}
-.logo-shimmer {
-  background-image: linear-gradient(
-    100deg,
-    var(--wax) 40%,
-    #F0DC94 50%,
-    var(--wax) 60%
-  );
-  background-size: 250% 100%;
-  background-position: -140% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: goldShimmer 5s ease-in-out infinite;
-}
 @media (prefers-reduced-motion: reduce) {
-  .logo-entrance, .logo-shimmer { animation: none; }
-}
-
-/* 3D extrusion effect on the logo */
-.logo-3d-navy {
-  text-shadow:
-    0.5px 0.5px 0 #24365C,
-    1px 1px 0 #24365C,
-    1.5px 1.5px 0 #1A2846,
-    2px 2px 0 #1A2846,
-    2.5px 2.5px 3px rgba(15,27,51,0.35);
-}
-.logo-3d-gold {
-  text-shadow:
-    0.5px 0.5px 0 #8A6D2F,
-    1px 1px 0 #8A6D2F,
-    1.5px 1.5px 0 #6E561F,
-    2px 2px 0 #6E561F,
-    2.5px 2.5px 4px rgba(163,130,26,0.45);
-}
-
-/* Logo: continuous gentle breathing pulse, pauses (and gives a
-   slightly bigger tilt) on hover */
-@keyframes logoBreathe {
-  0%, 100% { transform: perspective(400px) scale(1); }
-  50% { transform: perspective(400px) scale(1.018); }
-}
-.logo-3d-wrap {
-  display: inline-block;
-  transform-style: preserve-3d;
-  perspective: 400px;
-  animation: logoBreathe 4.5s ease-in-out infinite;
-}
-.logo-3d-wrap:hover {
-  animation-play-state: paused;
-  transform: perspective(400px) rotateX(6deg) rotateY(-6deg) scale(1.05);
-  transition: transform 300ms ease;
+  .logo-entrance { animation: none; }
 }
 
 /* Seal: continuous slow float/sway, pauses (and gives a bigger tilt)
@@ -179,6 +124,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .seal-3d-wrap, .logo-3d-wrap { animation: none; }
-  .seal-3d-wrap:hover, .logo-3d-wrap:hover { transform: none; transition: none; }
+  .seal-3d-wrap { animation: none; }
+  .seal-3d-wrap:hover { transform: none; transition: none; }
 }
