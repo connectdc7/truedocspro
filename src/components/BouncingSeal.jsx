@@ -15,17 +15,49 @@ function getContextualMenu(pathname, { isStaff, isAdmin }) {
       section: 'This order',
       items: [
         { to: '/staff', label: '← All documents' },
-        ...(isAdmin ? [{ to: '/staff/team', label: 'Team' }] : []),
+        ...(isAdmin
+          ? [
+              { to: '/staff/embassy-fees', label: 'Embassy fees' },
+              { to: '/staff/sos-fees', label: 'SOS fees' },
+              { to: '/staff/shipping-fees', label: 'Shipping fees' },
+              { to: '/staff/team', label: 'Team' },
+            ]
+          : []),
       ],
     }
   }
-  // Staff sub-pages (team, fee schedules, blog admin)
-  if (pathname.startsWith('/staff/') && pathname !== '/staff') {
+  // Team page
+  if (pathname === '/staff/team') {
     return {
       section: 'Staff tools',
       items: [
         { to: '/staff', label: '← Staff dashboard' },
-        ...(isAdmin && pathname !== '/staff/team' ? [{ to: '/staff/team', label: 'Team' }] : []),
+        { to: '/blog', label: 'View public blog' },
+      ],
+    }
+  }
+  // Fee schedule pages — cross-link to the other two
+  if (pathname === '/staff/embassy-fees' || pathname === '/staff/sos-fees' || pathname === '/staff/shipping-fees') {
+    const feeLinks = [
+      { to: '/staff/embassy-fees', label: 'Embassy fees' },
+      { to: '/staff/sos-fees', label: 'SOS fees' },
+      { to: '/staff/shipping-fees', label: 'Shipping fees' },
+    ]
+    return {
+      section: 'Fee schedules',
+      items: [
+        { to: '/staff', label: '← Staff dashboard' },
+        ...feeLinks,
+      ],
+    }
+  }
+  // Blog management pages
+  if (pathname.startsWith('/staff/blog')) {
+    return {
+      section: 'Blog management',
+      items: [
+        { to: '/staff', label: '← Staff dashboard' },
+        { to: '/staff/blog/new', label: '+ New post' },
         { to: '/blog', label: 'View public blog' },
       ],
     }
