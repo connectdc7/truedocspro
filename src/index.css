@@ -113,3 +113,33 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .logo-entrance, .logo-shimmer { animation: none; }
 }
+
+/* 3D extrusion effect on the logo */
+.logo-3d-navy {
+  text-shadow:
+    0.5px 0.5px 0 #24365C,
+    1px 1px 0 #24365C,
+    1.5px 1.5px 0 #1A2846,
+    2px 2px 0 #1A2846,
+    2.5px 2.5px 3px rgba(15,27,51,0.35);
+}
+.logo-3d-gold {
+  text-shadow:
+    0.5px 0.5px 0 #8A6D2F,
+    1px 1px 0 #8A6D2F,
+    1.5px 1.5px 0 #6E561F,
+    2px 2px 0 #6E561F,
+    2.5px 2.5px 4px rgba(163,130,26,0.45);
+}
+.logo-3d-wrap {
+  display: inline-block;
+  transition: transform 300ms ease;
+  transform-style: preserve-3d;
+  perspective: 400px;
+}
+.logo-3d-wrap:hover {
+  transform: perspective(400px) rotateX(6deg) rotateY(-6deg) scale(1.03);
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-3d-wrap, .logo-3d-wrap:hover { transform: none; transition: none; }
+}
