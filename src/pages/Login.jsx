@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../lib/supabaseClient'
@@ -8,9 +8,17 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [idleMessage, setIdleMessage] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/portal'
+
+  useEffect(() => {
+    if (sessionStorage.getItem('idle_logout')) {
+      setIdleMessage(true)
+      sessionStorage.removeItem('idle_logout')
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -30,6 +38,12 @@ export default function Login() {
       <section className="mx-auto max-w-md px-6 py-20">
         <h1 className="font-display text-3xl font-semibold text-[var(--ink)] text-center">Log in</h1>
         <p className="mt-2 text-center text-sm text-[var(--slate)]">Access your document portal.</p>
+
+        {idleMessage && (
+          <p className="mt-4 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 px-4 py-3 text-center text-sm text-[var(--brass)]">
+            You were signed out after a few minutes of inactivity, for your security. Please log back in.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>

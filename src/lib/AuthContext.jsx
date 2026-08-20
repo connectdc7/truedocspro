@@ -55,6 +55,33 @@ export function AuthProvider({ children }) {
     signOut: () => supabase.auth.signOut(),
   }
 
+  // Auto sign-out after 3 minutes of inactivity, while logged in.
+  useEffect(() => {
+    if (!session) return
+
+    const IDLE_LIMIT_MS = 3 * 60 * 1000
+    let timer
+
+    const handleIdle = () => {
+      sessionStorage.setItem('idle_logout', '1')
+      supabase.auth.signOut()
+    }
+
+    const resetTimer = () => {
+      clearTimeout(timer)
+      timer = setTimeout(handleIdle, IDLE_LIMIT_MS)
+    }
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart']
+    activityEvents.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }))
+    resetTimer()
+
+    return () => {
+      clearTimeout(timer)
+      activityEvents.forEach((evt) => window.removeEventListener(evt, resetTimer))
+    }
+  }, [session])
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
