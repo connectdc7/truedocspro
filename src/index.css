@@ -19,12 +19,6 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background-color: var(--parchment);
-  background-image:
-    radial-gradient(ellipse 900px 550px at 88% -8%, rgba(15,27,51,0.065), transparent 62%),
-    radial-gradient(ellipse 750px 550px at -8% 108%, rgba(201,162,39,0.05), transparent 60%),
-    radial-gradient(ellipse 1000px 700px at 50% 45%, rgba(15,27,51,0.025), transparent 70%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
   color: var(--ink);
   font-family: 'Inter', system-ui, sans-serif;
 }
@@ -88,3 +82,34 @@ body {
 .prose-blog a { color: var(--wax); text-decoration: underline; }
 .prose-blog em { color: var(--slate); }
 .prose-blog blockquote { border-left: 3px solid var(--wax); padding-left: 1em; color: var(--slate); font-style: italic; }
+
+/* Logo entrance + subtle recurring shimmer on the gold "Pro" */
+@keyframes logoEntrance {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.logo-entrance {
+  animation: logoEntrance 700ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes goldShimmer {
+  0%, 88% { background-position: -140% 0; }
+  100% { background-position: 240% 0; }
+}
+.logo-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    var(--wax) 40%,
+    #F0DC94 50%,
+    var(--wax) 60%
+  );
+  background-size: 250% 100%;
+  background-position: -140% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: goldShimmer 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-entrance, .logo-shimmer { animation: none; }
+}

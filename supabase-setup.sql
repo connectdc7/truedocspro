@@ -288,6 +288,7 @@ create policy "Users can view their own profile"
   );
 
 drop policy if exists "Staff can update any profile" on profiles;
+drop policy if exists "Admins can update any profile" on profiles;
 create policy "Admins can update any profile"
   on profiles for update
   using (is_admin());
@@ -316,11 +317,13 @@ create policy "Users can delete their own orders"
   using (auth.uid() = user_id and status = 'received');
 
 drop policy if exists "Staff can update any order" on orders;
+drop policy if exists "Staff can update assigned orders" on orders;
 create policy "Staff can update assigned orders"
   on orders for update
   using (is_admin() or (is_staff() and assigned_to = auth.uid()));
 
 drop policy if exists "Staff can delete any order" on orders;
+drop policy if exists "Admins can delete any order" on orders;
 create policy "Admins can delete any order"
   on orders for delete
   using (is_admin());
@@ -334,16 +337,19 @@ create policy "Anyone can view published posts"
   using (published = true or is_staff());
 
 drop policy if exists "Staff can insert posts" on posts;
+drop policy if exists "Admins can insert posts" on posts;
 create policy "Admins can insert posts"
   on posts for insert
   with check (is_admin());
 
 drop policy if exists "Staff can update posts" on posts;
+drop policy if exists "Admins can update posts" on posts;
 create policy "Admins can update posts"
   on posts for update
   using (is_admin());
 
 drop policy if exists "Staff can delete posts" on posts;
+drop policy if exists "Admins can delete posts" on posts;
 create policy "Admins can delete posts"
   on posts for delete
   using (is_admin());
@@ -357,6 +363,7 @@ create policy "Anyone can subscribe"
   with check (true);
 
 drop policy if exists "Staff can view subscribers" on subscribers;
+drop policy if exists "Admins can view subscribers" on subscribers;
 create policy "Admins can view subscribers"
   on subscribers for select
   using (is_admin());
@@ -371,6 +378,7 @@ create policy "Anyone can view embassy fees"
   using (true);
 
 drop policy if exists "Staff can manage embassy fees" on embassy_fees;
+drop policy if exists "Admins can manage embassy fees" on embassy_fees;
 create policy "Admins can manage embassy fees"
   on embassy_fees for all
   using (is_admin())
@@ -385,6 +393,7 @@ create policy "Anyone can view sos fees"
   using (true);
 
 drop policy if exists "Staff can manage sos fees" on sos_fees;
+drop policy if exists "Admins can manage sos fees" on sos_fees;
 create policy "Admins can manage sos fees"
   on sos_fees for all
   using (is_admin())
@@ -433,6 +442,7 @@ create policy "Users can upload attachments to their own orders"
   );
 
 drop policy if exists "Staff can upload attachments to any order" on order_attachments;
+drop policy if exists "Staff can upload attachments to assigned orders" on order_attachments;
 create policy "Staff can upload attachments to assigned orders"
   on order_attachments for insert
   with check (
@@ -443,6 +453,7 @@ create policy "Staff can upload attachments to assigned orders"
   );
 
 drop policy if exists "Staff can delete attachments" on order_attachments;
+drop policy if exists "Staff can delete attachments on assigned orders" on order_attachments;
 create policy "Staff can delete attachments on assigned orders"
   on order_attachments for delete
   using (
@@ -458,6 +469,7 @@ create policy "Staff can delete attachments on assigned orders"
 alter table order_fees enable row level security;
 
 drop policy if exists "Staff can manage fees" on order_fees;
+drop policy if exists "Staff can manage fees on assigned orders" on order_fees;
 create policy "Staff can manage fees on assigned orders"
   on order_fees for all
   using (
@@ -529,6 +541,7 @@ create policy "Users can delete their own documents"
 
 -- Admins can read every client's documents
 drop policy if exists "Staff can read all documents" on storage.objects;
+drop policy if exists "Admins can read all documents" on storage.objects;
 create policy "Admins can read all documents"
   on storage.objects for select
   using (
@@ -556,6 +569,7 @@ create policy "Staff can read assigned order documents"
 
 -- Admins can delete any document (used when deleting an order)
 drop policy if exists "Staff can delete documents" on storage.objects;
+drop policy if exists "Admins can delete documents" on storage.objects;
 create policy "Admins can delete documents"
   on storage.objects for delete
   using (
@@ -566,6 +580,7 @@ create policy "Admins can delete documents"
 -- Staff can upload documents only into a folder belonging to a client
 -- whose order is assigned to them
 drop policy if exists "Staff can upload documents" on storage.objects;
+drop policy if exists "Staff can upload documents for assigned orders" on storage.objects;
 create policy "Staff can upload documents for assigned orders"
   on storage.objects for insert
   with check (

@@ -21,8 +21,8 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--parchment)]/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
-            True Docs <span className="text-[var(--wax)]">Pro</span>
+          <span className="logo-entrance font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
+            True Docs <span className="logo-shimmer font-semibold">Pro</span>
           </span>
         </Link>
 
