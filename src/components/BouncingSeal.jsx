@@ -6,6 +6,7 @@ const SIZE = 88
 const SPEED = 1.8
 const START_DELAY_MS = 900
 const DOCK_TOP = 96
+const MIN_Y = 20 // keeps clear of a phone notch/status bar when installed as an app
 const DOCK_RIGHT = 20
 
 function getContextualMenu(pathname, { isStaff, isAdmin }) {
@@ -215,7 +216,7 @@ export default function BouncingSeal() {
 
         if (nextX <= 0) { nextX = 0; vel.x = Math.abs(vel.x) }
         else if (nextX >= maxX) { nextX = maxX; vel.x = -Math.abs(vel.x) }
-        if (nextY <= 0) { nextY = 0; vel.y = Math.abs(vel.y) }
+        if (nextY <= MIN_Y) { nextY = MIN_Y; vel.y = Math.abs(vel.y) }
         else if (nextY >= maxY) { nextY = maxY; vel.y = -Math.abs(vel.y) }
 
         posRef.current = { x: nextX, y: nextY }
