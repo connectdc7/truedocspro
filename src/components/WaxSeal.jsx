@@ -1,24 +1,43 @@
 export default function WaxSeal({ label = 'CERTIFIED', className = '' }) {
   return (
-    <div className={`stamp-anim ${className}`}>
+    <div className={`seal-3d-wrap stamp-anim ${className}`}>
       <svg viewBox="0 0 220 220" width="220" height="220" role="img" aria-label={`${label} seal`}>
         <defs>
-          <radialGradient id="navyGrad" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#24365C" />
-            <stop offset="60%" stopColor="#0F1B33" />
-            <stop offset="100%" stopColor="#081020" />
+          <radialGradient id="navyGrad" cx="32%" cy="26%" r="80%">
+            <stop offset="0%" stopColor="#33456E" />
+            <stop offset="45%" stopColor="#182B4D" />
+            <stop offset="80%" stopColor="#0B1526" />
+            <stop offset="100%" stopColor="#050A14" />
           </radialGradient>
-          <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#E4C766" />
-            <stop offset="50%" stopColor="#C9A227" />
-            <stop offset="100%" stopColor="#A3821A" />
+          {/* beveled gold ring: bright highlight upper-left, deep shadow lower-right */}
+          <linearGradient id="goldRing" x1="15%" y1="10%" x2="85%" y2="90%">
+            <stop offset="0%" stopColor="#F3E0A0" />
+            <stop offset="30%" stopColor="#E4C766" />
+            <stop offset="55%" stopColor="#C9A227" />
+            <stop offset="80%" stopColor="#8F6F1E" />
+            <stop offset="100%" stopColor="#6E5416" />
           </linearGradient>
+          {/* inner bevel ring — the lip where gold meets navy face */}
+          <linearGradient id="innerBevel" x1="15%" y1="10%" x2="85%" y2="90%">
+            <stop offset="0%" stopColor="#F3E0A0" />
+            <stop offset="50%" stopColor="#B8912B" />
+            <stop offset="100%" stopColor="#5C4713" />
+          </linearGradient>
+          <radialGradient id="sheen" cx="30%" cy="22%" r="45%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+          </radialGradient>
         </defs>
 
-        {/* outer gold ring */}
+        {/* outer gold ring, beveled */}
         <circle cx="110" cy="110" r="100" fill="url(#goldRing)" />
+        {/* inner bevel lip */}
+        <circle cx="110" cy="110" r="94" fill="url(#innerBevel)" />
         {/* navy medallion face */}
-        <circle cx="110" cy="110" r="92" fill="url(#navyGrad)" />
+        <circle cx="110" cy="110" r="90" fill="url(#navyGrad)" />
+        {/* soft light sheen, upper-left, for a domed/polished feel */}
+        <circle cx="110" cy="110" r="90" fill="url(#sheen)" />
+
         {/* inner gold rings */}
         <circle cx="110" cy="110" r="80" fill="none" stroke="#C9A227" strokeWidth="1.25" opacity="0.9" />
         <circle cx="110" cy="110" r="72" fill="none" stroke="#C9A227" strokeWidth="1" strokeDasharray="1,4" opacity="0.7" />
@@ -38,6 +57,7 @@ export default function WaxSeal({ label = 'CERTIFIED', className = '' }) {
           fontSize="30"
           fontWeight="600"
           fill="#E4C766"
+          style={{ filter: 'drop-shadow(0.5px 1px 0 #7A5E1C) drop-shadow(1px 2px 1px rgba(0,0,0,0.35))' }}
         >
           TDP
         </text>
