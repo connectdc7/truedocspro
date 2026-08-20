@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 
 const SIZE = 88
@@ -7,6 +7,94 @@ const SPEED = 1.8
 const START_DELAY_MS = 900
 const DOCK_TOP = 96
 const DOCK_RIGHT = 20
+
+function getContextualMenu(pathname, { isStaff, isAdmin }) {
+  // Viewing a specific staff order
+  if (pathname.startsWith('/staff/orders/')) {
+    return {
+      section: 'This order',
+      items: [
+        { to: '/staff', label: '← All documents' },
+        ...(isAdmin ? [{ to: '/staff/team', label: 'Team' }] : []),
+      ],
+    }
+  }
+  // Staff sub-pages (team, fee schedules, blog admin)
+  if (pathname.startsWith('/staff/') && pathname !== '/staff') {
+    return {
+      section: 'Staff tools',
+      items: [
+        { to: '/staff', label: '← Staff dashboard' },
+        ...(isAdmin && pathname !== '/staff/team' ? [{ to: '/staff/team', label: 'Team' }] : []),
+        { to: '/blog', label: 'View public blog' },
+      ],
+    }
+  }
+  // Staff dashboard itself
+  if (pathname === '/staff') {
+    const items = []
+    if (isAdmin) {
+      items.push(
+        { to: '/staff/team', label: 'Team' },
+        { to: '/staff/embassy-fees', label: 'Embassy fees' },
+        { to: '/staff/sos-fees', label: 'SOS fees' },
+        { to: '/staff/shipping-fees', label: 'Shipping fees' },
+        { to: '/staff/blog', label: 'Manage blog' }
+      )
+    }
+    items.push({ to: '/portal', label: 'My documents' })
+    return { section: 'Staff tools', items }
+  }
+  // Viewing a specific client order
+  if (pathname.startsWith('/portal/orders/')) {
+    return {
+      section: 'This document',
+      items: [
+        { to: '/portal', label: '← My documents' },
+        { to: '/portal/new', label: 'Submit another document' },
+        { to: '/app', label: 'Get the app' },
+        { to: '/contact', label: 'Questions? Contact us' },
+      ],
+    }
+  }
+  // Submitting a new document
+  if (pathname === '/portal/new') {
+    return {
+      section: 'Submitting a document',
+      items: [
+        { to: '/portal', label: 'My documents' },
+        { to: '/services', label: 'View pricing' },
+        { to: '/contact', label: 'Questions? Contact us' },
+      ],
+    }
+  }
+  // Client portal dashboard
+  if (pathname === '/portal') {
+    const items = [{ to: '/portal/new', label: '+ Submit a document' }]
+    if (isStaff) items.push({ to: '/staff', label: 'Staff dashboard' })
+    items.push({ to: '/app', label: 'Get the app' }, { to: '/blog', label: 'Blog & updates' })
+    return { section: 'Your documents', items }
+  }
+  // Blog
+  if (pathname.startsWith('/blog')) {
+    return {
+      section: 'Blog',
+      items: [
+        { to: '/portal/new', label: 'Submit a document' },
+        { to: '/portal', label: 'My documents' },
+        { to: '/services', label: 'View pricing' },
+      ],
+    }
+  }
+  // Marketing pages: home, services, how-it-works, contact, app install
+  const items = [
+    { to: '/portal/new', label: 'Submit a document' },
+    { to: '/portal', label: 'My documents' },
+  ]
+  if (isStaff) items.push({ to: '/staff', label: 'Staff dashboard' })
+  items.push({ to: '/app', label: 'Get the app' }, { to: '/blog', label: 'Blog & updates' })
+  return { section: 'Quick links', items }
+}
 
 function SealGraphic({ label }) {
   return (
@@ -38,6 +126,7 @@ function SealGraphic({ label }) {
 
 export default function BouncingSeal() {
   const { user, isStaff, isAdmin } = useAuth()
+  const location = useLocation()
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
   const posRef = useRef({ x: 0, y: 0 })
@@ -46,18 +135,11 @@ export default function BouncingSeal() {
   const [, forceRender] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const menuItems = useMemo(() => {
-    if (!user) return []
-    const items = [
-      { to: '/portal/new', label: 'Submit a document' },
-      { to: '/portal', label: 'My documents' },
-    ]
-    if (isStaff) items.push({ to: '/staff', label: 'Staff dashboard' })
-    if (isAdmin) items.push({ to: '/staff/team', label: 'Team' })
-    items.push({ to: '/app', label: 'Get the app' })
-    items.push({ to: '/blog', label: 'Blog & updates' })
-    return items
-  }, [user, isStaff, isAdmin])
+  const menu = useMemo(() => {
+    if (!user) return { section: '', items: [] }
+    const built = getContextualMenu(location.pathname, { isStaff, isAdmin })
+    return { ...built, items: built.items.filter((item) => item.to !== location.pathname) }
+  }, [user, isStaff, isAdmin, location.pathname])
 
   // Bounce freely when logged out; dock top-right once logged in.
   useEffect(() => {
@@ -127,6 +209,11 @@ export default function BouncingSeal() {
     }
   }, [user])
 
+  // Close the dropdown whenever the page changes
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
+
   // Close the dropdown on outside click
   useEffect(() => {
     if (!menuOpen) return
@@ -187,7 +274,12 @@ export default function BouncingSeal() {
           ref={menuRef}
           className="absolute right-0 top-[100px] w-56 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl"
         >
-          {menuItems.map((item) => (
+          {menu.section && (
+            <p className="border-b border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
+              {menu.section}
+            </p>
+          )}
+          {menu.items.map((item) => (
             <Link
               key={item.to}
               to={item.to}
