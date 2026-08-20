@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
+import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 import { US_STATES, EMBASSY_COUNTRIES } from '../lib/countries'
 
@@ -22,6 +23,7 @@ const STAGE_NAMES = ['Notary', 'Secretary of State', 'U.S. State Department', 'E
 export default function StaffOrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const [order, setOrder] = useState(null)
   const [attachments, setAttachments] = useState([])
   const [fees, setFees] = useState([])
@@ -409,18 +411,24 @@ export default function StaffOrderDetail() {
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Assigned to</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <select
-              value={order.assigned_to || ''}
-              onChange={(e) => assignOrder(e.target.value)}
-              disabled={assigning}
-              className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
-            >
-              <option value="">Unassigned</option>
-              {staffList.map((s) => (
-                <option key={s.id} value={s.id}>{s.full_name || s.email}</option>
-              ))}
-            </select>
-            {assigning && <span className="font-mono text-xs text-[var(--slate)]">Saving…</span>}
+            {isAdmin ? (
+              <>
+                <select
+                  value={order.assigned_to || ''}
+                  onChange={(e) => assignOrder(e.target.value)}
+                  disabled={assigning}
+                  className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+                >
+                  <option value="">Unassigned</option>
+                  {staffList.map((s) => (
+                    <option key={s.id} value={s.id}>{s.full_name || s.email}</option>
+                  ))}
+                </select>
+                {assigning && <span className="font-mono text-xs text-[var(--slate)]">Saving…</span>}
+              </>
+            ) : (
+              <p className="text-sm text-[var(--ink)]">Assigned to you</p>
+            )}
           </div>
         </div>
 

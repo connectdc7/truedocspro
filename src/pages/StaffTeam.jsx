@@ -71,18 +71,33 @@ export default function StaffTeam() {
 
   const toggleStaff = async (profile) => {
     const promoting = !profile.is_staff
+    // Removing staff access should also remove admin access, to avoid
+    // an inconsistent "admin but not staff" state.
+    const payload = promoting ? { is_staff: true } : { is_staff: false, is_admin: false }
     const { error } = await supabase
       .from('profiles')
-      .update({ is_staff: promoting })
+      .update(payload)
       .eq('id', profile.id)
     if (!error) {
-      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, is_staff: promoting } : p)))
+      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, ...payload } : p)))
       if (promoting) {
         const { error: emailError } = await supabase.functions.invoke('notify-new-staff', {
           body: { profile_id: profile.id },
         })
         if (emailError) setPromoteError('Staff access granted, but the welcome email failed to send.')
       }
+    } else {
+      setError(error.message)
+    }
+  }
+
+  const toggleAdmin = async (profile) => {
+    const promoting = !profile.is_admin
+    // Promoting to admin should always also grant staff access
+    const payload = promoting ? { is_admin: true, is_staff: true } : { is_admin: false }
+    const { error } = await supabase.from('profiles').update(payload).eq('id', profile.id)
+    if (!error) {
+      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, ...payload } : p)))
     } else {
       setError(error.message)
     }
@@ -117,8 +132,10 @@ export default function StaffTeam() {
           </Link>
           <h1 className="font-display mt-2 text-3xl font-semibold text-[var(--ink)]">Team</h1>
           <p className="mt-1 text-sm text-[var(--slate)]">
-            Give staff access to accounts, and set each person's name and title. Anyone must have already
-            created an account on the site before you can find them here.
+            Give staff access to accounts, set each person's name and title, and promote trusted staff to
+            admin. Regular staff only see and act on orders assigned to them; admins see and manage
+            everything, including this page. Anyone must have already created an account on the site
+            before you can find them here.
           </p>
         </div>
       </section>
@@ -206,6 +223,11 @@ export default function StaffTeam() {
                     >
                       {p.is_staff ? 'Staff' : 'Client'}
                     </span>
+                    {p.is_admin && (
+                      <span className="rounded-full bg-[var(--ink)] px-3 py-1 font-mono text-xs uppercase tracking-wide text-[var(--parchment)]">
+                        Admin
+                      </span>
+                    )}
                     <button
                       onClick={() => toggleStaff(p)}
                       disabled={isSelf && p.is_staff}
@@ -213,6 +235,14 @@ export default function StaffTeam() {
                       className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {p.is_staff ? 'Remove staff access' : 'Make staff'}
+                    </button>
+                    <button
+                      onClick={() => toggleAdmin(p)}
+                      disabled={isSelf && p.is_admin}
+                      title={isSelf && p.is_admin ? "You can't remove your own admin access" : ''}
+                      className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {p.is_admin ? 'Remove admin' : 'Make admin'}
                     </button>
                   </div>
                 </div>

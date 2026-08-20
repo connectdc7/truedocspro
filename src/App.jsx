@@ -20,6 +20,7 @@ import StaffEmbassyFees from './pages/StaffEmbassyFees'
 import StaffSosFees from './pages/StaffSosFees'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffRoute from './components/StaffRoute'
+import AdminRoute from './components/AdminRoute'
 
 export default function App() {
   return (
@@ -34,41 +35,41 @@ export default function App() {
       <Route
         path="/staff/blog"
         element={
-          <StaffRoute>
+          <AdminRoute>
             <StaffBlogList />
-          </StaffRoute>
+          </AdminRoute>
         }
       />
       <Route
         path="/staff/blog/:id"
         element={
-          <StaffRoute>
+          <AdminRoute>
             <StaffBlogEditor />
-          </StaffRoute>
+          </AdminRoute>
         }
       />
       <Route
         path="/staff/team"
         element={
-          <StaffRoute>
+          <AdminRoute>
             <StaffTeam />
-          </StaffRoute>
+          </AdminRoute>
         }
       />
       <Route
         path="/staff/embassy-fees"
         element={
-          <StaffRoute>
+          <AdminRoute>
             <StaffEmbassyFees />
-          </StaffRoute>
+          </AdminRoute>
         }
       />
       <Route
         path="/staff/sos-fees"
         element={
-          <StaffRoute>
+          <AdminRoute>
             <StaffSosFees />
-          </StaffRoute>
+          </AdminRoute>
         }
       />
       <Route

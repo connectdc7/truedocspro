@@ -7,32 +7,37 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isStaff, setIsStaff] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     let active = true
 
-    async function loadStaffFlag(userId) {
+    async function loadRoleFlags(userId) {
       if (!userId) {
         setIsStaff(false)
+        setIsAdmin(false)
         return
       }
       const { data } = await supabase
         .from('profiles')
-        .select('is_staff')
+        .select('is_staff, is_admin')
         .eq('id', userId)
         .maybeSingle()
-      if (active) setIsStaff(Boolean(data?.is_staff))
+      if (active) {
+        setIsStaff(Boolean(data?.is_staff))
+        setIsAdmin(Boolean(data?.is_admin))
+      }
     }
 
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
-      await loadStaffFlag(data.session?.user?.id)
+      await loadRoleFlags(data.session?.user?.id)
       if (active) setLoading(false)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession)
-      await loadStaffFlag(newSession?.user?.id)
+      await loadRoleFlags(newSession?.user?.id)
     })
 
     return () => {
@@ -45,6 +50,7 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user ?? null,
     isStaff,
+    isAdmin,
     loading,
     signOut: () => supabase.auth.signOut(),
   }

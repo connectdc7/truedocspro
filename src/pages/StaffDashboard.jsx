@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
+import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
 const SERVICE_LABEL = { notary: 'Notary', apostille: 'Apostille', embassy: 'Embassy legalization' }
@@ -8,6 +9,7 @@ const STATUS_LABEL = { received: 'Received', in_process: 'In process', ready: 'R
 const TABS = ['all', 'received', 'in_process', 'ready', 'shipped']
 
 export default function StaffDashboard() {
+  const { isAdmin } = useAuth()
   const [orders, setOrders] = useState([])
   const [staffList, setStaffList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -80,30 +82,34 @@ export default function StaffDashboard() {
             <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              to="/staff/sos-fees"
-              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-            >
-              SOS fees
-            </Link>
-            <Link
-              to="/staff/embassy-fees"
-              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-            >
-              Embassy fees
-            </Link>
-            <Link
-              to="/staff/team"
-              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-            >
-              Team
-            </Link>
-            <Link
-              to="/staff/blog"
-              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-            >
-              Manage blog
-            </Link>
+            {isAdmin && (
+              <>
+                <Link
+                  to="/staff/sos-fees"
+                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                >
+                  SOS fees
+                </Link>
+                <Link
+                  to="/staff/embassy-fees"
+                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                >
+                  Embassy fees
+                </Link>
+                <Link
+                  to="/staff/team"
+                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                >
+                  Team
+                </Link>
+                <Link
+                  to="/staff/blog"
+                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                >
+                  Manage blog
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -186,17 +192,23 @@ export default function StaffDashboard() {
                     <StatusBadge status={o.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <select
-                      value={o.assigned_to || ''}
-                      onChange={(e) => assignOrder(o.id, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded-lg border border-[var(--line)] bg-white/70 px-2 py-1.5 text-xs outline-none focus:border-[var(--wax)]"
-                    >
-                      <option value="">Unassigned</option>
-                      {staffList.map((s) => (
-                        <option key={s.id} value={s.id}>{s.full_name || s.email}</option>
-                      ))}
-                    </select>
+                    {isAdmin ? (
+                      <select
+                        value={o.assigned_to || ''}
+                        onChange={(e) => assignOrder(o.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded-lg border border-[var(--line)] bg-white/70 px-2 py-1.5 text-xs outline-none focus:border-[var(--wax)]"
+                      >
+                        <option value="">Unassigned</option>
+                        {staffList.map((s) => (
+                          <option key={s.id} value={s.id}>{s.full_name || s.email}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="font-mono text-xs text-[var(--slate)]">
+                        {o.assignee?.full_name || o.assignee?.email || 'Unassigned'}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-[var(--slate)]">
                     {o.needed_by_date ? new Date(o.needed_by_date).toLocaleDateString() : '—'}

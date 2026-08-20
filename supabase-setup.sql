@@ -120,6 +120,7 @@ create table if not exists profiles (
 
 alter table profiles add column if not exists full_name text;
 alter table profiles add column if not exists title text;
+alter table profiles add column if not exists is_admin boolean not null default false;
 
 -- Now that profiles exists, add the order assignment column (references it)
 alter table orders add column if not exists assigned_to uuid references profiles(id) on delete set null;
@@ -246,17 +247,32 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
+-- Admins see and manage everything staff-wide. Regular staff only see
+-- and act on orders specifically assigned to them.
+create or replace function is_admin()
+returns boolean as $$
+  select coalesce(
+    (select p.is_admin from public.profiles p where p.id = auth.uid()),
+    false
+  );
+$$ language sql security definer stable;
+
 alter table profiles enable row level security;
 
 drop policy if exists "Users can view their own profile" on profiles;
 create policy "Users can view their own profile"
   on profiles for select
-  using (auth.uid() = id or is_staff());
+  using (
+    auth.uid() = id
+    or is_admin()
+    or (is_staff() and is_staff = true)
+    or exists (select 1 from orders o where o.user_id = profiles.id and o.assigned_to = auth.uid())
+  );
 
 drop policy if exists "Staff can update any profile" on profiles;
-create policy "Staff can update any profile"
+create policy "Admins can update any profile"
   on profiles for update
-  using (is_staff());
+  using (is_admin());
 
 -- 3. Row Level Security — clients can only ever see their own orders,
 -- staff (you) can see and update every order.
@@ -265,7 +281,11 @@ alter table orders enable row level security;
 drop policy if exists "Users can view their own orders" on orders;
 create policy "Users can view their own orders"
   on orders for select
-  using (auth.uid() = user_id or is_staff());
+  using (
+    auth.uid() = user_id
+    or is_admin()
+    or (is_staff() and assigned_to = auth.uid())
+  );
 
 drop policy if exists "Users can insert their own orders" on orders;
 create policy "Users can insert their own orders"
@@ -278,14 +298,14 @@ create policy "Users can delete their own orders"
   using (auth.uid() = user_id and status = 'received');
 
 drop policy if exists "Staff can update any order" on orders;
-create policy "Staff can update any order"
+create policy "Staff can update assigned orders"
   on orders for update
-  using (is_staff());
+  using (is_admin() or (is_staff() and assigned_to = auth.uid()));
 
 drop policy if exists "Staff can delete any order" on orders;
-create policy "Staff can delete any order"
+create policy "Admins can delete any order"
   on orders for delete
-  using (is_staff());
+  using (is_admin());
 
 -- 3b. Blog posts — anyone can read published posts, only staff can write
 alter table posts enable row level security;
@@ -296,21 +316,21 @@ create policy "Anyone can view published posts"
   using (published = true or is_staff());
 
 drop policy if exists "Staff can insert posts" on posts;
-create policy "Staff can insert posts"
+create policy "Admins can insert posts"
   on posts for insert
-  with check (is_staff());
+  with check (is_admin());
 
 drop policy if exists "Staff can update posts" on posts;
-create policy "Staff can update posts"
+create policy "Admins can update posts"
   on posts for update
-  using (is_staff());
+  using (is_admin());
 
 drop policy if exists "Staff can delete posts" on posts;
-create policy "Staff can delete posts"
+create policy "Admins can delete posts"
   on posts for delete
-  using (is_staff());
+  using (is_admin());
 
--- 3c. Newsletter subscribers — anyone can subscribe, only staff can view the list
+-- 3c. Newsletter subscribers — anyone can subscribe, only admins can view the list
 alter table subscribers enable row level security;
 
 drop policy if exists "Anyone can subscribe" on subscribers;
@@ -319,12 +339,12 @@ create policy "Anyone can subscribe"
   with check (true);
 
 drop policy if exists "Staff can view subscribers" on subscribers;
-create policy "Staff can view subscribers"
+create policy "Admins can view subscribers"
   on subscribers for select
-  using (is_staff());
+  using (is_admin());
 
 -- 3c-b. Embassy fee schedule — anyone can read it (needed at checkout
--- time before an order even exists), only staff can edit it.
+-- time before an order even exists), only admins can edit it.
 alter table embassy_fees enable row level security;
 
 drop policy if exists "Anyone can view embassy fees" on embassy_fees;
@@ -333,10 +353,10 @@ create policy "Anyone can view embassy fees"
   using (true);
 
 drop policy if exists "Staff can manage embassy fees" on embassy_fees;
-create policy "Staff can manage embassy fees"
+create policy "Admins can manage embassy fees"
   on embassy_fees for all
-  using (is_staff())
-  with check (is_staff());
+  using (is_admin())
+  with check (is_admin());
 
 -- 3c-c. Secretary of State fee schedule — same pattern as embassy fees.
 alter table sos_fees enable row level security;
@@ -347,22 +367,25 @@ create policy "Anyone can view sos fees"
   using (true);
 
 drop policy if exists "Staff can manage sos fees" on sos_fees;
-create policy "Staff can manage sos fees"
+create policy "Admins can manage sos fees"
   on sos_fees for all
-  using (is_staff())
-  with check (is_staff());
+  using (is_admin())
+  with check (is_admin());
 
 -- 3d. Order attachments — client sees/uploads only for their own orders,
--- staff sees and uploads for every order.
+-- admins see/upload for every order, staff only for orders assigned to them.
 alter table order_attachments enable row level security;
 
 drop policy if exists "Users can view attachments on their own orders" on order_attachments;
 create policy "Users can view attachments on their own orders"
   on order_attachments for select
   using (
-    is_staff()
+    is_admin()
     or exists (
       select 1 from orders o where o.id = order_attachments.order_id and o.user_id = auth.uid()
+    )
+    or exists (
+      select 1 from orders o where o.id = order_attachments.order_id and o.assigned_to = auth.uid()
     )
   );
 
@@ -377,24 +400,41 @@ create policy "Users can upload attachments to their own orders"
   );
 
 drop policy if exists "Staff can upload attachments to any order" on order_attachments;
-create policy "Staff can upload attachments to any order"
+create policy "Staff can upload attachments to assigned orders"
   on order_attachments for insert
-  with check (is_staff());
+  with check (
+    is_admin()
+    or exists (
+      select 1 from orders o where o.id = order_attachments.order_id and o.assigned_to = auth.uid()
+    )
+  );
 
 drop policy if exists "Staff can delete attachments" on order_attachments;
-create policy "Staff can delete attachments"
+create policy "Staff can delete attachments on assigned orders"
   on order_attachments for delete
-  using (is_staff());
+  using (
+    is_admin()
+    or exists (
+      select 1 from orders o where o.id = order_attachments.order_id and o.assigned_to = auth.uid()
+    )
+  );
 
--- 3e. Additional fees — staff manage them fully, clients can view (and
--- later pay) fees on their own orders only.
+-- 3e. Additional fees — admins manage fees on any order, staff only on
+-- orders assigned to them. Clients can view (and later pay) fees on
+-- their own orders only.
 alter table order_fees enable row level security;
 
 drop policy if exists "Staff can manage fees" on order_fees;
-create policy "Staff can manage fees"
+create policy "Staff can manage fees on assigned orders"
   on order_fees for all
-  using (is_staff())
-  with check (is_staff());
+  using (
+    is_admin()
+    or exists (select 1 from orders o where o.id = order_fees.order_id and o.assigned_to = auth.uid())
+  )
+  with check (
+    is_admin()
+    or exists (select 1 from orders o where o.id = order_fees.order_id and o.assigned_to = auth.uid())
+  );
 
 drop policy if exists "Users can view fees on their own orders" on order_fees;
 create policy "Users can view fees on their own orders"
@@ -454,32 +494,55 @@ create policy "Users can delete their own documents"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- Staff can read every client's documents
+-- Admins can read every client's documents
 drop policy if exists "Staff can read all documents" on storage.objects;
-create policy "Staff can read all documents"
+create policy "Admins can read all documents"
+  on storage.objects for select
+  using (
+    bucket_id = 'client-documents'
+    and is_admin()
+  );
+
+-- Staff can read documents only for orders assigned to them (matches
+-- either the main uploaded file or a supporting-document attachment)
+drop policy if exists "Staff can read assigned order documents" on storage.objects;
+create policy "Staff can read assigned order documents"
   on storage.objects for select
   using (
     bucket_id = 'client-documents'
     and is_staff()
+    and (
+      exists (select 1 from orders o where o.file_path = storage.objects.name and o.assigned_to = auth.uid())
+      or exists (
+        select 1 from order_attachments a
+        join orders o on o.id = a.order_id
+        where a.file_path = storage.objects.name and o.assigned_to = auth.uid()
+      )
+    )
   );
 
--- Staff can delete documents (used when deleting an order)
+-- Admins can delete any document (used when deleting an order)
 drop policy if exists "Staff can delete documents" on storage.objects;
-create policy "Staff can delete documents"
+create policy "Admins can delete documents"
   on storage.objects for delete
   using (
     bucket_id = 'client-documents'
-    and is_staff()
+    and is_admin()
   );
 
--- Staff can upload documents into any client's folder (e.g. attaching
--- something on a client's behalf)
+-- Staff can upload documents only into a folder belonging to a client
+-- whose order is assigned to them
 drop policy if exists "Staff can upload documents" on storage.objects;
-create policy "Staff can upload documents"
+create policy "Staff can upload documents for assigned orders"
   on storage.objects for insert
   with check (
     bucket_id = 'client-documents'
     and is_staff()
+    and exists (
+      select 1 from orders o
+      where o.user_id::text = (storage.foldername(name))[1]
+        and o.assigned_to = auth.uid()
+    )
   );
 
 -- ============================================================
@@ -607,17 +670,102 @@ If you''re not sure whether your document qualifies for the electronic process o
 )
 on conflict (slug) do nothing;
 
+insert into posts (slug, title, excerpt, content, author, published) values
+(
+  'uscis-fee-increases-2026',
+  'USCIS Fees Went Up Again in 2026 — Here''s What Changed',
+  'Between inflation adjustments, a new mandatory asylum fee, and premium processing hikes, 2026 has brought the most immigration fee changes in years. Here''s a plain-English summary.',
+  'If you''ve filed anything with USCIS recently, you''ve probably noticed the fees keep moving. 2026 has been an unusually active year for immigration costs, driven by a few separate changes stacking on top of each other.
+
+**Inflation adjustments, effective January 1, 2026.** Following the "One Big Beautiful Bill" (H.R. 1) signed in mid-2025, USCIS now adjusts certain fees for inflation every fiscal year. Based on the roughly 2.7% inflation increase between July 2024 and July 2025, a number of fees went up by $5 to $20 starting this January.
+
+**A new mandatory Annual Asylum Fee, enforced starting May 29, 2026.** This one carries real consequences: the $100 fee cannot be waived, and if it goes unpaid within 30 days of notice, USCIS can begin removal proceedings for anyone without another lawful status, or deny or revoke work authorization.
+
+**Premium processing fees rose again on March 1, 2026.** Employer-sponsored petitions like H-1B, L-1, and O-1 (Form I-129) now cost $2,965 for premium processing, matching the new rate for I-140 immigrant petitions.
+
+**A proposed end to N-400 fee waivers.** As of this writing, DHS has proposed eliminating the reduced-fee option and fee waivers entirely for naturalization (Form N-400) and certificate of citizenship (Form N-336) applications. Public comments were open through late August 2026 — worth watching if this affects your filing plans.
+
+**Why this matters for document legalization specifically:** if you''re assembling a filing that includes notarized or apostilled documents, a fee miscalculation anywhere in the packet can delay or reject the whole thing. Always confirm current USCIS fees directly on uscis.gov before submitting, separate from what we charge for authentication services.
+
+*Sources: USCIS.gov, Federal Register, Tahirih Justice Center, Ogletree Deakins*',
+  'True Docs Pro Team',
+  true
+),
+(
+  'notary-law-changes-2026',
+  'Several States Overhauled Their Notary Laws in 2026 — Does Yours Affect You?',
+  'Texas now requires notary education and testing. Pennsylvania raised bond requirements. A handful of other states changed journal and remote notarization rules. Here''s a quick roundup.',
+  'Notary law is usually quiet, state-by-state, slow-moving territory — but 2026 brought a real wave of updates worth knowing about, especially if you''re a notary yourself or relying on one regularly.
+
+**Texas (Senate Bill 693):** Starting with applications submitted on or after January 1, 2026, new and renewing Texas notaries must complete a Secretary of State-run education course (capped at two hours) and pass a test with at least 70% correct. Notaries commissioned before September 1, 2025 are exempt from the retroactive requirement. The bill also tightened in-person signing requirements and increased penalties for improper notarizations.
+
+**Pennsylvania:** Comprehensive new regulations took effect March 28, 2026, implementing the Revised Uniform Law on Notarial Acts (RULONA). The headline change: the required notary bond jumped from $10,000 to $25,000 for anyone newly appointed or reappointed after that date. Notaries with a commission already in force can keep their current bond and seal until it expires.
+
+**A broader pattern across other states:** Utah added a mandatory notary journal requirement (SB 139). South Dakota eliminated its bond requirement and removed fee caps (HB 1133, HB 1192). Tennessee introduced a new online notary course and exam requirement. Virginia''s HB 163/SB 316 took effect July 1, 2026 with its own set of changes.
+
+**What this means practically:** if you''re a commissioned notary, or considering becoming one, check your state''s Secretary of State site for anything enacted in the 2025–2026 legislative cycle — the rules you learned when you first got commissioned may no longer be current. If you''re a client, this mostly stays invisible to you; we track these changes so you don''t have to.
+
+*Sources: Pennsylvania Department of State, Texas Legislature (SB 693), American Society of Notaries, NotaryAct*',
+  'True Docs Pro Team',
+  true
+),
+(
+  'passport-processing-times-2026',
+  'Passport Wait Times in 2026: What''s Actually Realistic Right Now',
+  'Routine passport processing is running 4–6 weeks, expedited 2–3 weeks — and that''s before mailing time. Here''s how to plan around it, especially if your document also needs an apostille or embassy legalization.',
+  'If your document legalization plans depend on having a current passport, timing matters more than people expect.
+
+**Current published targets, as of mid-2026:** the State Department lists routine passport processing at 4 to 6 weeks and expedited at 2 to 3 weeks. But that clock only starts once your application physically arrives — mailing typically adds 1 to 2 weeks each way, meaning routine applications realistically take 8 to 10 weeks door to door, and even expedited ones can stretch to 6 to 7 weeks once you include shipping.
+
+**2025 set a record.** The U.S. issued 27.3 million passports last year, and demand hasn''t slowed down — spring and summer remain the highest-volume months, with processing consistently running toward the longer end of the published range during that window.
+
+**One genuine improvement:** online passport renewal, through opr.travel.state.gov, expanded to more eligible adults nationwide in 2026 after years of limited testing. If you qualify, it can meaningfully cut the process down — worth checking before assuming you need to mail anything in.
+
+**The most common self-inflicted delay:** a photo that doesn''t meet requirements, an expired supporting document, or a fee paid incorrectly. Any of these can send your entire application back to the start, adding weeks you didn''t plan for.
+
+**Why this matters here specifically:** if your document needs both a new passport *and* an apostille or embassy legalization — say, for an adoption, a visa, or an overseas property purchase — plan the passport step first and build in the full realistic timeline, not just the "processing time" headline number. We''re happy to help you sequence the steps so nothing sits waiting on something else.
+
+*Sources: U.S. Department of State (travel.state.gov), RushMyPassport, eGovRush*',
+  'True Docs Pro Team',
+  true
+),
+(
+  'international-adoption-2026-changes',
+  'International Adoption in 2026: South Korea Joins the Hague Convention, Haiti Pauses Visas',
+  'Two significant changes this year for anyone pursuing an international adoption — one expands protections, the other freezes a pathway entirely.',
+  'International adoption has seen more policy movement in the past year than in most of the last decade. Two changes stand out for anyone currently in process or considering it.
+
+**South Korea joined the Hague Adoption Convention on October 1, 2025.** This means intercountry adoptions from South Korea now follow the same internationally recognized safeguards — standardized consent procedures, accreditation requirements, and oversight — as the more than 100 other Hague Adoption Convention countries. In a related but separate move, South Korea also announced in December 2025 that it intends to phase out foreign adoptions entirely over the next several years, aiming for zero by 2029. For families with cases already underway, the near-term process gets more standardized even as the long-term pathway narrows.
+
+**Haiti''s adoption visas stopped being issued on January 1, 2026.** A presidential proclamation halted issuance of the IR-3, IR-4, IH-3, and IH-4 visa categories used for Haitian adoptions, despite more than 50 adoptions having been completed there in fiscal year 2024. If you have a Haiti case in progress, this is worth discussing directly with your adoption attorney or agency, since the guidance here can shift.
+
+**The bigger picture:** total U.S. intercountry adoptions have fallen from roughly 23,000 in 2004 to just 1,172 in fiscal year 2024 — a structural decline driven by tightening international standards and country-by-country policy shifts, not by reduced need. Countries that are Hague Convention members generally offer more predictable timelines and documentation requirements than non-Hague countries, though even Hague cases can run well over a thousand days depending on the country.
+
+**What this means for your paperwork:** adoption cases typically require a stack of notarized and apostilled or embassy-legalized documents — home studies, background checks, financial records — and the exact requirements depend heavily on whether the origin country is a Hague member. If you''re early in an international adoption, confirming your destination country''s current Hague status is one of the first things worth checking, since it changes which documents need what kind of authentication.
+
+*Sources: IMUNA/UNICEF 2026 Update Brief, Marble Law, U.S. Department of State (travel.state.gov)*',
+  'True Docs Pro Team',
+  true
+)
+on conflict (slug) do nothing;
+
 -- ============================================================
--- Done. One more manual step: make yourself a staff member so
--- you can access the /staff dashboard in the app.
+-- Done. One more manual step: make yourself an ADMIN so you can
+-- access the /staff dashboard with full visibility, and manage
+-- other staff from /staff/team.
 --
 -- 1. Sign up for a normal account on the live website first
 --    (if you haven't already), using the email you want to log
---    in with as staff.
+--    in with as admin.
 -- 2. Then run this, replacing the email with yours:
 --
---    update profiles set is_staff = true
+--    update profiles set is_staff = true, is_admin = true
 --    where email = 'you@truedocspro.com';
 --
 -- After that, log in on the website and visit /staff.
+--
+-- From then on, promote or demote other staff/admins from
+-- /staff/team instead of running SQL manually — that page is
+-- admin-only. Regular staff (is_staff = true, is_admin = false)
+-- only ever see orders assigned to them; admins see everything.
 -- ============================================================
