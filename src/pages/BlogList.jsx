@@ -51,7 +51,7 @@ export default function BlogList() {
       <section className="border-b border-[var(--line)] px-6 py-16 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--wax)]">Blog &amp; updates</p>
         <h1 className="font-display mt-3 text-4xl font-semibold text-[var(--ink)]">
-          Notary, apostille &amp; immigration news.
+          notary, apostille &amp; immigration news.
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-[var(--slate)]">
           Policy changes, new Hague Convention members, and plain-English explainers — free, straight to your inbox.
