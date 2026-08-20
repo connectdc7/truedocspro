@@ -187,6 +187,24 @@ create table if not exists order_attachments (
   created_at timestamptz not null default now()
 );
 
+-- 2f-b. Default shipping fee amounts — admin-set defaults for the three
+-- shipping legs staff commonly need to bill: to/from Secretary of State,
+-- to/from embassy or consulate, and mailing the completed document home.
+-- Staff use these as one-click starting points when adding a fee to an
+-- order; they aren't charged automatically.
+create table if not exists shipping_fees (
+  key text primary key check (key in ('sos', 'embassy', 'mail_home')),
+  label text not null,
+  fee_cents integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+insert into shipping_fees (key, label, fee_cents) values
+  ('sos', 'Shipping to/from Secretary of State', 0),
+  ('embassy', 'Shipping to/from embassy or consulate', 0),
+  ('mail_home', 'Mailing completed document home', 0)
+on conflict (key) do nothing;
+
 -- 2f. Additional pass-through fees (Secretary of State, embassy, etc.)
 -- added by staff after the order is submitted, since these vary and
 -- aren't known at checkout time. Billed to the client separately.
@@ -369,6 +387,21 @@ create policy "Anyone can view sos fees"
 drop policy if exists "Staff can manage sos fees" on sos_fees;
 create policy "Admins can manage sos fees"
   on sos_fees for all
+  using (is_admin())
+  with check (is_admin());
+
+-- 3c-d. Shipping fee defaults — anyone can read (staff need the current
+-- default when adding a fee), only admins can edit.
+alter table shipping_fees enable row level security;
+
+drop policy if exists "Anyone can view shipping fees" on shipping_fees;
+create policy "Anyone can view shipping fees"
+  on shipping_fees for select
+  using (true);
+
+drop policy if exists "Admins can manage shipping fees" on shipping_fees;
+create policy "Admins can manage shipping fees"
+  on shipping_fees for update
   using (is_admin())
   with check (is_admin());
 

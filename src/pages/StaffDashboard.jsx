@@ -91,6 +91,12 @@ export default function StaffDashboard() {
                   SOS fees
                 </Link>
                 <Link
+                  to="/staff/shipping-fees"
+                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                >
+                  Shipping fees
+                </Link>
+                <Link
                   to="/staff/embassy-fees"
                   className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
                 >

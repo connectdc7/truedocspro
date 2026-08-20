@@ -27,6 +27,7 @@ export default function StaffOrderDetail() {
   const [order, setOrder] = useState(null)
   const [attachments, setAttachments] = useState([])
   const [fees, setFees] = useState([])
+  const [shippingDefaults, setShippingDefaults] = useState([])
   const [newFeeDesc, setNewFeeDesc] = useState('')
   const [newFeeAmount, setNewFeeAmount] = useState('')
   const [addingFee, setAddingFee] = useState(false)
@@ -67,6 +68,7 @@ export default function StaffOrderDetail() {
   useEffect(() => {
     load()
     loadStaffList()
+    loadShippingDefaults()
   }, [id])
 
   async function loadStaffList() {
@@ -143,6 +145,11 @@ export default function StaffOrderDetail() {
       .eq('order_id', id)
       .order('created_at', { ascending: true })
     setFees(data ?? [])
+  }
+
+  async function loadShippingDefaults() {
+    const { data } = await supabase.from('shipping_fees').select('*')
+    setShippingDefaults(data ?? [])
   }
 
   const [manualSubject, setManualSubject] = useState('')
@@ -489,6 +496,31 @@ export default function StaffOrderDetail() {
                   </div>
                 )
               )}
+            </div>
+          )}
+
+          {shippingDefaults.length > 0 && (
+            <div className="mt-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Quick add: shipping</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {shippingDefaults.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => {
+                      setNewFeeDesc(s.label)
+                      setNewFeeAmount(s.fee_cents > 0 ? (s.fee_cents / 100).toFixed(2) : '')
+                    }}
+                    className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                  >
+                    {s.label}
+                    {s.fee_cents > 0 && ` — $${(s.fee_cents / 100).toFixed(2)}`}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-[var(--slate)]">
+                Fills in the fields below — adjust the amount if this shipment costs differently, then click Add fee.
+              </p>
             </div>
           )}
 

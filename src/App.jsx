@@ -18,6 +18,7 @@ import StaffBlogEditor from './pages/StaffBlogEditor'
 import StaffTeam from './pages/StaffTeam'
 import StaffEmbassyFees from './pages/StaffEmbassyFees'
 import StaffSosFees from './pages/StaffSosFees'
+import StaffShippingFees from './pages/StaffShippingFees'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffRoute from './components/StaffRoute'
 import AdminRoute from './components/AdminRoute'
@@ -69,6 +70,14 @@ export default function App() {
         element={
           <AdminRoute>
             <StaffSosFees />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/staff/shipping-fees"
+        element={
+          <AdminRoute>
+            <StaffShippingFees />
           </AdminRoute>
         }
       />
