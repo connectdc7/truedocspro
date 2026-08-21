@@ -2,8 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../lib/supabaseClient'
+import useDocumentHead from '../lib/useDocumentHead'
 
 export default function Signup() {
+  useDocumentHead({
+    title: 'Create Your Account',
+    description: 'Create a free account to submit documents and track notary, apostille, and embassy legalization status.',
+    path: '/signup',
+  })
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

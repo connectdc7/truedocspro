@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import QRCode from 'qrcode'
+import useDocumentHead from '../lib/useDocumentHead'
 
 function detectPlatform() {
   const ua = navigator.userAgent || ''
@@ -10,6 +11,11 @@ function detectPlatform() {
 }
 
 export default function InstallApp() {
+  useDocumentHead({
+    title: 'Get the App',
+    description: 'Install True Docs Pro on your phone to submit documents, track status, and download completed copies.',
+    path: '/app',
+  })
   const canvasRef = useRef(null)
   const [platform, setPlatform] = useState('desktop')
   const [url, setUrl] = useState('')

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
+import useDocumentHead from '../lib/useDocumentHead'
 
 const DETAIL = [
   {
@@ -29,6 +30,12 @@ const DETAIL = [
 ]
 
 export default function Services() {
+  useDocumentHead({
+    title: 'Services & Pricing — Notary, Apostille, Embassy Legalization',
+    description:
+      'Notary from $25, apostille from $85, embassy legalization from $150. See pricing and turnaround times for each document service.',
+    path: '/services',
+  })
   return (
     <Layout>
       <section className="border-b border-[var(--line)] px-6 py-16 text-center">

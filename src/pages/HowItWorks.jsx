@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import StatusTracker from '../components/StatusTracker'
+import useDocumentHead from '../lib/useDocumentHead'
 
 export default function HowItWorks() {
+  useDocumentHead({
+    title: 'How It Works',
+    description:
+      'From upload to certified copy: submit your document, track it through notarization or legalization, and download it from your portal for 30 days.',
+    path: '/how-it-works',
+  })
   return (
     <Layout>
       <section className="border-b border-[var(--line)] px-6 py-16 text-center">

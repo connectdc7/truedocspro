@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import HeroGraphic from '../components/HeroGraphic'
+import useDocumentHead from '../lib/useDocumentHead'
 
 const SERVICES = [
   {
@@ -24,6 +25,12 @@ const SERVICES = [
 ]
 
 export default function Home() {
+  useDocumentHead({
+    title: 'Notary, Apostille & Embassy Legalization',
+    description:
+      'Submit notary, apostille, and embassy legalization documents securely online. Track every step and download certified copies from your portal.',
+    path: '/',
+  })
   return (
     <Layout>
       {/* Hero */}

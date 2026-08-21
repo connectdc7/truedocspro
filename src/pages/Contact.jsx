@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
+import useDocumentHead from '../lib/useDocumentHead'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Contact() {
+  useDocumentHead({
+    title: 'Contact',
+    description: 'Questions about notary, apostille, or embassy legalization? Reach True Docs Pro — we usually reply within one business day.',
+    path: '/contact',
+  })
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
   const [errorMsg, setErrorMsg] = useState('')

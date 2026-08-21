@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /portal
+Disallow: /staff
+Disallow: /blog
+Disallow: /login
+
+Sitemap: https://truedocspro.com/sitemap.xml
