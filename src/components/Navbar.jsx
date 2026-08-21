@@ -29,7 +29,7 @@ export default function Navbar() {
         <nav className="hidden items-center gap-8 md:flex">
           <NavLink to="/services" className={navLink}>Services</NavLink>
           <NavLink to="/how-it-works" className={navLink}>How it works</NavLink>
-          <NavLink to="/blog" className={navLink}>Blog</NavLink>
+          {user && <NavLink to="/blog" className={navLink}>Blog</NavLink>}
           <NavLink to="/contact" className={navLink}>Contact</NavLink>
           {user ? (
             <>
@@ -76,7 +76,7 @@ export default function Navbar() {
         <nav className="flex flex-col gap-1 border-t border-[var(--line)] px-6 py-4 md:hidden">
           <NavLink to="/services" className="py-2" onClick={() => setOpen(false)}>Services</NavLink>
           <NavLink to="/how-it-works" className="py-2" onClick={() => setOpen(false)}>How it works</NavLink>
-          <NavLink to="/blog" className="py-2" onClick={() => setOpen(false)}>Blog</NavLink>
+          {user && <NavLink to="/blog" className="py-2" onClick={() => setOpen(false)}>Blog</NavLink>}
           <NavLink to="/contact" className="py-2" onClick={() => setOpen(false)}>Contact</NavLink>
           {user ? (
             <>

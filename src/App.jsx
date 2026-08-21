@@ -30,8 +30,22 @@ export default function App() {
       <Route path="/services" element={<Services />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/blog" element={<BlogList />} />
-      <Route path="/blog/:slug" element={<BlogPost />} />
+      <Route
+        path="/blog"
+        element={
+          <ProtectedRoute>
+            <BlogList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/blog/:slug"
+        element={
+          <ProtectedRoute>
+            <BlogPost />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/app" element={<InstallApp />} />
       <Route
         path="/staff/blog"
