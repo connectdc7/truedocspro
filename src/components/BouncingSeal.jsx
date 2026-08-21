@@ -165,6 +165,9 @@ export default function BouncingSeal() {
   const posRef = useRef({ x: 0, y: 0 })
   const velRef = useRef({ x: SPEED, y: SPEED * 0.8 })
   const pausedRef = useRef(false)
+  const draggingRef = useRef(false)
+  const draggedRef = useRef(false)
+  const dragOffsetRef = useRef({ x: 0, y: 0 })
   const [, forceRender] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -262,6 +265,45 @@ export default function BouncingSeal() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen])
 
+  const DRAG_THRESHOLD = 4
+
+  const handlePointerDown = (e) => {
+    draggingRef.current = true
+    draggedRef.current = false
+    pausedRef.current = true
+    const rect = wrapRef.current.getBoundingClientRect()
+    dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+
+  const handlePointerMove = (e) => {
+    if (!draggingRef.current) return
+    const dx = e.clientX - (dragOffsetRef.current.x + posRef.current.x)
+    const dy = e.clientY - (dragOffsetRef.current.y + posRef.current.y)
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      draggedRef.current = true
+    }
+    const nextX = Math.min(Math.max(e.clientX - dragOffsetRef.current.x, 0), window.innerWidth - SIZE)
+    const nextY = Math.min(Math.max(e.clientY - dragOffsetRef.current.y, MIN_Y), window.innerHeight - SIZE)
+    posRef.current = { x: nextX, y: nextY }
+    if (wrapRef.current) wrapRef.current.style.transform = `translate(${nextX}px, ${nextY}px)`
+  }
+
+  const handlePointerUp = () => {
+    draggingRef.current = false
+    // Logged-out seal resumes bouncing from wherever it was dropped.
+    // Logged-in seal just stays put — dragging is how you park it somewhere handy.
+    if (!user) pausedRef.current = false
+  }
+
+  const handleClickCapture = (e) => {
+    if (draggedRef.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      draggedRef.current = false
+    }
+  }
+
   const baseStyle = {
     position: 'fixed',
     top: 0,
@@ -277,12 +319,16 @@ export default function BouncingSeal() {
       <Link
         to="/portal/new"
         ref={wrapRef}
-        onMouseEnter={() => { pausedRef.current = true }}
-        onMouseLeave={() => { pausedRef.current = false }}
-        style={{ ...baseStyle, cursor: 'pointer' }}
+        onMouseEnter={() => { if (!draggingRef.current) pausedRef.current = true }}
+        onMouseLeave={() => { if (!draggingRef.current) pausedRef.current = false }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClickCapture={handleClickCapture}
+        style={{ ...baseStyle, cursor: 'grab', touchAction: 'none' }}
         className="drop-shadow-lg transition-transform hover:scale-110"
-        aria-label="Submit a document"
-        title="Submit a document"
+        aria-label="Submit a document — drag to move"
+        title="Submit a document — drag to move"
       >
         <SealGraphic label="SUBMIT" />
       </Link>
@@ -290,14 +336,19 @@ export default function BouncingSeal() {
   }
 
   return (
-    <div ref={wrapRef} style={baseStyle}>
+    <div ref={wrapRef} style={{ ...baseStyle, touchAction: 'none' }}>
       <button
         type="button"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClickCapture={handleClickCapture}
         onClick={() => setMenuOpen((o) => !o)}
+        style={{ cursor: 'grab' }}
         className="drop-shadow-lg transition-transform hover:scale-105"
-        aria-label="Quick links"
+        aria-label="Quick links — drag to move"
         aria-expanded={menuOpen}
-        title="Quick links"
+        title="Quick links — drag to move"
       >
         <SealGraphic label="MENU" />
       </button>
