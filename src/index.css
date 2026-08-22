@@ -127,3 +127,68 @@ body {
   .seal-3d-wrap { animation: none; }
   .seal-3d-wrap:hover { transform: none; transition: none; }
 }
+
+/* ============================================================
+   How It Works page — animated document journey.
+   One shared 11s loop: document arrives → gets stamped →
+   packaged into an envelope → delivered to a desk.
+   ============================================================ */
+.process-anim-wrap svg { display: block; }
+
+@keyframes paDocument {
+  0%   { transform: translate(-170px, 55px) scale(1); opacity: 0; }
+  9%   { transform: translate(0px, 55px) scale(1); opacity: 1; }
+  46%  { transform: translate(0px, 55px) scale(1); opacity: 1; }
+  56%  { transform: translate(230px, 55px) scale(0.55); opacity: 0; }
+  100% { transform: translate(230px, 55px) scale(0.55); opacity: 0; }
+}
+.pa-document { animation: paDocument 11s ease-in-out infinite; transform-origin: 60px 130px; }
+
+@keyframes paStampMark {
+  0%, 29%   { opacity: 0; }
+  32%, 54%  { opacity: 1; }
+  60%, 100% { opacity: 0; }
+}
+.pa-stamp-mark { animation: paStampMark 11s ease-in-out infinite; }
+
+@keyframes paSeal {
+  0%, 20%   { transform: translate(60px, 20px) scale(0.7); opacity: 0; }
+  27%       { transform: translate(60px, 140px) scale(1.08); opacity: 1; }
+  30%       { transform: translate(60px, 130px) scale(1); opacity: 1; }
+  42%       { transform: translate(60px, 130px) scale(1); opacity: 1; }
+  48%       { transform: translate(60px, 10px) scale(0.7); opacity: 0; }
+  100%      { transform: translate(60px, 10px) scale(0.7); opacity: 0; }
+}
+.pa-seal { animation: paSeal 11s ease-in-out infinite; }
+
+@keyframes paEnvelope {
+  0%, 44%   { transform: translate(330px, 130px) scale(0.6); opacity: 0; }
+  52%       { transform: translate(330px, 130px) scale(1); opacity: 1; }
+  66%       { transform: translate(330px, 130px) scale(1); opacity: 1; }
+  88%       { transform: translate(695px, 130px) scale(1); opacity: 1; }
+  95%       { transform: translate(695px, 130px) scale(1); opacity: 1; }
+  100%      { transform: translate(695px, 130px) scale(0.85); opacity: 0; }
+}
+.pa-envelope { animation: paEnvelope 11s ease-in-out infinite; }
+
+@keyframes paLabel1 { 0%,7% { opacity: 0.35; } 10%,45% { opacity: 1; } 50%,100% { opacity: 0.35; } }
+@keyframes paLabel2 { 0%,28% { opacity: 0.35; } 32%,45% { opacity: 1; } 50%,100% { opacity: 0.35; } }
+@keyframes paLabel3 { 0%,49% { opacity: 0.35; } 53%,65% { opacity: 1; } 70%,100% { opacity: 0.35; } }
+@keyframes paLabel4 { 0%,85% { opacity: 0.35; } 89%,96% { opacity: 1; } 99%,100% { opacity: 0.35; } }
+.pa-label { font-weight: 500; }
+.pa-label-1 { animation: paLabel1 11s ease-in-out infinite; }
+.pa-label-2 { animation: paLabel2 11s ease-in-out infinite; }
+.pa-label-3 { animation: paLabel3 11s ease-in-out infinite; }
+.pa-label-4 { animation: paLabel4 11s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-document, .pa-stamp-mark, .pa-seal, .pa-envelope,
+  .pa-label-1, .pa-label-2, .pa-label-3, .pa-label-4 {
+    animation: none;
+  }
+  .pa-document { transform: translate(0px, 55px); opacity: 1; }
+  .pa-stamp-mark { opacity: 1; }
+  .pa-seal { opacity: 0; }
+  .pa-envelope { transform: translate(500px, 130px); opacity: 1; }
+  .pa-label-3, .pa-label-4 { opacity: 1; }
+}

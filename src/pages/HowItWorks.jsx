@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import StatusTracker from '../components/StatusTracker'
+import ProcessAnimation from '../components/ProcessAnimation'
 import useDocumentHead from '../lib/useDocumentHead'
 
 export default function HowItWorks() {
@@ -17,6 +18,10 @@ export default function HowItWorks() {
         <h1 className="font-display mt-3 text-4xl font-semibold text-[var(--ink)]">
           From upload to certified copy.
         </h1>
+      </section>
+
+      <section className="mx-auto max-w-4xl px-6 pt-16">
+        <ProcessAnimation />
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-16">
