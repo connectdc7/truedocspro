@@ -25,7 +25,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallbackDenylist: [/^\/portal\/orders\/.*$/],
+        navigateFallbackDenylist: [
+          /^\/portal\/orders\/.*$/,
+          /^\/robots\.txt$/,
+          /^\/sitemap\.xml$/,
+          /^\/og-image\.png$/,
+        ],
       },
     }),
   ],
