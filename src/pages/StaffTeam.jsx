@@ -23,7 +23,8 @@ export default function StaffTeam() {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .order('is_staff', { ascending: false })
+      .eq('is_staff', true)
+      .order('is_admin', { ascending: false })
       .order('email', { ascending: true })
     if (error) setError(error.message)
     else {
@@ -79,12 +80,16 @@ export default function StaffTeam() {
       .update(payload)
       .eq('id', profile.id)
     if (!error) {
-      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, ...payload } : p)))
       if (promoting) {
+        setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, ...payload } : p)))
         const { error: emailError } = await supabase.functions.invoke('notify-new-staff', {
           body: { profile_id: profile.id },
         })
         if (emailError) setPromoteError('Staff access granted, but the welcome email failed to send.')
+      } else {
+        // This list only shows current staff — once access is removed,
+        // drop them from view immediately so the list stays clean.
+        setProfiles((prev) => prev.filter((p) => p.id !== profile.id))
       }
     } else {
       setError(error.message)
@@ -132,10 +137,10 @@ export default function StaffTeam() {
           </Link>
           <h1 className="font-display mt-2 text-3xl font-semibold text-[var(--ink)]">Team</h1>
           <p className="mt-1 text-sm text-[var(--slate)]">
-            Give staff access to accounts, set each person's name and title, and promote trusted staff to
-            admin. Regular staff only see and act on orders assigned to them; admins see and manage
-            everything, including this page. Anyone must have already created an account on the site
-            before you can find them here.
+            This list shows your current staff only — remove someone's access and they're dropped from
+            this list right away. Regular staff only see and act on orders assigned to them; admins see
+            and manage everything, including this page. To add someone, use the invite box below — it
+            works whether or not they already have an account.
           </p>
         </div>
       </section>
@@ -216,13 +221,6 @@ export default function StaffTeam() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`rounded-full px-3 py-1 font-mono text-xs uppercase tracking-wide ${
-                        p.is_staff ? 'bg-[var(--wax)]/15 text-[var(--wax)]' : 'bg-[var(--line)] text-[var(--slate)]'
-                      }`}
-                    >
-                      {p.is_staff ? 'Staff' : 'Client'}
-                    </span>
                     {p.is_admin && (
                       <span className="rounded-full bg-[var(--ink)] px-3 py-1 font-mono text-xs uppercase tracking-wide text-[var(--parchment)]">
                         Admin
@@ -230,11 +228,11 @@ export default function StaffTeam() {
                     )}
                     <button
                       onClick={() => toggleStaff(p)}
-                      disabled={isSelf && p.is_staff}
-                      title={isSelf && p.is_staff ? "You can't remove your own staff access" : ''}
+                      disabled={isSelf}
+                      title={isSelf ? "You can't remove your own staff access" : 'Remove this person from staff'}
                       className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {p.is_staff ? 'Remove staff access' : 'Make staff'}
+                      Remove staff access
                     </button>
                     <button
                       onClick={() => toggleAdmin(p)}

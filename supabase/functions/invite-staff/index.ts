@@ -2,11 +2,14 @@
 //
 // Called from the Team page's "Invite by email" form. Works whether or
 // not that email already has an account:
-//   - New email: creates the account and sends Supabase's built-in
-//     invite email (a link to set a password and log in).
+//   - New email: creates the account via generateLink (this does NOT
+//     send any email itself — it just creates the user and hands back
+//     a secure setup link), then we email that link ourselves through
+//     Resend, so it reliably comes from your own domain instead of
+//     depending on Supabase's own email delivery.
 //   - Existing email: just promotes their existing account to staff.
-// Either way, is_staff gets set to true and our own welcome email
-// (via Resend) goes out.
+// Either way, is_staff gets set to true and a branded welcome email
+// goes out via Resend.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -61,6 +64,8 @@ Deno.serve(async (req) => {
       })
     }
 
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocpros.com'
+
     // Does a profile with this email already exist?
     const { data: existing } = await supabaseAdmin
       .from('profiles')
@@ -69,24 +74,30 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     let profileId = existing?.id
+    let setupLink: string | null = null
 
     if (!profileId) {
-      // Brand new person — create their account and send Supabase's
-      // built-in invite email (sets password, then logs them in)
-      const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${Deno.env.get('SITE_URL') || 'https://truedocpros.com'}/login`,
-        data: {
-          full_name: full_name || null,
-          title: title || null,
+      // Brand new person — create their account and get a secure setup
+      // link, WITHOUT Supabase sending any email of its own.
+      const { data: linked, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'invite',
+        email,
+        options: {
+          redirectTo: `${siteUrl}/login`,
+          data: {
+            full_name: full_name || null,
+            title: title || null,
+          },
         },
       })
-      if (inviteError || !invited?.user) {
-        return new Response(JSON.stringify({ error: `Could not invite: ${inviteError?.message}` }), {
+      if (linkError || !linked?.user) {
+        return new Response(JSON.stringify({ error: `Could not invite: ${linkError?.message}` }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-      profileId = invited.user.id
+      profileId = linked.user.id
+      setupLink = linked.properties?.action_link ?? null
     }
 
     // The handle_new_user trigger creates the profile row automatically
@@ -114,15 +125,32 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Send our own welcome email (best-effort — don't fail the whole
-    // request if this part has trouble)
+    // Send the invite/welcome email ourselves via Resend — reliable,
+    // and always comes from your own verified domain.
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (resendKey) {
       const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Doc Pros <onboarding@resend.dev>'
-      const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocpros.com'
       const firstName = full_name?.split(' ')[0] || 'there'
-      const html = `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #16233F;">
+
+      const html = setupLink
+        ? `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #0F1B33;">
+          <h2 style="font-family: Georgia, serif;">Welcome to True Doc Pros</h2>
+          <p>Hi ${firstName},</p>
+          <p>You've been invited to join the <strong>True Doc Pros</strong> team${title ? ` as ${title}` : ''}.
+          You are an asset to the team — don't hesitate to reach out with any questions.</p>
+          <p style="margin-top: 24px;">
+            <a href="${setupLink}"
+               style="background:#0F1B33;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;">
+              Set up your account
+            </a>
+          </p>
+          <p>Once you're in, you'll see a Staff tab in your portal to get started.</p>
+          <p style="margin-top:24px;font-size:12px;color:#57616F;">— True Doc Pros</p>
+        </div>
+      `
+        : `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #0F1B33;">
           <h2 style="font-family: Georgia, serif;">Congratulations, and welcome to the TDP Team!</h2>
           <p>Hi ${firstName},</p>
           <p>Congratulations, and welcome to the TDP Team. You are an asset to the team — don't hesitate to
@@ -130,17 +158,23 @@ Deno.serve(async (req) => {
           <p>Log back in to your TDP portal to see the Staff tab and begin helping your team.</p>
           <p style="margin-top: 24px;">
             <a href="${siteUrl}/login"
-               style="background:#16233F;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;">
+               style="background:#0F1B33;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;">
               Log in
             </a>
           </p>
-          <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Doc Pros</p>
+          <p style="margin-top:24px;font-size:12px;color:#57616F;">— True Doc Pros</p>
         </div>
       `
+
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: fromEmail, to: email, subject: 'Welcome to the True Doc Pros team!', html }),
+        body: JSON.stringify({
+          from: fromEmail,
+          to: email,
+          subject: setupLink ? "You've been invited to join the True Doc Pros team" : 'Welcome to the True Doc Pros team!',
+          html,
+        }),
       })
     }
 
