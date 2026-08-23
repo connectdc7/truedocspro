@@ -114,6 +114,12 @@ export default function StaffDashboard() {
                 >
                   Manage blog
                 </Link>
+                <Link
+                  to="/staff/subscribers"
+                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+                >
+                  Subscribers
+                </Link>
               </>
             )}
           </div>

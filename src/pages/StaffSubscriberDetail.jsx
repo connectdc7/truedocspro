@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import Layout from '../components/Layout'
+import { supabase } from '../lib/supabaseClient'
+
+export default function StaffSubscriberDetail() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [subscriber, setSubscriber] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    supabase
+      .from('subscribers')
+      .select('*')
+      .eq('id', id)
+      .single()
+      .then(({ data, error }) => {
+        if (error) setError(error.message)
+        else setSubscriber(data)
+        setLoading(false)
+      })
+  }, [id])
+
+  const daysSubscribed = subscriber
+    ? Math.floor((Date.now() - new Date(subscriber.created_at)) / (1000 * 60 * 60 * 24))
+    : null
+
+  const handleRemove = async () => {
+    if (!window.confirm(`Remove ${subscriber.email} from the subscriber list?`)) return
+    setDeleting(true)
+    const { error } = await supabase.from('subscribers').delete().eq('id', id)
+    setDeleting(false)
+    if (error) setError(error.message)
+    else navigate('/staff/subscribers')
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-xl px-6 py-20 text-center font-mono text-sm text-[var(--slate)]">Loading…</div>
+      </Layout>
+    )
+  }
+
+  if (error || !subscriber) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-xl px-6 py-20 text-center">
+          <p className="font-display text-xl text-[var(--ink)]">Subscriber not found.</p>
+          <Link to="/staff/subscribers" className="mt-4 inline-block text-sm text-[var(--wax)] hover:underline">
+            ← Back to subscribers
+          </Link>
+        </div>
+      </Layout>
+    )
+  }
+
+  return (
+    <Layout>
+      <section className="mx-auto max-w-xl px-6 py-16">
+        <Link to="/staff/subscribers" className="font-mono text-xs uppercase tracking-widest text-[var(--slate)] hover:text-[var(--wax)]">
+          ← Subscribers
+        </Link>
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email</p>
+          <p className="mt-1 font-display text-xl text-[var(--ink)]">{subscriber.email}</p>
+
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Subscribed on</p>
+              <p className="mt-1 text-sm text-[var(--ink)]">
+                {new Date(subscriber.created_at).toLocaleDateString(undefined, {
+                  year: 'numeric', month: 'long', day: 'numeric',
+                })}
+              </p>
+            </div>
+            <div>
+              <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Time subscribed</p>
+              <p className="mt-1 text-sm text-[var(--ink)]">
+                {daysSubscribed === 0 ? 'Today' : `${daysSubscribed} day${daysSubscribed === 1 ? '' : 's'}`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRemove}
+            disabled={deleting}
+            className="mt-8 rounded-full border border-[var(--wax)]/40 px-4 py-2 font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors disabled:opacity-50"
+          >
+            {deleting ? 'Removing…' : 'Remove from subscribers'}
+          </button>
+        </div>
+      </section>
+    </Layout>
+  )
+}

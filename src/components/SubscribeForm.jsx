@@ -11,19 +11,18 @@ export default function SubscribeForm({ compact = false }) {
     setStatus('sending')
     setErrorMsg('')
     const { error } = await supabase.from('subscribers').insert({ email })
-    if (error) {
-      // Unique violation just means they're already subscribed — treat as success
-      if (error.code === '23505') {
-        setStatus('done')
-      } else {
-        setStatus('error')
-        setErrorMsg(error.message)
-      }
+    // Send the welcome email every time someone submits — whether this
+    // is a brand new subscription or they're entering an email that's
+    // already on the list.
+    supabase.functions.invoke('subscriber-welcome', { body: { email } })
+
+    if (error && error.code !== '23505') {
+      // A real error (not just "already subscribed")
+      setStatus('error')
+      setErrorMsg(error.message)
     } else {
       setStatus('done')
       setEmail('')
-      // Best-effort — don't block the subscribe confirmation on this
-      supabase.functions.invoke('subscriber-welcome', { body: { email } })
     }
   }
 
