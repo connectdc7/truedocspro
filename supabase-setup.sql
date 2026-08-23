@@ -120,6 +120,7 @@ create table if not exists profiles (
 
 alter table profiles add column if not exists full_name text;
 alter table profiles add column if not exists title text;
+alter table profiles add column if not exists phone text;
 alter table profiles add column if not exists is_admin boolean not null default false;
 
 -- Now that profiles exists, add the order assignment column (references it)
@@ -292,6 +293,21 @@ drop policy if exists "Admins can update any profile" on profiles;
 create policy "Admins can update any profile"
   on profiles for update
   using (is_admin());
+
+-- Any signed-in user can update their OWN name and phone — deliberately
+-- NOT done via a broad RLS update policy, since that would let someone
+-- edit any column on their own row, including is_staff/is_admin. This
+-- function only ever touches full_name and phone.
+create or replace function update_own_contact_info(new_full_name text, new_phone text)
+returns void as $$
+begin
+  update public.profiles
+  set full_name = new_full_name, phone = new_phone
+  where id = auth.uid();
+end;
+$$ language plpgsql security definer;
+
+grant execute on function update_own_contact_info(text, text) to authenticated;
 
 -- 3. Row Level Security — clients can only ever see their own orders,
 -- staff (you) can see and update every order.

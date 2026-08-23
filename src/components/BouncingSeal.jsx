@@ -196,7 +196,7 @@ function SealGraphic({ label }) {
 }
 
 export default function BouncingSeal() {
-  const { user, isStaff, isAdmin } = useAuth()
+  const { user, isStaff, isAdmin, profile } = useAuth()
   const location = useLocation()
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
@@ -394,10 +394,26 @@ export default function BouncingSeal() {
       {menuOpen && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-[144px] w-56 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl"
+          className="absolute right-0 top-[144px] w-72 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl"
         >
+          <div className="border-b border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
+            <p className="font-display text-sm font-semibold text-[var(--ink)]">
+              {profile?.full_name || 'Your account'}
+            </p>
+            {isStaff && profile?.title && (
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--brass)]">{profile.title}</p>
+            )}
+            <p className="mt-1.5 text-xs text-[var(--slate)]">{profile?.email || user.email}</p>
+            <p className="text-xs text-[var(--slate)]">
+              {profile?.phone || (
+                <Link to="/account" onClick={() => setMenuOpen(false)} className="text-[var(--wax)] hover:underline">
+                  Add a phone number
+                </Link>
+              )}
+            </p>
+          </div>
           {menu.section && (
-            <p className="border-b border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
+            <p className="border-b border-[var(--line)] px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
               {menu.section}
             </p>
           )}

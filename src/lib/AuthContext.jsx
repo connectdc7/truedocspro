@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from './supabaseClient'
 
 const AuthContext = createContext(null)
@@ -8,49 +8,54 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [isStaff, setIsStaff] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [profile, setProfile] = useState(null) // { full_name, phone, title, email }
+
+  const loadProfile = useCallback(async (userId) => {
+    if (!userId) {
+      setIsStaff(false)
+      setIsAdmin(false)
+      setProfile(null)
+      return
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_staff, is_admin, full_name, phone, title, email')
+      .eq('id', userId)
+      .maybeSingle()
+    setIsStaff(Boolean(data?.is_staff))
+    setIsAdmin(Boolean(data?.is_admin))
+    setProfile(data || null)
+  }, [])
 
   useEffect(() => {
     let active = true
 
-    async function loadRoleFlags(userId) {
-      if (!userId) {
-        setIsStaff(false)
-        setIsAdmin(false)
-        return
-      }
-      const { data } = await supabase
-        .from('profiles')
-        .select('is_staff, is_admin')
-        .eq('id', userId)
-        .maybeSingle()
-      if (active) {
-        setIsStaff(Boolean(data?.is_staff))
-        setIsAdmin(Boolean(data?.is_admin))
-      }
-    }
-
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
-      await loadRoleFlags(data.session?.user?.id)
+      await loadProfile(data.session?.user?.id)
       if (active) setLoading(false)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession)
-      await loadRoleFlags(newSession?.user?.id)
+      await loadProfile(newSession?.user?.id)
     })
 
     return () => {
       active = false
       listener.subscription.unsubscribe()
     }
-  }, [])
+  }, [loadProfile])
+
+  const refreshProfile = useCallback(() => loadProfile(session?.user?.id), [loadProfile, session])
 
   const value = {
     session,
     user: session?.user ?? null,
     isStaff,
     isAdmin,
+    profile,
+    refreshProfile,
     loading,
     signOut: () => supabase.auth.signOut(),
   }

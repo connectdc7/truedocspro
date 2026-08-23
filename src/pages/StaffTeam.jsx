@@ -31,7 +31,7 @@ export default function StaffTeam() {
       setProfiles(data)
       const initialEdits = {}
       data.forEach((p) => {
-        initialEdits[p.id] = { full_name: p.full_name || '', title: p.title || '' }
+        initialEdits[p.id] = { full_name: p.full_name || '', title: p.title || '', phone: p.phone || '' }
       })
       setEdits(initialEdits)
     }
@@ -114,11 +114,11 @@ export default function StaffTeam() {
 
   const saveDetails = async (id) => {
     setSavingId(id)
-    const { full_name, title } = edits[id]
-    const { error } = await supabase.from('profiles').update({ full_name, title }).eq('id', id)
+    const { full_name, title, phone } = edits[id]
+    const { error } = await supabase.from('profiles').update({ full_name, title, phone }).eq('id', id)
     setSavingId(null)
     if (!error) {
-      setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, full_name, title } : p)))
+      setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, full_name, title, phone } : p)))
       setSavedId(id)
       setTimeout(() => setSavedId(null), 2000)
     } else {
@@ -214,8 +214,11 @@ export default function StaffTeam() {
         <div className="mt-6 space-y-3">
           {filtered.map((p) => {
             const isSelf = p.id === user.id
-            const edit = edits[p.id] || { full_name: '', title: '' }
-            const dirty = edit.full_name !== (p.full_name || '') || edit.title !== (p.title || '')
+            const edit = edits[p.id] || { full_name: '', title: '', phone: '' }
+            const dirty =
+              edit.full_name !== (p.full_name || '') ||
+              edit.title !== (p.title || '') ||
+              edit.phone !== (p.phone || '')
             return (
               <div key={p.id} className="rounded-xl border border-[var(--line)] bg-white/40 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -249,7 +252,7 @@ export default function StaffTeam() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Name</label>
                     <input
@@ -272,7 +275,19 @@ export default function StaffTeam() {
                       className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div>
+                    <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Phone</label>
+                    <input
+                      type="tel"
+                      value={edit.phone}
+                      onChange={(e) =>
+                        setEdits((prev) => ({ ...prev, [p.id]: { ...prev[p.id], phone: e.target.value } }))
+                      }
+                      placeholder="Phone number"
+                      className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
+                    />
+                  </div>
+                  <div className="flex items-end gap-2">
                     <button
                       onClick={() => saveDetails(p.id)}
                       disabled={!dirty || savingId === p.id}
