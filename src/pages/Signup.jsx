@@ -32,6 +32,8 @@ export default function Signup() {
       setError(error.message)
       return
     }
+    // Best-effort — don't block navigation on this
+    supabase.functions.invoke('notify-signup-welcome', { body: { email, full_name: fullName } })
     if (data.session) {
       navigate('/portal')
     } else {
