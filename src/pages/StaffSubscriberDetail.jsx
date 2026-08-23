@@ -32,6 +32,10 @@ export default function StaffSubscriberDetail() {
     if (!window.confirm(`Remove ${subscriber.email} from the subscriber list?`)) return
     setDeleting(true)
     const { error } = await supabase.from('subscribers').delete().eq('id', id)
+    if (!error) {
+      // Best-effort — don't block navigating away on this
+      supabase.functions.invoke('notify-unsubscribed', { body: { email: subscriber.email } })
+    }
     setDeleting(false)
     if (error) setError(error.message)
     else navigate('/staff/subscribers')
