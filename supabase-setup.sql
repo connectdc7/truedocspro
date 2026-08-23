@@ -808,7 +808,7 @@ on conflict (slug) do nothing;
 -- 2. Then run this, replacing the email with yours:
 --
 --    update profiles set is_staff = true, is_admin = true
---    where email = 'you@truedocspro.com';
+--    where email = 'you@truedocpros.com';
 --
 -- After that, log in on the website and visit /staff.
 --

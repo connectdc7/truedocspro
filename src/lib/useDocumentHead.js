@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 const SITE_NAME = 'True Docs Pro'
-const BASE_URL = 'https://truedocspro.com'
+const BASE_URL = 'https://truedocpros.com'
 
 /**
  * Sets document.title, the meta description, and a canonical link tag

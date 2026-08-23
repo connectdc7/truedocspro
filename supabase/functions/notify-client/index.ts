@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         <h2 style="font-family: Georgia, serif;">${subject}</h2>
         <p>${message.replace(/\n/g, '<br/>')}</p>
         <p style="margin-top: 24px;">
-          <a href="${Deno.env.get('SITE_URL') || 'https://truedocspro.com'}/portal/orders/${order_id}"
+          <a href="${Deno.env.get('SITE_URL') || 'https://truedocpros.com'}/portal/orders/${order_id}"
              style="background:#16233F;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;">
             View your document
           </a>

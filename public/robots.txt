@@ -5,4 +5,4 @@ Disallow: /staff
 Disallow: /blog
 Disallow: /login
 
-Sitemap: https://truedocspro.com/sitemap.xml
+Sitemap: https://truedocpros.com/sitemap.xml

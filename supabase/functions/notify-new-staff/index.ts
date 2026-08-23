@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       })
     }
     const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Docs Pro <onboarding@resend.dev>'
-    const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocspro.com'
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocpros.com'
     const firstName = newStaff.full_name?.split(' ')[0] || 'there'
 
     const html = `

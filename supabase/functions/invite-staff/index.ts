@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       // Brand new person — create their account and send Supabase's
       // built-in invite email (sets password, then logs them in)
       const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${Deno.env.get('SITE_URL') || 'https://truedocspro.com'}/login`,
+        redirectTo: `${Deno.env.get('SITE_URL') || 'https://truedocpros.com'}/login`,
         data: {
           full_name: full_name || null,
           title: title || null,
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (resendKey) {
       const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Docs Pro <onboarding@resend.dev>'
-      const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocspro.com'
+      const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocpros.com'
       const firstName = full_name?.split(' ')[0] || 'there'
       const html = `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #16233F;">

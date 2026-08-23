@@ -111,7 +111,7 @@ export default function StaffBlogEditor() {
               }}
               className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm font-mono outline-none focus:border-[var(--wax)]"
             />
-            <p className="mt-1.5 text-xs text-[var(--slate)]">Will be published at truedocspro.com/blog/{slug || '…'}</p>
+            <p className="mt-1.5 text-xs text-[var(--slate)]">Will be published at truedocpros.com/blog/{slug || '…'}</p>
           </div>
 
           <Field label="Excerpt (shown on the blog list)" value={excerpt} onChange={setExcerpt} textarea rows={2} />
