@@ -470,11 +470,33 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {attachments.filter((a) => a.category !== 'return_label').length > 0 && (
+        {attachments.filter((a) => a.category === 'completed_document').length > 0 && (
+          <div className="mt-6 rounded-xl border border-[var(--wax)]/40 bg-[var(--wax)]/5 p-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--wax)]">Completed document</p>
+            <div className="mt-3 space-y-2">
+              {attachments
+                .filter((a) => a.category === 'completed_document')
+                .map((a) => (
+                  <a
+                    key={a.id}
+                    href={a.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between rounded-lg border border-[var(--wax)]/30 bg-white/60 px-4 py-3 hover:border-[var(--wax)] transition-colors"
+                  >
+                    <span className="text-sm font-medium text-[var(--ink)]">{a.file_name || 'Completed document'}</span>
+                    <span className="font-mono text-xs uppercase tracking-wide text-[var(--wax)]">View & download</span>
+                  </a>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document').length > 0 && (
           <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
             <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
             <div className="mt-3 space-y-2">
-              {attachments.filter((a) => a.category !== 'return_label').map((a) => (
+              {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document').map((a) => (
                 <a
                   key={a.id}
                   href={a.url}

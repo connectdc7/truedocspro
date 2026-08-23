@@ -223,10 +223,11 @@ alter table order_attachments add column if not exists category text not null de
 
 do $$
 begin
-  if not exists (select 1 from pg_constraint where conname = 'order_attachments_category_check') then
-    alter table order_attachments add constraint order_attachments_category_check
-      check (category in ('supporting', 'return_label'));
+  if exists (select 1 from pg_constraint where conname = 'order_attachments_category_check') then
+    alter table order_attachments drop constraint order_attachments_category_check;
   end if;
+  alter table order_attachments add constraint order_attachments_category_check
+    check (category in ('supporting', 'return_label', 'completed_document'));
 end $$;
 
 -- Automatically create a profile row whenever someone signs up

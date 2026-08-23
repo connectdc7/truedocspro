@@ -63,6 +63,9 @@ export default function StaffOrderDetail() {
   const [requestNote, setRequestNote] = useState('')
   const [sendingRequest, setSendingRequest] = useState(false)
   const [staffFile, setStaffFile] = useState(null)
+  const [completedFile, setCompletedFile] = useState(null)
+  const [uploadingCompletedFile, setUploadingCompletedFile] = useState(false)
+  const [completedUploadResult, setCompletedUploadResult] = useState(null)
   const [uploadingStaffFile, setUploadingStaffFile] = useState(false)
 
   useEffect(() => {
@@ -276,6 +279,47 @@ export default function StaffOrderDetail() {
       setError(err.message)
     } finally {
       setUploadingStaffFile(false)
+    }
+  }
+
+  const uploadCompletedDocument = async () => {
+    if (!completedFile) return
+    setUploadingCompletedFile(true)
+    setCompletedUploadResult(null)
+    try {
+      const ext = completedFile.name.split('.').pop()
+      const path = `${order.user_id}/attachments/${crypto.randomUUID()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(path, completedFile)
+      if (uploadError) throw uploadError
+
+      const { error: insertError } = await supabase.from('order_attachments').insert({
+        order_id: id,
+        file_path: path,
+        file_name: completedFile.name,
+        uploaded_by: 'staff',
+        category: 'completed_document',
+      })
+      if (insertError) throw insertError
+
+      const { data, error: notifyError } = await supabase.functions.invoke('notify-document-ready', {
+        body: { order_id: id },
+      })
+
+      setCompletedFile(null)
+      await loadAttachments()
+
+      if (notifyError || data?.error) {
+        setCompletedUploadResult({
+          ok: false,
+          message: `Uploaded, but the client email failed to send: ${data?.error || notifyError.message}`,
+        })
+      } else {
+        setCompletedUploadResult({ ok: true, message: 'Uploaded — the client has been emailed a link to view and download it.' })
+      }
+    } catch (err) {
+      setCompletedUploadResult({ ok: false, message: err.message })
+    } finally {
+      setUploadingCompletedFile(false)
     }
   }
 
@@ -861,6 +905,32 @@ export default function StaffOrderDetail() {
               The client's 30-day download window started the moment this was first marked Ready.
             </p>
           )}
+
+          <div className="mt-6 border-t border-[var(--line)] pt-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Upload completed document</p>
+            <p className="mt-1 text-xs text-[var(--slate)]">
+              Uploads the finished, certified document and emails the client a link to view and download it.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                type="file"
+                onChange={(e) => setCompletedFile(e.target.files?.[0] ?? null)}
+                className="text-sm text-[var(--ink)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--parchment-dim)] file:px-4 file:py-2 file:text-xs file:font-medium file:text-[var(--ink)] hover:file:bg-[var(--line)]"
+              />
+              <button
+                onClick={uploadCompletedDocument}
+                disabled={!completedFile || uploadingCompletedFile}
+                className="rounded-full bg-[var(--wax)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+              >
+                {uploadingCompletedFile ? 'Uploading…' : 'Upload & notify client'}
+              </button>
+            </div>
+            {completedUploadResult && (
+              <p className={`mt-3 text-sm ${completedUploadResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+                {completedUploadResult.message}
+              </p>
+            )}
+          </div>
         </div>
       </section>
     </Layout>
