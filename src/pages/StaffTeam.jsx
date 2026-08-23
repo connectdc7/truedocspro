@@ -107,6 +107,12 @@ export default function StaffTeam() {
     const { error } = await supabase.from('profiles').update(payload).eq('id', profile.id)
     if (!error) {
       setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, ...payload } : p)))
+      if (promoting) {
+        const { error: adminEmailError } = await supabase.functions.invoke('notify-admin-granted', {
+          body: { email: profile.email, full_name: profile.full_name },
+        })
+        if (adminEmailError) setPromoteError('Admin access granted, but the notification email failed to send.')
+      }
     } else {
       setError(error.message)
     }
