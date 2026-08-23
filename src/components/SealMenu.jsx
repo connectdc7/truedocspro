@@ -45,11 +45,11 @@ export default function SealMenu() {
         title="Account menu"
         className="transition-transform hover:scale-105"
       >
-        <SealGraphic size={40} />
+        <SealGraphic size={72} label="MENU" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[52px] w-72 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl z-50">
+        <div className="absolute right-0 top-[84px] w-72 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl z-50">
           <div className="border-b border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
             <p className="font-display text-sm font-semibold text-[var(--ink)]">
               {profile?.full_name || 'Your account'}
