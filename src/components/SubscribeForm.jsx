@@ -22,6 +22,8 @@ export default function SubscribeForm({ compact = false }) {
     } else {
       setStatus('done')
       setEmail('')
+      // Best-effort — don't block the subscribe confirmation on this
+      supabase.functions.invoke('subscriber-welcome', { body: { email } })
     }
   }
 

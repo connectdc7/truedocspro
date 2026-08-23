@@ -24,9 +24,11 @@ export default function StaffBlogEditor() {
   const [content, setContent] = useState('')
   const [author, setAuthor] = useState('True Doc Pros Team')
   const [published, setPublished] = useState(true)
+  const [initialPublished, setInitialPublished] = useState(false)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [notifyResult, setNotifyResult] = useState(null)
 
   useEffect(() => {
     if (isNew) return
@@ -45,6 +47,7 @@ export default function StaffBlogEditor() {
           setContent(data.content)
           setAuthor(data.author)
           setPublished(data.published)
+          setInitialPublished(data.published)
           setSlugEdited(true)
         }
         setLoading(false)
@@ -59,6 +62,7 @@ export default function StaffBlogEditor() {
   const handleSave = async () => {
     setSaving(true)
     setError('')
+    setNotifyResult(null)
     const payload = { title, slug, excerpt, content, author, published }
 
     const { error } = isNew
@@ -68,9 +72,24 @@ export default function StaffBlogEditor() {
     setSaving(false)
     if (error) {
       setError(error.message)
-    } else {
-      navigate('/staff/blog')
+      return
     }
+
+    // Only notify subscribers the moment a post actually becomes published
+    // — not on every subsequent edit to an already-published post.
+    const isNewlyPublished = published && (isNew || !initialPublished)
+    if (isNewlyPublished) {
+      const { data, error: notifyError } = await supabase.functions.invoke('notify-subscribers-new-post', {
+        body: { title, slug, excerpt },
+      })
+      if (!notifyError && data) {
+        setNotifyResult(`Notified ${data.sent} of ${data.total} subscribers.`)
+        setTimeout(() => navigate('/staff/blog'), 1500)
+        return
+      }
+    }
+
+    navigate('/staff/blog')
   }
 
   const handleDelete = async () => {
@@ -129,6 +148,7 @@ export default function StaffBlogEditor() {
           </label>
 
           {error && <p className="text-sm text-[var(--wax)]">{error}</p>}
+          {notifyResult && <p className="text-sm text-[var(--brass)]">{notifyResult}</p>}
 
           <div className="flex items-center justify-between pt-2">
             <button

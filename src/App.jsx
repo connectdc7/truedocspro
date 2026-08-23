@@ -6,6 +6,8 @@ import HowItWorks from './pages/HowItWorks'
 import Contact from './pages/Contact'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import InstallApp from './pages/InstallApp'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffRoute from './components/StaffRoute'
@@ -15,6 +17,7 @@ import AdminRoute from './components/AdminRoute'
 // main bundle means public marketing pages (the ones search engines and
 // first-time visitors hit) load faster.
 const Portal = lazy(() => import('./pages/Portal'))
+const Account = lazy(() => import('./pages/Account'))
 const NewOrder = lazy(() => import('./pages/NewOrder'))
 const OrderDetail = lazy(() => import('./pages/OrderDetail'))
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard'))
@@ -127,11 +130,21 @@ export default function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/portal"
           element={
             <ProtectedRoute>
               <Portal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <Account />
             </ProtectedRoute>
           }
         />

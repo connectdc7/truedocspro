@@ -34,6 +34,7 @@ export default function Navbar() {
           {user ? (
             <>
               <NavLink to="/portal" className={navLink}>Portal</NavLink>
+              <NavLink to="/account" className={navLink}>Account</NavLink>
               <NavLink to="/app" className={navLink}>Get the app</NavLink>
               {isStaff && (
                 <NavLink to="/staff" className={navLink}>
@@ -81,6 +82,7 @@ export default function Navbar() {
           {user ? (
             <>
               <NavLink to="/portal" className="py-2" onClick={() => setOpen(false)}>Portal</NavLink>
+              <NavLink to="/account" className="py-2" onClick={() => setOpen(false)}>Account</NavLink>
               {isStaff && (
                 <NavLink to="/staff" className="py-2" onClick={() => setOpen(false)}>Staff</NavLink>
               )}
