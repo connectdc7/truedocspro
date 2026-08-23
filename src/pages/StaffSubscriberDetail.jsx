@@ -38,7 +38,7 @@ export default function StaffSubscriberDetail() {
     }
     setDeleting(false)
     if (error) setError(error.message)
-    else navigate('/staff/subscribers')
+    else navigate('/staff/blog')
   }
 
   if (loading) {
@@ -54,8 +54,8 @@ export default function StaffSubscriberDetail() {
       <Layout>
         <div className="mx-auto max-w-xl px-6 py-20 text-center">
           <p className="font-display text-xl text-[var(--ink)]">Subscriber not found.</p>
-          <Link to="/staff/subscribers" className="mt-4 inline-block text-sm text-[var(--wax)] hover:underline">
-            ← Back to subscribers
+          <Link to="/staff/blog" className="mt-4 inline-block text-sm text-[var(--wax)] hover:underline">
+            ← Back to blog
           </Link>
         </div>
       </Layout>
@@ -65,8 +65,8 @@ export default function StaffSubscriberDetail() {
   return (
     <Layout>
       <section className="mx-auto max-w-xl px-6 py-16">
-        <Link to="/staff/subscribers" className="font-mono text-xs uppercase tracking-widest text-[var(--slate)] hover:text-[var(--wax)]">
-          ← Subscribers
+        <Link to="/staff/blog" className="font-mono text-xs uppercase tracking-widest text-[var(--slate)] hover:text-[var(--wax)]">
+          ← Blog
         </Link>
 
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">

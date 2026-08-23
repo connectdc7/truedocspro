@@ -7,10 +7,11 @@ export function getContextualMenu(pathname, { isStaff, isAdmin }) {
         { to: '/staff', label: '← All documents' },
         ...(isAdmin
           ? [
-              { to: '/staff/embassy-fees', label: 'Embassy fees' },
               { to: '/staff/sos-fees', label: 'SOS fees' },
+              { to: '/staff/embassy-fees', label: 'Embassy fees' },
               { to: '/staff/shipping-fees', label: 'Shipping fees' },
-              { to: '/staff/team', label: 'Team' },
+              { to: '/staff/blog', label: 'Manage blog' },
+              { to: '/staff/team', label: 'Team Members' },
             ]
           : []),
       ],
@@ -29,8 +30,8 @@ export function getContextualMenu(pathname, { isStaff, isAdmin }) {
   // Fee schedule pages — cross-link to the other two
   if (pathname === '/staff/embassy-fees' || pathname === '/staff/sos-fees' || pathname === '/staff/shipping-fees') {
     const feeLinks = [
-      { to: '/staff/embassy-fees', label: 'Embassy fees' },
       { to: '/staff/sos-fees', label: 'SOS fees' },
+      { to: '/staff/embassy-fees', label: 'Embassy fees' },
       { to: '/staff/shipping-fees', label: 'Shipping fees' },
     ]
     return {
@@ -41,7 +42,7 @@ export function getContextualMenu(pathname, { isStaff, isAdmin }) {
       ],
     }
   }
-  // Blog management pages
+  // Blog management pages (posts + subscribers both live here now)
   if (pathname.startsWith('/staff/blog')) {
     return {
       section: 'Blog management',
@@ -52,13 +53,13 @@ export function getContextualMenu(pathname, { isStaff, isAdmin }) {
       ],
     }
   }
-  // Subscribers page
+  // Individual subscriber detail page
   if (pathname.startsWith('/staff/subscribers')) {
     return {
       section: 'Subscribers',
       items: [
-        { to: '/staff', label: '← Staff dashboard' },
-        { to: '/staff/blog', label: 'Manage blog' },
+        { to: '/staff/blog', label: '← Blog & subscribers' },
+        { to: '/staff', label: 'Staff dashboard' },
       ],
     }
   }
@@ -67,12 +68,11 @@ export function getContextualMenu(pathname, { isStaff, isAdmin }) {
     const items = []
     if (isAdmin) {
       items.push(
-        { to: '/staff/team', label: 'Team' },
-        { to: '/staff/embassy-fees', label: 'Embassy fees' },
         { to: '/staff/sos-fees', label: 'SOS fees' },
+        { to: '/staff/embassy-fees', label: 'Embassy fees' },
         { to: '/staff/shipping-fees', label: 'Shipping fees' },
         { to: '/staff/blog', label: 'Manage blog' },
-        { to: '/staff/subscribers', label: 'Subscribers' }
+        { to: '/staff/team', label: 'Team Members' }
       )
     }
     items.push({ to: '/portal', label: 'My documents' })

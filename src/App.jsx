@@ -30,7 +30,6 @@ const StaffTeam = lazy(() => import('./pages/StaffTeam'))
 const StaffEmbassyFees = lazy(() => import('./pages/StaffEmbassyFees'))
 const StaffSosFees = lazy(() => import('./pages/StaffSosFees'))
 const StaffShippingFees = lazy(() => import('./pages/StaffShippingFees'))
-const StaffSubscribers = lazy(() => import('./pages/StaffSubscribers'))
 const StaffSubscriberDetail = lazy(() => import('./pages/StaffSubscriberDetail'))
 
 function PageFallback() {
@@ -111,14 +110,6 @@ export default function App() {
           element={
             <AdminRoute>
               <StaffShippingFees />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/staff/subscribers"
-          element={
-            <AdminRoute>
-              <StaffSubscribers />
             </AdminRoute>
           }
         />

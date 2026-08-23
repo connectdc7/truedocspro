@@ -91,22 +91,16 @@ export default function StaffDashboard() {
                   SOS fees
                 </Link>
                 <Link
-                  to="/staff/shipping-fees"
-                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                >
-                  Shipping fees
-                </Link>
-                <Link
                   to="/staff/embassy-fees"
                   className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
                 >
                   Embassy fees
                 </Link>
                 <Link
-                  to="/staff/team"
+                  to="/staff/shipping-fees"
                   className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
                 >
-                  Team
+                  Shipping fees
                 </Link>
                 <Link
                   to="/staff/blog"
@@ -115,10 +109,10 @@ export default function StaffDashboard() {
                   Manage blog
                 </Link>
                 <Link
-                  to="/staff/subscribers"
+                  to="/staff/team"
                   className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
                 >
-                  Subscribers
+                  Team Members
                 </Link>
               </>
             )}
