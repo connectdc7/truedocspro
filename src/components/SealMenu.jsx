@@ -128,7 +128,7 @@ export default function SealMenu() {
         aria-expanded={open}
         title="Account menu — drag to move"
         className="drop-shadow-lg transition-transform"
-        style={{ cursor: 'grab', transform: hovering ? 'scale(1.18)' : 'scale(1)' }}
+        style={{ cursor: 'grab', transform: hovering ? 'scale(1.6)' : 'scale(1)' }}
       >
         <SealGraphic size={SIZE} label="MENU" />
       </button>
