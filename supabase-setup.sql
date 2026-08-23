@@ -368,6 +368,11 @@ create policy "Admins can view subscribers"
   on subscribers for select
   using (is_admin());
 
+drop policy if exists "Admins can delete subscribers" on subscribers;
+create policy "Admins can delete subscribers"
+  on subscribers for delete
+  using (is_admin());
+
 -- 3c-b. Embassy fee schedule — anyone can read it (needed at checkout
 -- time before an order even exists), only admins can edit it.
 alter table embassy_fees enable row level security;

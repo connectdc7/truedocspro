@@ -90,6 +90,10 @@ export default function StaffTeam() {
         // This list only shows current staff — once access is removed,
         // drop them from view immediately so the list stays clean.
         setProfiles((prev) => prev.filter((p) => p.id !== profile.id))
+        const { error: removedEmailError } = await supabase.functions.invoke('notify-staff-removed', {
+          body: { email: profile.email, full_name: profile.full_name },
+        })
+        if (removedEmailError) setPromoteError('Staff access removed, but the notification email failed to send.')
       }
     } else {
       setError(error.message)
