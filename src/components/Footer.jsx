@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-12 grid gap-10 md:grid-cols-4">
         <div>
           <span className="font-display text-lg font-semibold text-[var(--ink)]">
-            True Docs <span className="text-[var(--wax)]">Pro</span>
+            True Doc <span className="text-[var(--wax)]">Pros</span>
           </span>
           <p className="mt-3 text-sm text-[var(--slate)] max-w-xs">
             Notary, apostille, and embassy legalization, handled document by document, with a paper trail you can see.
@@ -41,7 +41,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-[var(--line)] px-6 py-5 text-center text-xs text-[var(--slate)] font-mono">
-        © {new Date().getFullYear()} True Docs Pro. Documents remain accessible in your portal for 30 days after completion.
+        © {new Date().getFullYear()} True Doc Pros. Documents remain accessible in your portal for 30 days after completion.
       </div>
     </footer>
   )

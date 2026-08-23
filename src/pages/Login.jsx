@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient'
 import useDocumentHead from '../lib/useDocumentHead'
 
 export default function Login() {
-  useDocumentHead({ title: 'Log In', description: 'Log in to your True Docs Pro portal.', path: '/login' })
+  useDocumentHead({ title: 'Log In', description: 'Log in to your True Doc Pros portal.', path: '/login' })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')

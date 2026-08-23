@@ -348,7 +348,7 @@ export default function OrderDetail() {
 
         {isFirstOrder && paymentResult === 'success' && (
           <div className="mt-6 rounded-xl border border-[var(--ink)]/20 bg-[var(--ink)] p-6 text-[var(--parchment)]">
-            <p className="font-display text-lg font-semibold">Get the True Docs Pro app.</p>
+            <p className="font-display text-lg font-semibold">Get the True Doc Pros app.</p>
             <p className="mt-1 text-sm opacity-80">
               Track this document, upload your next one, and download completed copies straight from your phone.
             </p>

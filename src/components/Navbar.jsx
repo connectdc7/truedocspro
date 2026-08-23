@@ -22,7 +22,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
           <span className="logo-entrance font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
-            True Docs <span className="text-[var(--wax)]">Pro</span>
+            True Doc <span className="text-[var(--wax)]">Pros</span>
           </span>
         </Link>
 

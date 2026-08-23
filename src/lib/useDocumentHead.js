@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-const SITE_NAME = 'True Docs Pro'
+const SITE_NAME = 'True Doc Pros'
 const BASE_URL = 'https://truedocpros.com'
 
 /**

@@ -22,7 +22,7 @@ export default function StaffBlogEditor() {
   const [slugEdited, setSlugEdited] = useState(false)
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('True Docs Pro Team')
+  const [author, setAuthor] = useState('True Doc Pros Team')
   const [published, setPublished] = useState(true)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)

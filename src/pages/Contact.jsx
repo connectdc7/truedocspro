@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient'
 export default function Contact() {
   useDocumentHead({
     title: 'Contact',
-    description: 'Questions about notary, apostille, or embassy legalization? Reach True Docs Pro — we usually reply within one business day.',
+    description: 'Questions about notary, apostille, or embassy legalization? Reach True Doc Pros — we usually reply within one business day.',
     path: '/contact',
   })
   const [form, setForm] = useState({ name: '', email: '', message: '' })

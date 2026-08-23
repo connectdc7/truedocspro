@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Docs Pro <onboarding@resend.dev>'
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Doc Pros <onboarding@resend.dev>'
     const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocpros.com'
     const firstName = newStaff.full_name?.split(' ')[0] || 'there'
 
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
             Log in
           </a>
         </p>
-        <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Docs Pro</p>
+        <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Doc Pros</p>
       </div>
     `
 
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: fromEmail,
         to: newStaff.email,
-        subject: 'Welcome to the True Docs Pro team!',
+        subject: 'Welcome to the True Doc Pros team!',
         html,
       }),
     })

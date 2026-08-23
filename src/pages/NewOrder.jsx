@@ -13,7 +13,7 @@ const SERVICES = [
 ]
 
 // TODO: replace with your real mailing address before going live.
-const MAILING_ADDRESS = 'True Docs Pro\n[Street Address]\n[City, State ZIP]'
+const MAILING_ADDRESS = 'True Doc Pros\n[Street Address]\n[City, State ZIP]'
 
 export default function NewOrder() {
   const { user } = useAuth()

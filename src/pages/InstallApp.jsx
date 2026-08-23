@@ -13,7 +13,7 @@ function detectPlatform() {
 export default function InstallApp() {
   useDocumentHead({
     title: 'Get the App',
-    description: 'Install True Docs Pro on your phone to submit documents, track status, and download completed copies.',
+    description: 'Install True Doc Pros on your phone to submit documents, track status, and download completed copies.',
     path: '/app',
   })
   const canvasRef = useRef(null)
@@ -38,7 +38,7 @@ export default function InstallApp() {
       <section className="border-b border-[var(--line)] px-6 py-16 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--wax)]">Get the app</p>
         <h1 className="font-display mt-3 text-4xl font-semibold text-[var(--ink)]">
-          True Docs Pro, on your phone.
+          True Doc Pros, on your phone.
         </h1>
         <p className="mx-auto mt-3 max-w-md text-[var(--slate)]">
           Submit documents, pay, track status, and download completed copies — no app store needed.
@@ -62,7 +62,7 @@ export default function InstallApp() {
               'Open the link above in Safari (not Chrome — Safari is required for this step on iPhone).',
               'Tap the Share icon (square with an arrow pointing up) at the bottom of the screen.',
               'Scroll down and tap "Add to Home Screen."',
-              'Tap "Add" in the top right. The True Docs Pro icon now appears on your home screen like any other app.',
+              'Tap "Add" in the top right. The True Doc Pros icon now appears on your home screen like any other app.',
             ]}
           />
           <PlatformBlock
@@ -72,7 +72,7 @@ export default function InstallApp() {
               'Open the link above in Chrome.',
               'Tap the three-dot menu in the top right.',
               'Tap "Add to Home screen," then "Install."',
-              'The True Docs Pro icon now appears on your home screen and opens full-screen like any other app.',
+              'The True Doc Pros icon now appears on your home screen and opens full-screen like any other app.',
             ]}
           />
           <PlatformBlock
@@ -80,7 +80,7 @@ export default function InstallApp() {
             title="On a computer"
             steps={[
               'Open the link above in Chrome or Edge.',
-              'Click the install icon in the address bar (or the ⋮ menu → "Install True Docs Pro").',
+              'Click the install icon in the address bar (or the ⋮ menu → "Install True Doc Pros").',
               'The app opens in its own window, separate from your browser tabs.',
             ]}
           />

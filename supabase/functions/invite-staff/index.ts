@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     // request if this part has trouble)
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (resendKey) {
-      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Docs Pro <onboarding@resend.dev>'
+      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Doc Pros <onboarding@resend.dev>'
       const siteUrl = Deno.env.get('SITE_URL') || 'https://truedocpros.com'
       const firstName = full_name?.split(' ')[0] || 'there'
       const html = `
@@ -134,13 +134,13 @@ Deno.serve(async (req) => {
               Log in
             </a>
           </p>
-          <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Docs Pro</p>
+          <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Doc Pros</p>
         </div>
       `
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: fromEmail, to: email, subject: 'Welcome to the True Docs Pro team!', html }),
+        body: JSON.stringify({ from: fromEmail, to: email, subject: 'Welcome to the True Doc Pros team!', html }),
       })
     }
 

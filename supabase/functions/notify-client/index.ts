@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Docs Pro <onboarding@resend.dev>'
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'True Doc Pros <onboarding@resend.dev>'
 
     const html = `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; color: #16233F;">
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
             View your document
           </a>
         </p>
-        <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Docs Pro</p>
+        <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Doc Pros</p>
       </div>
     `
 
