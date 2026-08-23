@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
           </p>
           <p>Once you're in, you'll see a Staff tab in your portal to get started.</p>
           <p style="margin-top:24px;font-size:12px;color:#57616F;">— True Doc Pros</p>
+        <div style="text-align:center; margin-top:20px;"><img src="https://truedocpros.com/email-seal.png" width="56" height="56" alt="True Doc Pros" style="display:inline-block;" /></div>
         </div>
       `
         : `
@@ -163,6 +164,7 @@ Deno.serve(async (req) => {
             </a>
           </p>
           <p style="margin-top:24px;font-size:12px;color:#57616F;">— True Doc Pros</p>
+        <div style="text-align:center; margin-top:20px;"><img src="https://truedocpros.com/email-seal.png" width="56" height="56" alt="True Doc Pros" style="display:inline-block;" /></div>
         </div>
       `
 

@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
           </a>
         </p>
         <p style="margin-top:24px;font-size:12px;color:#5C6470;">— True Doc Pros</p>
+        <div style="text-align:center; margin-top:20px;"><img src="https://truedocpros.com/email-seal.png" width="56" height="56" alt="True Doc Pros" style="display:inline-block;" /></div>
       </div>
     `
 
