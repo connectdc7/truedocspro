@@ -33,7 +33,7 @@ export default function ServiceFlipCard({ name, turnaround, definition, visual, 
         </div>
 
         {/* Back */}
-        <div className="flip-card-back rounded-2xl border border-[var(--wax)]/30 bg-[var(--parchment-dim)] p-6 flex flex-col overflow-y-auto">
+        <div className="flip-card-face flip-card-back rounded-2xl border border-[var(--wax)]/30 bg-[var(--parchment-dim)] p-6 flex flex-col overflow-y-auto">
           <h3 className="font-display text-base font-semibold text-[var(--ink)]">{name}</h3>
           <p className="mt-2 text-xs leading-relaxed text-[var(--slate)]">{definition}</p>
 
