@@ -403,7 +403,11 @@ export default function BouncingSeal() {
             {isStaff && profile?.title && (
               <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--brass)]">{profile.title}</p>
             )}
-            <p className="mt-1.5 text-xs text-[var(--slate)]">{profile?.email || user.email}</p>
+            <p className="mt-1.5 text-xs text-[var(--slate)]">
+              <a href={`mailto:${profile?.email || user.email}`} className="hover:text-[var(--wax)] hover:underline">
+                {profile?.email || user.email}
+              </a>
+            </p>
             <p className="text-xs text-[var(--slate)]">
               {profile?.phone || (
                 <Link to="/account" onClick={() => setMenuOpen(false)} className="text-[var(--wax)] hover:underline">
