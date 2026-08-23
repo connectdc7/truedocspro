@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import HeroGraphic from '../components/HeroGraphic'
+import ServiceFlipCard from '../components/ServiceFlipCard'
+import CountryChecker from '../components/CountryChecker'
+import { NotaryVisual, ApostilleVisual, EmbassyVisual } from '../components/ServiceVisuals'
 import useDocumentHead from '../lib/useDocumentHead'
 
 const SERVICES = [
@@ -9,18 +12,24 @@ const SERVICES = [
     name: 'Notary',
     desc: 'A commissioned notary witnesses your signature and confirms your identity, in person or online.',
     turnaround: 'Same day',
+    definition:
+      'A notarization is an official act where a commissioned notary public witnesses you sign a document, verifies your identity, and applies their seal — confirming the signature is genuinely yours. It\'s the foundation nearly every apostille or embassy legalization builds on.',
   },
   {
     id: 'apostille',
     name: 'Apostille',
     desc: 'Authentication for use in any of the 120+ Hague Convention member countries. One certificate, no embassy visit.',
     turnaround: '3–7 business days',
+    definition:
+      'An apostille is a standardized certificate — recognized by every member of the 1961 Hague Convention — that authenticates a document for use in another member country, without any embassy visit required. One certificate, accepted everywhere in the Convention.',
   },
   {
     id: 'embassy',
     name: 'Embassy legalization',
     desc: 'Full chain legalization for countries outside the Hague Convention — county, state, and embassy authentication.',
     turnaround: '2–4 weeks',
+    definition:
+      'For countries that haven\'t joined the Hague Convention, a document needs a full chain of authentication instead of a single apostille: notarization, then state-level authentication, then U.S. State Department authentication, and finally legalization by the destination country\'s own embassy or consulate.',
   },
 ]
 
@@ -75,14 +84,25 @@ export default function Home() {
             Full pricing →
           </Link>
         </div>
+        <p className="mt-3 text-sm text-[var(--slate)]">Tap any card to see what it actually means.</p>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {SERVICES.map((s) => (
-            <div key={s.id} id={s.id} className="rounded-2xl border border-[var(--line)] bg-white/40 p-7">
-              <h3 className="font-display text-xl font-semibold text-[var(--ink)]">{s.name}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">{s.desc}</p>
-              <p className="mt-5 font-mono text-xs uppercase tracking-widest text-[var(--brass)]">
-                Turnaround: {s.turnaround}
-              </p>
+            <div key={s.id} id={s.id}>
+              <ServiceFlipCard
+                name={s.name}
+                turnaround={s.turnaround}
+                definition={s.definition}
+                visual={
+                  s.id === 'notary' ? <NotaryVisual /> : s.id === 'apostille' ? <ApostilleVisual /> : <EmbassyVisual />
+                }
+                checker={
+                  s.id === 'apostille' ? (
+                    <CountryChecker mode="hague" datalistId="home-country-list-apostille" />
+                  ) : s.id === 'embassy' ? (
+                    <CountryChecker mode="non-hague" datalistId="home-country-list-embassy" />
+                  ) : null
+                }
+              />
             </div>
           ))}
         </div>
