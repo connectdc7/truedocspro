@@ -15,12 +15,12 @@ export default function ForgotPassword() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+    const { data, error } = await supabase.functions.invoke('request-password-reset', {
+      body: { email },
     })
     setLoading(false)
-    if (error) {
-      setError(error.message)
+    if (error || data?.error) {
+      setError(data?.error || error.message)
     } else {
       setSent(true)
     }
