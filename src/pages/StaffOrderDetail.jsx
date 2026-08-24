@@ -52,6 +52,8 @@ export default function StaffOrderDetail() {
   const [showInvoice, setShowInvoice] = useState(false)
   const [sendingInvoice, setSendingInvoice] = useState(false)
   const [invoiceSentResult, setInvoiceSentResult] = useState(null)
+  const [sendingUnpaidFeesEmail, setSendingUnpaidFeesEmail] = useState(false)
+  const [unpaidFeesEmailResult, setUnpaidFeesEmailResult] = useState(null)
 
   useEffect(() => {
     load()
@@ -280,6 +282,23 @@ export default function StaffOrderDetail() {
       setInvoiceSentResult({ ok: false, message: data?.error || invoiceError.message })
     } else {
       setInvoiceSentResult({ ok: true, message: 'Sent — the client has been emailed this breakdown.' })
+    }
+  }
+
+  const emailUnpaidFees = async () => {
+    setSendingUnpaidFeesEmail(true)
+    setUnpaidFeesEmailResult(null)
+    const { data, error: feesEmailError } = await supabase.functions.invoke('notify-unpaid-fees', {
+      body: { order_id: id },
+    })
+    setSendingUnpaidFeesEmail(false)
+    if (feesEmailError || data?.error) {
+      setUnpaidFeesEmailResult({ ok: false, message: data?.error || feesEmailError.message })
+    } else {
+      setUnpaidFeesEmailResult({
+        ok: true,
+        message: `Sent — the client has been emailed a direct payment link for $${(data.total_cents / 100).toFixed(2)}.`,
+      })
     }
   }
 
@@ -770,10 +789,24 @@ export default function StaffOrderDetail() {
             }
             if (hasUnpaidFees) {
               return (
-                <p className="mt-3 text-xs text-[var(--wax)]">
-                  This order has unpaid additional fees. The client must pay them before the completed
-                  document can be delivered — see Additional fees below.
-                </p>
+                <div className="mt-3">
+                  <p className="text-xs text-[var(--wax)]">
+                    This order has unpaid additional fees. The client must pay them before the completed
+                    document can be delivered — see Additional fees below.
+                  </p>
+                  <button
+                    onClick={emailUnpaidFees}
+                    disabled={sendingUnpaidFeesEmail}
+                    className="mt-3 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+                  >
+                    {sendingUnpaidFeesEmail ? 'Sending…' : 'Email client to pay before delivery'}
+                  </button>
+                  {unpaidFeesEmailResult && (
+                    <p className={`mt-3 text-sm ${unpaidFeesEmailResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+                      {unpaidFeesEmailResult.message}
+                    </p>
+                  )}
+                </div>
               )
             }
             return (

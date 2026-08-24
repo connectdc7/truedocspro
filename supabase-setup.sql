@@ -598,6 +598,7 @@ create policy "Staff can read assigned order documents"
 -- Admins can delete any document (used when deleting an order)
 drop policy if exists "Staff can delete documents" on storage.objects;
 drop policy if exists "Admins can delete documents" on storage.objects;
+drop policy if exists "Staff can delete documents for assigned orders" on storage.objects;
 create policy "Staff can delete documents for assigned orders"
   on storage.objects for delete
   using (
