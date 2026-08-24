@@ -7,9 +7,9 @@ import ProcessingQueue, { isProcessingComplete } from '../components/ProcessingQ
 
 const SERVICE_LABEL = { notary: 'Notary', apostille: 'Apostille', embassy: 'Embassy legalization' }
 const SERVICES = [
-  { value: 'notary', label: 'Notary' },
-  { value: 'apostille', label: 'Apostille' },
-  { value: 'embassy', label: 'Embassy legalization' },
+  { value: 'notary', label: 'Notary', price: 25, expedite: 15 },
+  { value: 'apostille', label: 'Apostille', price: 85, expedite: 40 },
+  { value: 'embassy', label: 'Embassy legalization', price: 150, expedite: 75 },
 ]
 const STATUS_LABEL = { received: 'Received', in_process: 'In process', ready: 'Ready', shipped: 'Shipped / Returned' }
 const STATUSES = [
@@ -49,6 +49,10 @@ export default function StaffOrderDetail() {
   const [completedFile, setCompletedFile] = useState(null)
   const [uploadingCompletedFile, setUploadingCompletedFile] = useState(false)
   const [completedUploadResult, setCompletedUploadResult] = useState(null)
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState(null)
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [sendingInvoice, setSendingInvoice] = useState(false)
+  const [invoiceSentResult, setInvoiceSentResult] = useState(null)
   const [uploadingStaffFile, setUploadingStaffFile] = useState(false)
 
   useEffect(() => {
@@ -266,6 +270,43 @@ export default function StaffOrderDetail() {
     }
   }
 
+  const deleteCompletedDocument = async (attachment) => {
+    if (!window.confirm(`Remove "${attachment.file_name}"? The client will no longer be able to view or download it.`)) return
+    setDeletingAttachmentId(attachment.id)
+    await supabase.storage.from(DOCUMENTS_BUCKET).remove([attachment.file_path])
+    const { error } = await supabase.from('order_attachments').delete().eq('id', attachment.id)
+    setDeletingAttachmentId(null)
+    if (!error) await loadAttachments()
+    else setError(error.message)
+  }
+
+  const invoiceBreakdown = () => {
+    const service = SERVICES.find((s) => s.value === order.service) || SERVICES[0]
+    const items = [{ label: `${service.label} handling fee`, amount: service.price }]
+    if (order.is_expedited) items.push({ label: 'Expedited processing', amount: service.expedite })
+    if (order.arrived_notarized) items.push({ label: 'Notary fee (waived — arrived pre-notarized)', amount: 0 })
+    if (order.sos_fee_cents > 0) items.push({ label: `Secretary of State fee${order.origin_state ? ` (${order.origin_state})` : ''}`, amount: order.sos_fee_cents / 100 })
+    if (order.embassy_fee_cents > 0) items.push({ label: `Embassy fee${order.destination_country ? ` (${order.destination_country})` : ''}`, amount: order.embassy_fee_cents / 100 })
+    fees.forEach((fee) => items.push({ label: `${fee.description}${fee.paid ? ' (paid)' : ''}`, amount: fee.amount_cents / 100 }))
+    const total = items.reduce((sum, item) => sum + item.amount, 0)
+    return { items, total }
+  }
+
+  const emailInvoice = async () => {
+    setSendingInvoice(true)
+    setInvoiceSentResult(null)
+    const { items, total } = invoiceBreakdown()
+    const { data, error: invoiceError } = await supabase.functions.invoke('notify-preliminary-invoice', {
+      body: { order_id: id, items, total },
+    })
+    setSendingInvoice(false)
+    if (invoiceError || data?.error) {
+      setInvoiceSentResult({ ok: false, message: data?.error || invoiceError.message })
+    } else {
+      setInvoiceSentResult({ ok: true, message: 'Sent — the client has been emailed this breakdown.' })
+    }
+  }
+
   const sendManualEmail = async () => {
     if (!manualSubject.trim() || !manualMessage.trim()) return
     setSendingManual(true)
@@ -402,6 +443,7 @@ export default function StaffOrderDetail() {
           Submitted {new Date(order.created_at).toLocaleDateString()}
         </p>
 
+        {/* 1. Assigned to */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Assigned to</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -424,9 +466,206 @@ export default function StaffOrderDetail() {
               <p className="text-sm text-[var(--ink)]">Assigned to you</p>
             )}
           </div>
+          {notifyError && <p className="mt-3 text-xs text-[var(--wax)]">{notifyError}</p>}
         </div>
 
-        {/* Additional fees */}
+        {/* 2. Client info */}
+        <div className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <InfoBlock label="Client" value={order.profiles?.email ?? '—'} />
+          <InfoBlock
+            label="Payment"
+            value={order.payment_status === 'paid' ? `Paid ($${(order.amount_cents / 100).toFixed(2)})` : 'Unpaid'}
+            highlight={order.payment_status !== 'paid'}
+          />
+          {order.contact_name && <InfoBlock label="Contact name" value={order.contact_name} />}
+          {order.company_name && <InfoBlock label="Company" value={order.company_name} />}
+          {order.contact_phone && <InfoBlock label="Phone" value={order.contact_phone} />}
+          {order.destination_country && <InfoBlock label="Country of use" value={order.destination_country} />}
+          {order.origin_state && <InfoBlock label="State of origin" value={order.origin_state} />}
+          {order.sos_fee_cents > 0 && (
+            <InfoBlock label="SOS fee charged" value={`$${(order.sos_fee_cents / 100).toFixed(2)}`} />
+          )}
+          <InfoBlock label="Document type" value={order.document_type === 'business' ? 'Business' : 'Personal'} />
+          {order.embassy_fee_cents > 0 && (
+            <InfoBlock label="Embassy fee charged" value={`$${(order.embassy_fee_cents / 100).toFixed(2)}`} />
+          )}
+          {order.needed_by_date && (
+            <InfoBlock label="Requested completion" value={new Date(order.needed_by_date).toLocaleDateString()} />
+          )}
+        </div>
+
+        {/* 3. Service requested */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Service requested</p>
+          <p className="mt-2 text-lg font-medium text-[var(--ink)]">{SERVICE_LABEL[order.service]}</p>
+        </div>
+
+        {order.notes && (
+          <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Client notes</p>
+            <p className="mt-2 text-sm text-[var(--ink)]/85">{order.notes}</p>
+          </div>
+        )}
+
+        {downloadUrl ? (
+          <a
+            href={downloadUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-block rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+          >
+            View uploaded document
+          </a>
+        ) : order.mail_in ? (
+          <div className="mt-6 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 px-4 py-3">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Mail-in document</p>
+            <p className="mt-1 text-sm text-[var(--ink)]">Client is mailing the physical document — no file uploaded.</p>
+          </div>
+        ) : null}
+
+        {/* Email the client */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email the client</p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            Status changes and document requests email the client automatically. Use this for anything else —
+            a rename, a service change, or a general note.
+          </p>
+          <div className="mt-3 space-y-2">
+            <input
+              placeholder="Subject"
+              value={manualSubject}
+              onChange={(e) => setManualSubject(e.target.value)}
+              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
+            />
+            <textarea
+              rows={3}
+              placeholder="Message"
+              value={manualMessage}
+              onChange={(e) => setManualMessage(e.target.value)}
+              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+            />
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              onClick={sendManualEmail}
+              disabled={sendingManual || !manualSubject.trim() || !manualMessage.trim()}
+              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {sendingManual ? 'Sending…' : 'Send email'}
+            </button>
+            {manualSent && <p className="font-mono text-xs text-[var(--brass)]">Sent.</p>}
+          </div>
+        </div>
+
+        {/* 4. Internal processing queue */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <ProcessingQueue order={order} onUpdate={(fields) => setOrder((prev) => ({ ...prev, ...fields }))} />
+        </div>
+
+        {/* 5. Request supporting documents */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Request supporting documents</p>
+
+          {order.request_status === 'requested' ? (
+            <div className="mt-3 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-4">
+              <p className="text-sm text-[var(--ink)]">{order.requested_documents}</p>
+              <p className="mt-2 font-mono text-xs uppercase text-[var(--brass)]">Waiting on client</p>
+              <button
+                onClick={clearRequest}
+                disabled={sendingRequest}
+                className="mt-3 rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+              >
+                Mark as fulfilled
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <textarea
+                rows={2}
+                value={requestNote}
+                onChange={(e) => setRequestNote(e.target.value)}
+                placeholder="e.g. Please upload a color scan of your passport photo page"
+                className="w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+              />
+              <button
+                onClick={sendRequest}
+                disabled={sendingRequest || !requestNote.trim()}
+                className="mt-3 rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+              >
+                {sendingRequest ? 'Sending…' : 'Request from client'}
+              </button>
+              <p className="mt-2 text-xs text-[var(--slate)]">
+                The client sees this the moment they open their portal, with an upload box right there.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Return shipping label */}
+        {attachments.filter((a) => a.category === 'return_label').length > 0 && (
+          <div className="mt-6 rounded-2xl border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-6">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Return shipping label</p>
+            <div className="mt-3 space-y-2">
+              {attachments.filter((a) => a.category === 'return_label').map((a) => (
+                <a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-lg border border-[var(--brass)]/40 bg-white/40 px-4 py-2.5 hover:border-[var(--brass)] transition-colors"
+                >
+                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Return label'}</span>
+                  <span className="font-mono text-xs text-[var(--brass)]">
+                    Uploaded {new Date(a.created_at).toLocaleDateString()}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Supporting documents */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
+
+          {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document').length === 0 ? (
+            <p className="mt-3 text-sm text-[var(--slate)]">None uploaded yet.</p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document').map((a) => (
+                <a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-2.5 hover:border-[var(--wax)] transition-colors"
+                >
+                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Document'}</span>
+                  <span className="font-mono text-xs text-[var(--slate)]">
+                    {a.uploaded_by === 'client' ? 'From client' : 'Staff upload'} · {new Date(a.created_at).toLocaleDateString()}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              type="file"
+              onChange={(e) => setStaffFile(e.target.files?.[0] ?? null)}
+              className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
+            />
+            <button
+              onClick={uploadStaffAttachment}
+              disabled={!staffFile || uploadingStaffFile}
+              className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {uploadingStaffFile ? 'Uploading…' : 'Attach file'}
+            </button>
+          </div>
+        </div>
+
+        {/* 6. Additional fees */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
             Additional fees <span className="normal-case">(Secretary of State, embassy, etc.)</span>
@@ -536,198 +775,7 @@ export default function StaffOrderDetail() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-4">
-          <InfoBlock label="Client" value={order.profiles?.email ?? '—'} />
-          <InfoBlock
-            label="Payment"
-            value={order.payment_status === 'paid' ? `Paid ($${(order.amount_cents / 100).toFixed(2)})` : 'Unpaid'}
-            highlight={order.payment_status !== 'paid'}
-          />
-          {order.contact_name && <InfoBlock label="Contact name" value={order.contact_name} />}
-          {order.company_name && <InfoBlock label="Company" value={order.company_name} />}
-          {order.contact_phone && <InfoBlock label="Phone" value={order.contact_phone} />}
-          {order.destination_country && <InfoBlock label="Country of use" value={order.destination_country} />}
-          {order.origin_state && <InfoBlock label="State of origin" value={order.origin_state} />}
-          {order.sos_fee_cents > 0 && (
-            <InfoBlock label="SOS fee charged" value={`$${(order.sos_fee_cents / 100).toFixed(2)}`} />
-          )}
-          <InfoBlock label="Document type" value={order.document_type === 'business' ? 'Business' : 'Personal'} />
-          {order.embassy_fee_cents > 0 && (
-            <InfoBlock label="Embassy fee charged" value={`$${(order.embassy_fee_cents / 100).toFixed(2)}`} />
-          )}
-          {order.needed_by_date && (
-            <InfoBlock label="Requested completion" value={new Date(order.needed_by_date).toLocaleDateString()} />
-          )}
-        </div>
-
-        {notifyError && (
-          <p className="mt-3 text-xs text-[var(--wax)]">{notifyError}</p>
-        )}
-
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email the client</p>
-          <p className="mt-1 text-xs text-[var(--slate)]">
-            Status changes and document requests email the client automatically. Use this for anything else —
-            a rename, a service change, or a general note.
-          </p>
-          <div className="mt-3 space-y-2">
-            <input
-              placeholder="Subject"
-              value={manualSubject}
-              onChange={(e) => setManualSubject(e.target.value)}
-              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
-            />
-            <textarea
-              rows={3}
-              placeholder="Message"
-              value={manualMessage}
-              onChange={(e) => setManualMessage(e.target.value)}
-              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
-            />
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              onClick={sendManualEmail}
-              disabled={sendingManual || !manualSubject.trim() || !manualMessage.trim()}
-              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
-            >
-              {sendingManual ? 'Sending…' : 'Send email'}
-            </button>
-            {manualSent && <p className="font-mono text-xs text-[var(--brass)]">Sent.</p>}
-          </div>
-        </div>
-
-        {order.notes && (
-          <div className="mt-6 rounded-xl border border-[var(--line)] p-5">
-            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Client notes</p>
-            <p className="mt-2 text-sm text-[var(--ink)]/85">{order.notes}</p>
-          </div>
-        )}
-
-        {downloadUrl ? (
-          <a
-            href={downloadUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-6 inline-block rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-          >
-            View uploaded document
-          </a>
-        ) : order.mail_in ? (
-          <div className="mt-6 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 px-4 py-3">
-            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Mail-in document</p>
-            <p className="mt-1 text-sm text-[var(--ink)]">Client is mailing the physical document — no file uploaded.</p>
-          </div>
-        ) : null}
-
-        {/* Request supporting documents */}
-        <div className="mt-10 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Request supporting documents</p>
-
-          {order.request_status === 'requested' ? (
-            <div className="mt-3 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-4">
-              <p className="text-sm text-[var(--ink)]">{order.requested_documents}</p>
-              <p className="mt-2 font-mono text-xs uppercase text-[var(--brass)]">Waiting on client</p>
-              <button
-                onClick={clearRequest}
-                disabled={sendingRequest}
-                className="mt-3 rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-              >
-                Mark as fulfilled
-              </button>
-            </div>
-          ) : (
-            <div className="mt-3">
-              <textarea
-                rows={2}
-                value={requestNote}
-                onChange={(e) => setRequestNote(e.target.value)}
-                placeholder="e.g. Please upload a color scan of your passport photo page"
-                className="w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
-              />
-              <button
-                onClick={sendRequest}
-                disabled={sendingRequest || !requestNote.trim()}
-                className="mt-3 rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
-              >
-                {sendingRequest ? 'Sending…' : 'Request from client'}
-              </button>
-              <p className="mt-2 text-xs text-[var(--slate)]">
-                The client sees this the moment they open their portal, with an upload box right there.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Processing */}
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <ProcessingQueue order={order} onUpdate={(fields) => setOrder((prev) => ({ ...prev, ...fields }))} />
-        </div>
-
-        {/* Return shipping label */}
-        {attachments.filter((a) => a.category === 'return_label').length > 0 && (
-          <div className="mt-6 rounded-2xl border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-6">
-            <p className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Return shipping label</p>
-            <div className="mt-3 space-y-2">
-              {attachments.filter((a) => a.category === 'return_label').map((a) => (
-                <a
-                  key={a.id}
-                  href={a.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between rounded-lg border border-[var(--brass)]/40 bg-white/40 px-4 py-2.5 hover:border-[var(--brass)] transition-colors"
-                >
-                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Return label'}</span>
-                  <span className="font-mono text-xs text-[var(--brass)]">
-                    Uploaded {new Date(a.created_at).toLocaleDateString()}
-                  </span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Attachments */}
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
-
-          {attachments.filter((a) => a.category !== 'return_label').length === 0 ? (
-            <p className="mt-3 text-sm text-[var(--slate)]">None uploaded yet.</p>
-          ) : (
-            <div className="mt-3 space-y-2">
-              {attachments.filter((a) => a.category !== 'return_label').map((a) => (
-                <a
-                  key={a.id}
-                  href={a.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-2.5 hover:border-[var(--wax)] transition-colors"
-                >
-                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Document'}</span>
-                  <span className="font-mono text-xs text-[var(--slate)]">
-                    {a.uploaded_by === 'client' ? 'From client' : 'Staff upload'} · {new Date(a.created_at).toLocaleDateString()}
-                  </span>
-                </a>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 flex items-center gap-2">
-            <input
-              type="file"
-              onChange={(e) => setStaffFile(e.target.files?.[0] ?? null)}
-              className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
-            />
-            <button
-              onClick={uploadStaffAttachment}
-              disabled={!staffFile || uploadingStaffFile}
-              className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
-            >
-              {uploadingStaffFile ? 'Uploading…' : 'Attach file'}
-            </button>
-          </div>
-        </div>
-
+        {/* Update status */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Update status</p>
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -752,11 +800,42 @@ export default function StaffOrderDetail() {
               The client's 30-day download window started the moment this was first marked Ready.
             </p>
           )}
+        </div>
+
+        {/* 7. Upload completed document */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Completed document</p>
+
+          {attachments.filter((a) => a.category === 'completed_document').length > 0 && (
+            <div className="mt-3 space-y-2">
+              {attachments.filter((a) => a.category === 'completed_document').map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between rounded-lg border border-[var(--wax)]/40 bg-[var(--wax)]/5 px-4 py-2.5"
+                >
+                  <a href={a.url} target="_blank" rel="noreferrer" className="text-sm text-[var(--ink)] hover:text-[var(--wax)]">
+                    {a.file_name || 'Completed document'}
+                  </a>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs text-[var(--slate)]">
+                      {new Date(a.created_at).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={() => deleteCompletedDocument(a)}
+                      disabled={deletingAttachmentId === a.id}
+                      className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
+                    >
+                      {deletingAttachmentId === a.id ? 'Removing…' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {isProcessingComplete(order) ? (
-            <div className="mt-6 border-t border-[var(--line)] pt-5">
-              <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Upload completed document</p>
-              <p className="mt-1 text-xs text-[var(--slate)]">
+            <div className="mt-4">
+              <p className="text-xs text-[var(--slate)]">
                 Uploads the finished, certified document and emails the client a link to view and download it.
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -780,13 +859,59 @@ export default function StaffOrderDetail() {
               )}
             </div>
           ) : (
-            <div className="mt-6 border-t border-[var(--line)] pt-5">
-              <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Upload completed document</p>
-              <p className="mt-1 text-xs text-[var(--slate)]">
-                Finish every step in Processing above to unlock uploading the completed document.
-              </p>
-            </div>
+            <p className="mt-3 text-xs text-[var(--slate)]">
+              Finish every step in Processing above to unlock uploading the completed document.
+            </p>
           )}
+        </div>
+
+        {/* 8. Preliminary invoice */}
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Preliminary invoice</p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            An itemized breakdown of this order's cost, based on the handling fee, any surcharges, and fees added so far.
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowInvoice((v) => !v)}
+              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              {showInvoice ? 'Hide invoice' : 'View preliminary invoice'}
+            </button>
+            <button
+              onClick={emailInvoice}
+              disabled={sendingInvoice}
+              className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+            >
+              {sendingInvoice ? 'Sending…' : 'Email preliminary invoice to client'}
+            </button>
+          </div>
+          {invoiceSentResult && (
+            <p className={`mt-3 text-sm ${invoiceSentResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+              {invoiceSentResult.message}
+            </p>
+          )}
+
+          {showInvoice && (() => {
+            const { items, total } = invoiceBreakdown()
+            return (
+              <div className="mt-4 rounded-lg border border-[var(--line)] bg-white/70 p-4">
+                <div className="space-y-1.5">
+                  {items.map((item, i) => (
+                    <div key={i} className="flex justify-between text-sm text-[var(--ink)]/85">
+                      <span>{item.label}</span>
+                      <span>${item.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex justify-between border-t border-[var(--line)] pt-3">
+                  <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Total</span>
+                  <span className="font-display text-lg font-semibold text-[var(--ink)]">${total.toFixed(2)}</span>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </section>
     </Layout>
