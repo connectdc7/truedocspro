@@ -5,12 +5,29 @@ import { getContextualMenu } from '../lib/sealMenu'
 import SealGraphic from './SealGraphic'
 
 const SIZE = 72
-const DOCK_TOP = 16
-const DOCK_RIGHT = 24
+const DOCK_TOP_DESKTOP = 16
+const DOCK_TOP_MOBILE = 76 // clears the header row entirely, so it never overlaps the hamburger button
+const DOCK_RIGHT = 16
+
+function useDockTop() {
+  const [dockTop, setDockTop] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? DOCK_TOP_MOBILE : DOCK_TOP_DESKTOP
+  )
+  useEffect(() => {
+    const handleResize = () => {
+      setDockTop(window.innerWidth < 768 ? DOCK_TOP_MOBILE : DOCK_TOP_DESKTOP)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+  return dockTop
+}
 
 // Static seal in the same top-right spot on every page, once logged
 // in. Click opens the account menu; hover grows it slightly for
-// feedback. No dragging or movement — stays put consistently.
+// feedback. No dragging or movement — stays put consistently. Sits
+// just below the header on mobile so it never overlaps the hamburger
+// menu button.
 export default function SealMenu() {
   const { user, isStaff, isAdmin, profile, signOut } = useAuth()
   const location = useLocation()
@@ -19,6 +36,7 @@ export default function SealMenu() {
   const [hovering, setHovering] = useState(false)
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
+  const dockTop = useDockTop()
 
   useEffect(() => {
     setOpen(false)
@@ -54,7 +72,7 @@ export default function SealMenu() {
       ref={wrapRef}
       style={{
         position: 'fixed',
-        top: DOCK_TOP,
+        top: dockTop,
         right: DOCK_RIGHT,
         zIndex: 60,
       }}
