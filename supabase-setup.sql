@@ -129,6 +129,7 @@ alter table orders add column if not exists document_type text not null default 
 alter table orders add column if not exists embassy_fee_cents integer not null default 0;
 alter table orders add column if not exists origin_state text;
 alter table orders add column if not exists sos_fee_cents integer not null default 0;
+alter table orders add column if not exists arrived_notarized boolean not null default false;
 
 do $$
 begin

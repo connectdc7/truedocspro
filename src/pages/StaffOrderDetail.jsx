@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
-import { US_STATES, EMBASSY_COUNTRIES } from '../lib/countries'
+import ProcessingQueue, { isProcessingComplete } from '../components/ProcessingQueue'
 
 const SERVICE_LABEL = { notary: 'Notary', apostille: 'Apostille', embassy: 'Embassy legalization' }
 const SERVICES = [
@@ -18,7 +18,6 @@ const STATUSES = [
   { value: 'ready', label: 'Ready' },
   { value: 'shipped', label: 'Shipped / Returned' },
 ]
-const STAGE_NAMES = ['Notary', 'Secretary of State', 'U.S. State Department', 'Embassy']
 
 export default function StaffOrderDetail() {
   const { id } = useParams()
@@ -43,22 +42,6 @@ export default function StaffOrderDetail() {
 
   const [staffList, setStaffList] = useState([])
   const [assigning, setAssigning] = useState(false)
-
-  const [queues, setQueues] = useState({
-    current_stage: 1,
-    notary_start_date: '',
-    notary_complete_date: '',
-    sos_stage_state: '',
-    sos_start_date: '',
-    sos_complete_date: '',
-    state_dept_start_date: '',
-    state_dept_complete_date: '',
-    embassy_stage_country: '',
-    embassy_start_date: '',
-    embassy_complete_date: '',
-  })
-  const [savingQueues, setSavingQueues] = useState(false)
-  const [queuesSaved, setQueuesSaved] = useState(false)
 
   const [requestNote, setRequestNote] = useState('')
   const [sendingRequest, setSendingRequest] = useState(false)
@@ -97,19 +80,6 @@ export default function StaffOrderDetail() {
     }
     setOrder(data)
     setRequestNote(data.requested_documents || '')
-    setQueues({
-      current_stage: data.current_stage || 1,
-      notary_start_date: data.notary_start_date || '',
-      notary_complete_date: data.notary_complete_date || '',
-      sos_stage_state: data.sos_stage_state || '',
-      sos_start_date: data.sos_start_date || '',
-      sos_complete_date: data.sos_complete_date || '',
-      state_dept_start_date: data.state_dept_start_date || '',
-      state_dept_complete_date: data.state_dept_complete_date || '',
-      embassy_stage_country: data.embassy_stage_country || '',
-      embassy_start_date: data.embassy_start_date || '',
-      embassy_complete_date: data.embassy_complete_date || '',
-    })
 
     if (data.file_path) {
       const { data: signed } = await supabase.storage
@@ -194,33 +164,6 @@ export default function StaffOrderDetail() {
     setAssigning(false)
     if (!error) {
       setOrder((prev) => ({ ...prev, assigned_to: staffId || null }))
-    } else {
-      setError(error.message)
-    }
-  }
-
-  const saveQueues = async () => {
-    setSavingQueues(true)
-    setQueuesSaved(false)
-    const payload = {
-      current_stage: queues.current_stage,
-      notary_start_date: queues.notary_start_date || null,
-      notary_complete_date: queues.notary_complete_date || null,
-      sos_stage_state: queues.sos_stage_state || null,
-      sos_start_date: queues.sos_start_date || null,
-      sos_complete_date: queues.sos_complete_date || null,
-      state_dept_start_date: queues.state_dept_start_date || null,
-      state_dept_complete_date: queues.state_dept_complete_date || null,
-      embassy_stage_country: queues.embassy_stage_country || null,
-      embassy_start_date: queues.embassy_start_date || null,
-      embassy_complete_date: queues.embassy_complete_date || null,
-    }
-    const { error } = await supabase.from('orders').update(payload).eq('id', id)
-    setSavingQueues(false)
-    if (!error) {
-      setOrder((prev) => ({ ...prev, ...payload }))
-      setQueuesSaved(true)
-      setTimeout(() => setQueuesSaved(false), 2000)
     } else {
       setError(error.message)
     }
@@ -716,105 +659,9 @@ export default function StaffOrderDetail() {
           )}
         </div>
 
-        {/* Internal processing queues */}
+        {/* Processing */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
-            Internal processing queues <span className="normal-case text-[var(--slate)]">(staff only — clients don't see this)</span>
-          </p>
-          <p className="mt-2 text-xs text-[var(--slate)]">
-            A document is only actively in one stage at a time — set that below. You can still fill in
-            dates or selections for later stages ahead of time; they'll show as "Queued" until the
-            document actually reaches them.
-          </p>
-
-          <div className="mt-4">
-            <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Current stage</label>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {STAGE_NAMES.map((name, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setQueues((q) => ({ ...q, current_stage: i + 1 }))}
-                  className={`rounded-lg border px-3 py-2.5 text-sm transition-colors ${
-                    queues.current_stage === i + 1
-                      ? 'border-[var(--wax)] bg-[var(--wax)]/10 text-[var(--wax)]'
-                      : 'border-[var(--line)] text-[var(--ink)] hover:border-[var(--wax)]'
-                  }`}
-                >
-                  {i + 1}. {name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-5">
-            <QueueRow stageNum={1} label="Notary" current={queues.current_stage}>
-              <DateFields
-                start={queues.notary_start_date}
-                complete={queues.notary_complete_date}
-                onStart={(v) => setQueues((q) => ({ ...q, notary_start_date: v }))}
-                onComplete={(v) => setQueues((q) => ({ ...q, notary_complete_date: v }))}
-              />
-            </QueueRow>
-
-            <QueueRow stageNum={2} label="Secretary of State" current={queues.current_stage}>
-              <select
-                value={queues.sos_stage_state}
-                onChange={(e) => setQueues((q) => ({ ...q, sos_stage_state: e.target.value }))}
-                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)] sm:mb-2"
-              >
-                <option value="">Select a state…</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <DateFields
-                start={queues.sos_start_date}
-                complete={queues.sos_complete_date}
-                onStart={(v) => setQueues((q) => ({ ...q, sos_start_date: v }))}
-                onComplete={(v) => setQueues((q) => ({ ...q, sos_complete_date: v }))}
-              />
-            </QueueRow>
-
-            <QueueRow stageNum={3} label="U.S. State Department" current={queues.current_stage}>
-              <DateFields
-                start={queues.state_dept_start_date}
-                complete={queues.state_dept_complete_date}
-                onStart={(v) => setQueues((q) => ({ ...q, state_dept_start_date: v }))}
-                onComplete={(v) => setQueues((q) => ({ ...q, state_dept_complete_date: v }))}
-              />
-            </QueueRow>
-
-            <QueueRow stageNum={4} label="Embassy" current={queues.current_stage}>
-              <select
-                value={queues.embassy_stage_country}
-                onChange={(e) => setQueues((q) => ({ ...q, embassy_stage_country: e.target.value }))}
-                className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)] sm:mb-2"
-              >
-                <option value="">Select an embassy…</option>
-                {EMBASSY_COUNTRIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <DateFields
-                start={queues.embassy_start_date}
-                complete={queues.embassy_complete_date}
-                onStart={(v) => setQueues((q) => ({ ...q, embassy_start_date: v }))}
-                onComplete={(v) => setQueues((q) => ({ ...q, embassy_complete_date: v }))}
-              />
-            </QueueRow>
-          </div>
-
-          <div className="mt-5 flex items-center gap-3">
-            <button
-              onClick={saveQueues}
-              disabled={savingQueues}
-              className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
-            >
-              {savingQueues ? 'Saving…' : 'Save queue updates'}
-            </button>
-            {queuesSaved && <p className="font-mono text-xs text-[var(--brass)]">Saved.</p>}
-          </div>
+          <ProcessingQueue order={order} onUpdate={(fields) => setOrder((prev) => ({ ...prev, ...fields }))} />
         </div>
 
         {/* Return shipping label */}
@@ -906,81 +753,43 @@ export default function StaffOrderDetail() {
             </p>
           )}
 
-          <div className="mt-6 border-t border-[var(--line)] pt-5">
-            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Upload completed document</p>
-            <p className="mt-1 text-xs text-[var(--slate)]">
-              Uploads the finished, certified document and emails the client a link to view and download it.
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <input
-                type="file"
-                onChange={(e) => setCompletedFile(e.target.files?.[0] ?? null)}
-                className="text-sm text-[var(--ink)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--parchment-dim)] file:px-4 file:py-2 file:text-xs file:font-medium file:text-[var(--ink)] hover:file:bg-[var(--line)]"
-              />
-              <button
-                onClick={uploadCompletedDocument}
-                disabled={!completedFile || uploadingCompletedFile}
-                className="rounded-full bg-[var(--wax)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
-              >
-                {uploadingCompletedFile ? 'Uploading…' : 'Upload & notify client'}
-              </button>
-            </div>
-            {completedUploadResult && (
-              <p className={`mt-3 text-sm ${completedUploadResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
-                {completedUploadResult.message}
+          {isProcessingComplete(order) ? (
+            <div className="mt-6 border-t border-[var(--line)] pt-5">
+              <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Upload completed document</p>
+              <p className="mt-1 text-xs text-[var(--slate)]">
+                Uploads the finished, certified document and emails the client a link to view and download it.
               </p>
-            )}
-          </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  type="file"
+                  onChange={(e) => setCompletedFile(e.target.files?.[0] ?? null)}
+                  className="text-sm text-[var(--ink)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--parchment-dim)] file:px-4 file:py-2 file:text-xs file:font-medium file:text-[var(--ink)] hover:file:bg-[var(--line)]"
+                />
+                <button
+                  onClick={uploadCompletedDocument}
+                  disabled={!completedFile || uploadingCompletedFile}
+                  className="rounded-full bg-[var(--wax)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+                >
+                  {uploadingCompletedFile ? 'Uploading…' : 'Upload & notify client'}
+                </button>
+              </div>
+              {completedUploadResult && (
+                <p className={`mt-3 text-sm ${completedUploadResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+                  {completedUploadResult.message}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mt-6 border-t border-[var(--line)] pt-5">
+              <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Upload completed document</p>
+              <p className="mt-1 text-xs text-[var(--slate)]">
+                Finish every step in Processing above to unlock uploading the completed document.
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </Layout>
-  )
-}
-
-function QueueRow({ stageNum, label, current, children }) {
-  const statusLabel = stageNum < current ? 'Completed' : stageNum === current ? 'In progress' : 'Queued'
-  const statusColor =
-    stageNum < current
-      ? 'bg-[var(--wax)]/15 text-[var(--wax)]'
-      : stageNum === current
-      ? 'bg-[var(--brass)]/20 text-[var(--brass)]'
-      : 'bg-[var(--line)] text-[var(--slate)]'
-
-  return (
-    <div className="rounded-lg border border-[var(--line)] p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-[var(--ink)]">{stageNum}. {label}</p>
-        <span className={`rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-wide ${statusColor}`}>
-          {statusLabel}
-        </span>
-      </div>
-      <div className="mt-3 space-y-2">{children}</div>
-    </div>
-  )
-}
-
-function DateFields({ start, complete, onStart, onComplete }) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Start date</label>
-        <input
-          type="date"
-          value={start}
-          onChange={(e) => onStart(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
-        />
-      </div>
-      <div>
-        <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Complete date</label>
-        <input
-          type="date"
-          value={complete}
-          onChange={(e) => onComplete(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
-        />
-      </div>
-    </div>
   )
 }
 
