@@ -451,7 +451,7 @@ export default function StaffOrderDetail() {
         </div>
 
         {/* 2. Client info */}
-        <div className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <InfoBlock label="Client" value={order.profiles?.email ?? '—'} />
           <InfoBlock
             label="Payment"

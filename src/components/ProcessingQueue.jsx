@@ -139,7 +139,7 @@ export default function ProcessingQueue({ order, onUpdate }) {
                   <span className="font-mono text-xs text-[var(--slate)]">{order.destination_country}</span>
                 )}
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Start date</label>
                   <input

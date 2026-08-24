@@ -73,7 +73,7 @@ export default function StaffSubscriberDetail() {
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email</p>
           <p className="mt-1 font-display text-xl text-[var(--ink)]">{subscriber.email}</p>
 
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Subscribed on</p>
               <p className="mt-1 text-sm text-[var(--ink)]">

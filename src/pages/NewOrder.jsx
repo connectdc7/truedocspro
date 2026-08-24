@@ -306,7 +306,7 @@ export default function NewOrder() {
 
           <div>
             <label className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Service</label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
               {SERVICES.map((s) => (
                 <button
                   type="button"

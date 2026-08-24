@@ -78,7 +78,7 @@ export default function StaffEmbassyFees() {
 
         {loading && <p className="mt-8 font-mono text-sm text-[var(--slate)]">Loading…</p>}
 
-        <div className="mt-6 overflow-hidden rounded-xl border border-[var(--line)]">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--line)]">
           <table className="w-full text-left text-sm">
             <thead className="bg-[var(--parchment-dim)] font-mono text-xs uppercase tracking-wide text-[var(--slate)]">
               <tr>
