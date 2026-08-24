@@ -593,11 +593,23 @@ create policy "Staff can read assigned order documents"
 -- Admins can delete any document (used when deleting an order)
 drop policy if exists "Staff can delete documents" on storage.objects;
 drop policy if exists "Admins can delete documents" on storage.objects;
-create policy "Admins can delete documents"
+create policy "Staff can delete documents for assigned orders"
   on storage.objects for delete
   using (
     bucket_id = 'client-documents'
-    and is_admin()
+    and is_staff()
+    and (
+      is_admin()
+      or exists (
+        select 1 from orders o
+        where o.file_path = storage.objects.name and o.assigned_to = auth.uid()
+      )
+      or exists (
+        select 1 from order_attachments a
+        join orders o on o.id = a.order_id
+        where a.file_path = storage.objects.name and o.assigned_to = auth.uid()
+      )
+    )
   );
 
 -- Staff can upload documents only into a folder belonging to a client

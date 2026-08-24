@@ -45,7 +45,6 @@ export default function StaffOrderDetail() {
 
   const [requestNote, setRequestNote] = useState('')
   const [sendingRequest, setSendingRequest] = useState(false)
-  const [staffFile, setStaffFile] = useState(null)
   const [completedFile, setCompletedFile] = useState(null)
   const [uploadingCompletedFile, setUploadingCompletedFile] = useState(false)
   const [completedUploadResult, setCompletedUploadResult] = useState(null)
@@ -53,7 +52,6 @@ export default function StaffOrderDetail() {
   const [showInvoice, setShowInvoice] = useState(false)
   const [sendingInvoice, setSendingInvoice] = useState(false)
   const [invoiceSentResult, setInvoiceSentResult] = useState(null)
-  const [uploadingStaffFile, setUploadingStaffFile] = useState(false)
 
   useEffect(() => {
     load()
@@ -129,10 +127,6 @@ export default function StaffOrderDetail() {
     setShippingDefaults(data ?? [])
   }
 
-  const [manualSubject, setManualSubject] = useState('')
-  const [manualMessage, setManualMessage] = useState('')
-  const [sendingManual, setSendingManual] = useState(false)
-  const [manualSent, setManualSent] = useState(false)
   const [notifyError, setNotifyError] = useState('')
 
   const notifyClient = async (subject, message) => {
@@ -201,34 +195,6 @@ export default function StaffOrderDetail() {
     }
   }
 
-  const uploadStaffAttachment = async () => {
-    if (!staffFile) return
-    setUploadingStaffFile(true)
-    setError('')
-    try {
-      const ext = staffFile.name.split('.').pop()
-      const path = `${order.user_id}/attachments/${crypto.randomUUID()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(path, staffFile)
-      if (uploadError) throw uploadError
-
-      const { error: insertError } = await supabase.from('order_attachments').insert({
-        order_id: id,
-        file_path: path,
-        file_name: staffFile.name,
-        uploaded_by: 'staff',
-        category: 'supporting',
-      })
-      if (insertError) throw insertError
-
-      setStaffFile(null)
-      await loadAttachments()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setUploadingStaffFile(false)
-    }
-  }
-
   const uploadCompletedDocument = async () => {
     if (!completedFile) return
     setUploadingCompletedFile(true)
@@ -280,6 +246,16 @@ export default function StaffOrderDetail() {
     else setError(error.message)
   }
 
+  const deleteClientAttachment = async (attachment) => {
+    if (!window.confirm(`Remove "${attachment.file_name}"?`)) return
+    setDeletingAttachmentId(attachment.id)
+    await supabase.storage.from(DOCUMENTS_BUCKET).remove([attachment.file_path])
+    const { error } = await supabase.from('order_attachments').delete().eq('id', attachment.id)
+    setDeletingAttachmentId(null)
+    if (!error) await loadAttachments()
+    else setError(error.message)
+  }
+
   const invoiceBreakdown = () => {
     const service = SERVICES.find((s) => s.value === order.service) || SERVICES[0]
     const items = [{ label: `${service.label} handling fee`, amount: service.price }]
@@ -304,20 +280,6 @@ export default function StaffOrderDetail() {
       setInvoiceSentResult({ ok: false, message: data?.error || invoiceError.message })
     } else {
       setInvoiceSentResult({ ok: true, message: 'Sent — the client has been emailed this breakdown.' })
-    }
-  }
-
-  const sendManualEmail = async () => {
-    if (!manualSubject.trim() || !manualMessage.trim()) return
-    setSendingManual(true)
-    setManualSent(false)
-    const ok = await notifyClient(manualSubject, manualMessage)
-    setSendingManual(false)
-    if (ok) {
-      setManualSent(true)
-      setManualSubject('')
-      setManualMessage('')
-      setTimeout(() => setManualSent(false), 3000)
     }
   }
 
@@ -523,48 +485,14 @@ export default function StaffOrderDetail() {
           </div>
         ) : null}
 
-        {/* Email the client */}
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email the client</p>
-          <p className="mt-1 text-xs text-[var(--slate)]">
-            Status changes and document requests email the client automatically. Use this for anything else —
-            a rename, a service change, or a general note.
-          </p>
-          <div className="mt-3 space-y-2">
-            <input
-              placeholder="Subject"
-              value={manualSubject}
-              onChange={(e) => setManualSubject(e.target.value)}
-              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
-            />
-            <textarea
-              rows={3}
-              placeholder="Message"
-              value={manualMessage}
-              onChange={(e) => setManualMessage(e.target.value)}
-              className="w-full rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
-            />
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              onClick={sendManualEmail}
-              disabled={sendingManual || !manualSubject.trim() || !manualMessage.trim()}
-              className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
-            >
-              {sendingManual ? 'Sending…' : 'Send email'}
-            </button>
-            {manualSent && <p className="font-mono text-xs text-[var(--brass)]">Sent.</p>}
-          </div>
-        </div>
-
         {/* 4. Internal processing queue */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <ProcessingQueue order={order} onUpdate={(fields) => setOrder((prev) => ({ ...prev, ...fields }))} />
         </div>
 
-        {/* 5. Request supporting documents */}
+        {/* 5. Email client for supporting documents */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Request supporting documents</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Email client for supporting documents</p>
 
           {order.request_status === 'requested' ? (
             <div className="mt-3 rounded-lg border border-[var(--brass)]/40 bg-[var(--brass)]/10 p-4">
@@ -592,13 +520,47 @@ export default function StaffOrderDetail() {
                 disabled={sendingRequest || !requestNote.trim()}
                 className="mt-3 rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
               >
-                {sendingRequest ? 'Sending…' : 'Request from client'}
+                {sendingRequest ? 'Sending…' : 'Send email'}
               </button>
               <p className="mt-2 text-xs text-[var(--slate)]">
                 The client sees this the moment they open their portal, with an upload box right there.
               </p>
             </div>
           )}
+
+          <div className="mt-6 border-t border-[var(--line)] pt-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Client uploaded docs</p>
+            {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document' && a.uploaded_by === 'client').length === 0 ? (
+              <p className="mt-3 text-sm text-[var(--slate)]">None uploaded yet.</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {attachments
+                  .filter((a) => a.category !== 'return_label' && a.category !== 'completed_document' && a.uploaded_by === 'client')
+                  .map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-2.5"
+                    >
+                      <a href={a.url} target="_blank" rel="noreferrer" className="text-sm text-[var(--ink)] hover:text-[var(--wax)]">
+                        {a.file_name || 'Document'}
+                      </a>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs text-[var(--slate)]">
+                          {new Date(a.created_at).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => deleteClientAttachment(a)}
+                          disabled={deletingAttachmentId === a.id}
+                          className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
+                        >
+                          {deletingAttachmentId === a.id ? 'Removing…' : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Return shipping label */}
@@ -623,47 +585,6 @@ export default function StaffOrderDetail() {
             </div>
           </div>
         )}
-
-        {/* Supporting documents */}
-        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Supporting documents</p>
-
-          {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document').length === 0 ? (
-            <p className="mt-3 text-sm text-[var(--slate)]">None uploaded yet.</p>
-          ) : (
-            <div className="mt-3 space-y-2">
-              {attachments.filter((a) => a.category !== 'return_label' && a.category !== 'completed_document').map((a) => (
-                <a
-                  key={a.id}
-                  href={a.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-2.5 hover:border-[var(--wax)] transition-colors"
-                >
-                  <span className="text-sm text-[var(--ink)]">{a.file_name || 'Document'}</span>
-                  <span className="font-mono text-xs text-[var(--slate)]">
-                    {a.uploaded_by === 'client' ? 'From client' : 'Staff upload'} · {new Date(a.created_at).toLocaleDateString()}
-                  </span>
-                </a>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 flex items-center gap-2">
-            <input
-              type="file"
-              onChange={(e) => setStaffFile(e.target.files?.[0] ?? null)}
-              className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
-            />
-            <button
-              onClick={uploadStaffAttachment}
-              disabled={!staffFile || uploadingStaffFile}
-              className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"
-            >
-              {uploadingStaffFile ? 'Uploading…' : 'Attach file'}
-            </button>
-          </div>
-        </div>
 
         {/* 6. Additional fees */}
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
