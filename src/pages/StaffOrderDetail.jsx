@@ -39,6 +39,9 @@ export default function StaffOrderDetail() {
   const [saved, setSaved] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const [savingName, setSavingName] = useState(false)
 
   const [staffList, setStaffList] = useState([])
   const [assigning, setAssigning] = useState(false)
@@ -353,6 +356,19 @@ export default function StaffOrderDetail() {
     else setError(error.message)
   }
 
+  const saveDocumentName = async () => {
+    if (!nameDraft.trim()) return
+    setSavingName(true)
+    const { error } = await supabase.from('orders').update({ document_name: nameDraft.trim() }).eq('id', id)
+    setSavingName(false)
+    if (!error) {
+      setOrder((prev) => ({ ...prev, document_name: nameDraft.trim() }))
+      setEditingName(false)
+    } else {
+      setError(error.message)
+    }
+  }
+
   const handleDelete = async () => {
     const confirmed = window.confirm(
       `Permanently delete "${order.document_name}"? This removes the order and the uploaded file. This can't be undone.`
@@ -404,14 +420,46 @@ export default function StaffOrderDetail() {
         </Link>
 
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-          <h1 className="font-display text-3xl font-semibold text-[var(--ink)]">
-            {order.document_name}
-            {order.is_expedited && (
-              <span className="ml-3 rounded-full bg-[var(--brass)]/20 px-3 py-1 align-middle font-mono text-xs uppercase text-[var(--brass)]">
-                Expedited
-              </span>
+          <div className="flex-1">
+            {editingName ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  autoFocus
+                  className="font-display flex-1 min-w-[200px] rounded-lg border border-[var(--wax)] bg-white/70 px-3 py-2 text-2xl font-semibold text-[var(--ink)] outline-none"
+                />
+                <button
+                  onClick={saveDocumentName}
+                  disabled={savingName || !nameDraft.trim()}
+                  className="rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+                >
+                  {savingName ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditingName(false)}
+                  className="text-sm text-[var(--slate)] hover:text-[var(--wax)]"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <h1 className="font-display text-3xl font-semibold text-[var(--ink)]">
+                {order.document_name}
+                {order.is_expedited && (
+                  <span className="ml-3 rounded-full bg-[var(--brass)]/20 px-3 py-1 align-middle font-mono text-xs uppercase text-[var(--brass)]">
+                    Expedited
+                  </span>
+                )}
+                <button
+                  onClick={() => { setNameDraft(order.document_name); setEditingName(true) }}
+                  className="ml-3 align-middle font-mono text-xs uppercase tracking-wide text-[var(--slate)] hover:text-[var(--wax)]"
+                >
+                  Edit name
+                </button>
+              </h1>
             )}
-          </h1>
+          </div>
           <button
             onClick={handleDelete}
             disabled={deleting}
