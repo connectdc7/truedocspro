@@ -4,6 +4,7 @@ import HeroGraphic from '../components/HeroGraphic'
 import ServiceFlipCard from '../components/ServiceFlipCard'
 import CountryChecker from '../components/CountryChecker'
 import { NotaryVisual, ApostilleVisual, EmbassyVisual } from '../components/ServiceVisuals'
+import { NotaryFrontVisual, ApostilleFrontVisual, EmbassyFrontVisual } from '../components/ServiceFrontVisuals'
 import useDocumentHead from '../lib/useDocumentHead'
 
 const SERVICES = [
@@ -92,6 +93,9 @@ export default function Home() {
                 name={s.name}
                 turnaround={s.turnaround}
                 definition={s.definition}
+                frontVisual={
+                  s.id === 'notary' ? <NotaryFrontVisual /> : s.id === 'apostille' ? <ApostilleFrontVisual /> : <EmbassyFrontVisual />
+                }
                 visual={
                   s.id === 'notary' ? <NotaryVisual /> : s.id === 'apostille' ? <ApostilleVisual /> : <EmbassyVisual />
                 }

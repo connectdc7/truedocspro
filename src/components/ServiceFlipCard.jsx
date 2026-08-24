@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function ServiceFlipCard({ name, turnaround, definition, visual, checker }) {
+export default function ServiceFlipCard({ name, turnaround, definition, visual, frontVisual, checker }) {
   const [flipped, setFlipped] = useState(false)
 
   return (
@@ -21,10 +21,15 @@ export default function ServiceFlipCard({ name, turnaround, definition, visual, 
         {/* Front */}
         <div className="flip-card-face rounded-2xl border border-[var(--line)] bg-white/40 p-7 flex flex-col">
           <h3 className="font-display text-xl font-semibold text-[var(--ink)]">{name}</h3>
-          <p className="mt-5 font-mono text-xs uppercase tracking-widest text-[var(--brass)]">
+          <p className="mt-3 font-mono text-xs uppercase tracking-widest text-[var(--brass)]">
             Turnaround: {turnaround}
           </p>
-          <div className="mt-auto flex items-center gap-1.5 font-mono text-xs text-[var(--wax)]">
+          {frontVisual && (
+            <div className="mt-4 flex-1 min-h-0 rounded-xl border border-[var(--line)] bg-white/70 p-3 flex items-center justify-center">
+              <div className="w-[150px] h-[150px] shrink-0">{frontVisual}</div>
+            </div>
+          )}
+          <div className="mt-4 flex items-center gap-1.5 font-mono text-xs text-[var(--wax)]">
             Tap to see what it means
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
               <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
