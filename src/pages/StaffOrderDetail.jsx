@@ -721,6 +721,11 @@ export default function StaffOrderDetail() {
               The client's 30-day download window started the moment this was first marked Ready.
             </p>
           )}
+          {order.payment_status === 'paid' ? (
+            <p className="mt-3 text-xs text-[var(--brass)]">✓ Paid at submission — ${(order.amount_cents / 100).toFixed(2)}.</p>
+          ) : (
+            <p className="mt-3 text-xs text-[var(--wax)]">Payment pending from client.</p>
+          )}
         </div>
 
         {/* 7. Upload completed document */}
@@ -754,36 +759,50 @@ export default function StaffOrderDetail() {
             </div>
           )}
 
-          {isProcessingComplete(order) ? (
-            <div className="mt-4">
-              <p className="text-xs text-[var(--slate)]">
-                Uploads the finished, certified document and emails the client a link to view and download it.
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <input
-                  type="file"
-                  onChange={(e) => setCompletedFile(e.target.files?.[0] ?? null)}
-                  className="text-sm text-[var(--ink)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--parchment-dim)] file:px-4 file:py-2 file:text-xs file:font-medium file:text-[var(--ink)] hover:file:bg-[var(--line)]"
-                />
-                <button
-                  onClick={uploadCompletedDocument}
-                  disabled={!completedFile || uploadingCompletedFile}
-                  className="rounded-full bg-[var(--wax)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
-                >
-                  {uploadingCompletedFile ? 'Uploading…' : 'Upload & notify client'}
-                </button>
-              </div>
-              {completedUploadResult && (
-                <p className={`mt-3 text-sm ${completedUploadResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
-                  {completedUploadResult.message}
+          {(() => {
+            const hasUnpaidFees = fees.some((f) => !f.paid)
+            if (!isProcessingComplete(order)) {
+              return (
+                <p className="mt-3 text-xs text-[var(--slate)]">
+                  Finish every step in Processing above to unlock uploading the completed document.
                 </p>
-              )}
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-[var(--slate)]">
-              Finish every step in Processing above to unlock uploading the completed document.
-            </p>
-          )}
+              )
+            }
+            if (hasUnpaidFees) {
+              return (
+                <p className="mt-3 text-xs text-[var(--wax)]">
+                  This order has unpaid additional fees. The client must pay them before the completed
+                  document can be delivered — see Additional fees below.
+                </p>
+              )
+            }
+            return (
+              <div className="mt-4">
+                <p className="text-xs text-[var(--slate)]">
+                  Uploads the finished, certified document and emails the client a link to view and download it.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <input
+                    type="file"
+                    onChange={(e) => setCompletedFile(e.target.files?.[0] ?? null)}
+                    className="text-sm text-[var(--ink)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--parchment-dim)] file:px-4 file:py-2 file:text-xs file:font-medium file:text-[var(--ink)] hover:file:bg-[var(--line)]"
+                  />
+                  <button
+                    onClick={uploadCompletedDocument}
+                    disabled={!completedFile || uploadingCompletedFile}
+                    className="rounded-full bg-[var(--wax)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
+                  >
+                    {uploadingCompletedFile ? 'Uploading…' : 'Upload & notify client'}
+                  </button>
+                </div>
+                {completedUploadResult && (
+                  <p className={`mt-3 text-sm ${completedUploadResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+                    {completedUploadResult.message}
+                  </p>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* 8. Preliminary invoice */}

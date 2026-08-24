@@ -121,6 +121,11 @@ create table if not exists profiles (
 alter table profiles add column if not exists full_name text;
 alter table profiles add column if not exists title text;
 alter table profiles add column if not exists phone text;
+alter table profiles add column if not exists stripe_customer_id text;
+alter table profiles add column if not exists card_brand text;
+alter table profiles add column if not exists card_last4 text;
+alter table profiles add column if not exists card_exp_month integer;
+alter table profiles add column if not exists card_exp_year integer;
 alter table profiles add column if not exists is_admin boolean not null default false;
 
 -- Now that profiles exists, add the order assignment column (references it)

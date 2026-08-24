@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
     }
     const { data } = await supabase
       .from('profiles')
-      .select('is_staff, is_admin, full_name, phone, title, email')
+      .select('is_staff, is_admin, full_name, phone, title, email, stripe_customer_id, card_brand, card_last4, card_exp_month, card_exp_year')
       .eq('id', userId)
       .maybeSingle()
     setIsStaff(Boolean(data?.is_staff))

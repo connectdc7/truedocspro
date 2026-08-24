@@ -27,11 +27,11 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null)
   const [attachments, setAttachments] = useState([])
   const [fees, setFees] = useState([])
-  const [payingFees, setPayingFees] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState(null)
   const [isFirstOrder, setIsFirstOrder] = useState(false)
+  const [payingFees, setPayingFees] = useState(false)
   const [retrying, setRetrying] = useState(false)
 
   const [responseFile, setResponseFile] = useState(null)
@@ -322,30 +322,6 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {paymentResult === 'success' && (
-          <div className="mt-6 rounded-xl border border-[var(--wax)]/40 bg-[var(--wax)]/10 p-5">
-            <p className="font-display text-lg font-semibold text-[var(--ink)]">Payment received.</p>
-            <p className="mt-1 text-sm text-[var(--slate)]">
-              We've got your document and your payment — you'll see status updates right here.
-            </p>
-          </div>
-        )}
-        {paymentResult === 'cancelled' && order.payment_status !== 'paid' && (
-          <div className="mt-6 rounded-xl border border-[var(--brass)]/40 bg-[var(--parchment-dim)] p-5">
-            <p className="font-display text-lg font-semibold text-[var(--ink)]">Payment not completed.</p>
-            <p className="mt-1 text-sm text-[var(--slate)]">
-              Your document was uploaded, but checkout was cancelled before payment finished.
-            </p>
-            <button
-              onClick={handlePayNow}
-              disabled={retrying}
-              className="mt-4 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
-            >
-              {retrying ? 'Loading…' : 'Complete payment'}
-            </button>
-          </div>
-        )}
-
         {isFirstOrder && paymentResult === 'success' && (
           <div className="mt-6 rounded-xl border border-[var(--ink)]/20 bg-[var(--ink)] p-6 text-[var(--parchment)]">
             <p className="font-display text-lg font-semibold">Get the True Doc Pros app.</p>
@@ -408,6 +384,30 @@ export default function OrderDetail() {
             </div>
           )}
         </div>
+
+        {paymentResult === 'success' && (
+          <div className="mt-6 rounded-xl border border-[var(--wax)]/40 bg-[var(--wax)]/10 p-5">
+            <p className="font-display text-lg font-semibold text-[var(--ink)]">Payment received.</p>
+            <p className="mt-1 text-sm text-[var(--slate)]">
+              We've got your document and your payment — you'll see status updates right here.
+            </p>
+          </div>
+        )}
+        {paymentResult === 'cancelled' && order.payment_status !== 'paid' && (
+          <div className="mt-6 rounded-xl border border-[var(--brass)]/40 bg-[var(--parchment-dim)] p-5">
+            <p className="font-display text-lg font-semibold text-[var(--ink)]">Payment not completed.</p>
+            <p className="mt-1 text-sm text-[var(--slate)]">
+              Your document was uploaded, but checkout was cancelled before payment finished.
+            </p>
+            <button
+              onClick={handlePayNow}
+              disabled={retrying}
+              className="mt-4 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
+            >
+              {retrying ? 'Loading…' : 'Complete payment'}
+            </button>
+          </div>
+        )}
 
         {fees.length > 0 && (
           <div className="mt-6 rounded-xl border border-[var(--brass)]/40 bg-[var(--brass)]/5 p-6">
