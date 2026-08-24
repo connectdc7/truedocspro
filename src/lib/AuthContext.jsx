@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!session) return
 
-    const IDLE_LIMIT_MS = 3 * 60 * 1000
+    const IDLE_LIMIT_MS = 5 * 60 * 1000
     let timer
 
     const handleIdle = () => {

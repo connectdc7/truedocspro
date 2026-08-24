@@ -608,10 +608,13 @@ create policy "Staff can upload documents for assigned orders"
   with check (
     bucket_id = 'client-documents'
     and is_staff()
-    and exists (
-      select 1 from orders o
-      where o.user_id::text = (storage.foldername(name))[1]
-        and o.assigned_to = auth.uid()
+    and (
+      is_admin()
+      or exists (
+        select 1 from orders o
+        where o.user_id::text = (storage.foldername(name))[1]
+          and o.assigned_to = auth.uid()
+      )
     )
   );
 

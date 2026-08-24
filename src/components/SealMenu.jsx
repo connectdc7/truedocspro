@@ -7,8 +7,10 @@ import SealGraphic from './SealGraphic'
 const SIZE = 72
 const DOCK_TOP = 16
 const DOCK_RIGHT = 24
-const DRAG_THRESHOLD = 4
 
+// Static seal in the same top-right spot on every page, once logged
+// in. Click opens the account menu; hover grows it slightly for
+// feedback. No dragging or movement — stays put consistently.
 export default function SealMenu() {
   const { user, isStaff, isAdmin, profile, signOut } = useAuth()
   const location = useLocation()
@@ -17,28 +19,6 @@ export default function SealMenu() {
   const [hovering, setHovering] = useState(false)
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
-  const posRef = useRef({ x: 0, y: 0 })
-  const draggingRef = useRef(false)
-  const draggedRef = useRef(false)
-  const dragOffsetRef = useRef({ x: 0, y: 0 })
-
-  // Start docked top-right, same spot the old Sign out button used to sit
-  useEffect(() => {
-    if (!user) return
-    const x = window.innerWidth - SIZE - DOCK_RIGHT
-    const y = DOCK_TOP
-    posRef.current = { x, y }
-    if (wrapRef.current) wrapRef.current.style.transform = `translate(${x}px, ${y}px)`
-
-    const handleResize = () => {
-      const nx = Math.min(posRef.current.x, window.innerWidth - SIZE)
-      const ny = Math.min(posRef.current.y, window.innerHeight - SIZE)
-      posRef.current = { x: nx, y: ny }
-      if (wrapRef.current) wrapRef.current.style.transform = `translate(${nx}px, ${ny}px)`
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [user])
 
   useEffect(() => {
     setOpen(false)
@@ -69,66 +49,26 @@ export default function SealMenu() {
     navigate('/')
   }
 
-  const handlePointerDown = (e) => {
-    draggingRef.current = true
-    draggedRef.current = false
-    const rect = wrapRef.current.getBoundingClientRect()
-    dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-  }
-
-  const handlePointerMove = (e) => {
-    if (!draggingRef.current) return
-    const dx = e.clientX - (dragOffsetRef.current.x + posRef.current.x)
-    const dy = e.clientY - (dragOffsetRef.current.y + posRef.current.y)
-    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
-      draggedRef.current = true
-    }
-    const nextX = Math.min(Math.max(e.clientX - dragOffsetRef.current.x, 0), window.innerWidth - SIZE)
-    const nextY = Math.min(Math.max(e.clientY - dragOffsetRef.current.y, 0), window.innerHeight - SIZE)
-    posRef.current = { x: nextX, y: nextY }
-    if (wrapRef.current) wrapRef.current.style.transform = `translate(${nextX}px, ${nextY}px)`
-  }
-
-  const handlePointerUp = () => {
-    draggingRef.current = false
-  }
-
-  const handleClick = () => {
-    if (draggedRef.current) {
-      draggedRef.current = false
-      return
-    }
-    setOpen((o) => !o)
-  }
-
   return (
     <div
       ref={wrapRef}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        width: SIZE,
-        height: SIZE,
+        top: DOCK_TOP,
+        right: DOCK_RIGHT,
         zIndex: 60,
-        touchAction: 'none',
-        willChange: 'transform',
       }}
     >
       <button
         type="button"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onClick={handleClick}
+        onClick={() => setOpen((o) => !o)}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
-        aria-label="Account menu — drag to move"
+        aria-label="Account menu"
         aria-expanded={open}
-        title="Account menu — drag to move"
+        title="Account menu"
         className="drop-shadow-lg transition-transform"
-        style={{ cursor: 'grab', transform: hovering ? 'scale(1.6)' : 'scale(1)' }}
+        style={{ transform: hovering ? 'scale(1.25)' : 'scale(1)' }}
       >
         <SealGraphic size={SIZE} label="MENU" />
       </button>
