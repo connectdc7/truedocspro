@@ -1,4 +1,4 @@
-// supabase/functions/notify-preliminary-invoice/index.ts
+// supabase/functions/send-invoice-breakdown/index.ts
 //
 // Called from the staff order page. Emails the client an itemized
 // breakdown of what this order costs — handling fee, any expedited

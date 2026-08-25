@@ -277,7 +277,7 @@ export default function StaffOrderDetail() {
     setSendingInvoice(true)
     setInvoiceSentResult(null)
     const { items, total } = invoiceBreakdown()
-    const { data, error: invoiceError } = await supabase.functions.invoke('notify-preliminary-invoice', {
+    const { data, error: invoiceError } = await supabase.functions.invoke('send-invoice-breakdown', {
       body: { order_id: id, items, total },
     })
     setSendingInvoice(false)
