@@ -23,7 +23,7 @@ export default function StaffBlogEditor() {
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
   const [author, setAuthor] = useState('True Doc Pros Team')
-  const [published, setPublished] = useState(true)
+  const [published, setPublished] = useState(false)
   const [initialPublished, setInitialPublished] = useState(false)
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
@@ -156,7 +156,7 @@ export default function StaffBlogEditor() {
               disabled={saving || !title || !slug || !content}
               className="rounded-full bg-[var(--wax)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
             >
-              {saving ? 'Saving…' : isNew ? 'Publish post' : 'Save changes'}
+              {saving ? 'Saving…' : published ? (isNew ? 'Publish post' : 'Save changes') : 'Save draft'}
             </button>
             {!isNew && (
               <button onClick={handleDelete} className="text-sm text-[var(--wax)] hover:underline">
