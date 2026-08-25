@@ -8,6 +8,9 @@ export default function StaffBlogList() {
 
   const [posts, setPosts] = useState([])
   const [postsLoading, setPostsLoading] = useState(true)
+  const [selectedDraftIds, setSelectedDraftIds] = useState([])
+  const [publishing, setPublishing] = useState(false)
+  const [publishResult, setPublishResult] = useState(null)
 
   const [subscribers, setSubscribers] = useState([])
   const [subscribersLoading, setSubscribersLoading] = useState(true)
@@ -38,6 +41,53 @@ export default function StaffBlogList() {
   const filteredSubscribers = subscribers.filter((s) =>
     s.email?.toLowerCase().includes(subscriberSearch.trim().toLowerCase())
   )
+
+  const draftPosts = posts.filter((p) => !p.published)
+
+  const toggleDraftSelected = (id) => {
+    setSelectedDraftIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  const publishSelected = async () => {
+    if (selectedDraftIds.length === 0) return
+    setPublishing(true)
+    setPublishResult(null)
+
+    const selectedPosts = posts.filter((p) => selectedDraftIds.includes(p.id))
+
+    const { error: updateError } = await supabase
+      .from('posts')
+      .update({ published: true })
+      .in('id', selectedDraftIds)
+
+    if (updateError) {
+      setPublishing(false)
+      setPublishResult({ ok: false, message: updateError.message })
+      return
+    }
+
+    const { data, error: notifyError } = await supabase.functions.invoke('notify-subscribers-new-posts', {
+      body: {
+        posts: selectedPosts.map((p) => ({ title: p.title, slug: p.slug, excerpt: p.excerpt })),
+      },
+    })
+
+    setPublishing(false)
+    setSelectedDraftIds([])
+    await loadPosts()
+
+    if (notifyError || data?.error) {
+      setPublishResult({
+        ok: false,
+        message: `Published, but the subscriber email failed to send: ${data?.error || notifyError.message}`,
+      })
+    } else {
+      setPublishResult({
+        ok: true,
+        message: `Published ${selectedPosts.length} post${selectedPosts.length === 1 ? '' : 's'} — subscribers got one combined email (${data.sent} of ${data.total}).`,
+      })
+    }
+  }
 
   return (
     <Layout>
@@ -73,7 +123,11 @@ export default function StaffBlogList() {
 
       {tab === 'posts' ? (
         <section className="mx-auto max-w-4xl px-6 py-10">
-          <div className="flex items-center justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-[var(--slate)]">
+              Create posts as drafts, then select several and publish them together — subscribers get one
+              combined email instead of one per post.
+            </p>
             <Link
               to="/staff/blog/new"
               className="rounded-full bg-[var(--wax)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors"
@@ -82,28 +136,58 @@ export default function StaffBlogList() {
             </Link>
           </div>
 
+          {draftPosts.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
+                {selectedDraftIds.length} of {draftPosts.length} draft{draftPosts.length === 1 ? '' : 's'} selected
+              </span>
+              <button
+                onClick={publishSelected}
+                disabled={selectedDraftIds.length === 0 || publishing}
+                className="rounded-full bg-[var(--ink)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+              >
+                {publishing ? 'Publishing…' : `Publish selected (${selectedDraftIds.length})`}
+              </button>
+              {publishResult && (
+                <span className={`text-sm ${publishResult.ok ? 'text-[var(--brass)]' : 'text-[var(--wax)]'}`}>
+                  {publishResult.message}
+                </span>
+              )}
+            </div>
+          )}
+
           {postsLoading && <p className="mt-6 font-mono text-sm text-[var(--slate)]">Loading…</p>}
           <div className="mt-6 grid gap-3">
             {posts.map((p) => (
-              <Link
+              <div
                 key={p.id}
-                to={`/staff/blog/${p.id}`}
-                className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-white/40 px-5 py-4 hover:border-[var(--wax)] transition-colors"
+                className="flex items-center gap-3 rounded-xl border border-[var(--line)] bg-white/40 px-5 py-4 hover:border-[var(--wax)] transition-colors"
               >
-                <div>
-                  <p className="font-medium text-[var(--ink)]">{p.title}</p>
-                  <p className="font-mono text-xs text-[var(--slate)]">
-                    {new Date(p.created_at).toLocaleDateString()} · /blog/{p.slug}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 font-mono text-xs uppercase ${
-                    p.published ? 'bg-[var(--wax)]/15 text-[var(--wax)]' : 'bg-[var(--line)] text-[var(--slate)]'
-                  }`}
-                >
-                  {p.published ? 'Published' : 'Draft'}
-                </span>
-              </Link>
+                {!p.published && (
+                  <input
+                    type="checkbox"
+                    checked={selectedDraftIds.includes(p.id)}
+                    onChange={() => toggleDraftSelected(p.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-4 w-4 rounded border-[var(--line)] accent-[var(--wax)]"
+                  />
+                )}
+                <Link to={`/staff/blog/${p.id}`} className="flex flex-1 items-center justify-between">
+                  <div>
+                    <p className="font-medium text-[var(--ink)]">{p.title}</p>
+                    <p className="font-mono text-xs text-[var(--slate)]">
+                      {new Date(p.created_at).toLocaleDateString()} · /blog/{p.slug}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 font-mono text-xs uppercase ${
+                      p.published ? 'bg-[var(--wax)]/15 text-[var(--wax)]' : 'bg-[var(--line)] text-[var(--slate)]'
+                    }`}
+                  >
+                    {p.published ? 'Published' : 'Draft'}
+                  </span>
+                </Link>
+              </div>
             ))}
           </div>
         </section>
