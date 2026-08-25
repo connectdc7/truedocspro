@@ -199,16 +199,18 @@ export default function StaffBlogList() {
                     {p.published ? 'Published' : 'Draft'}
                   </span>
                 </Link>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    deletePost(p)
-                  }}
-                  disabled={deletingId === p.id}
-                  className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
-                >
-                  {deletingId === p.id ? 'Removing…' : 'Delete'}
-                </button>
+                {!p.published && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      deletePost(p)
+                    }}
+                    disabled={deletingId === p.id}
+                    className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
+                  >
+                    {deletingId === p.id ? 'Removing…' : 'Delete'}
+                  </button>
+                )}
               </div>
             ))}
           </div>

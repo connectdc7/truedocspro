@@ -158,7 +158,7 @@ export default function StaffBlogEditor() {
             >
               {saving ? 'Saving…' : published ? (isNew ? 'Publish post' : 'Save changes') : 'Save draft'}
             </button>
-            {!isNew && (
+            {!isNew && !initialPublished && (
               <button onClick={handleDelete} className="text-sm text-[var(--wax)] hover:underline">
                 Delete post
               </button>
