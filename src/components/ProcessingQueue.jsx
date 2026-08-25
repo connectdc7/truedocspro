@@ -4,12 +4,13 @@ import { supabase } from '../lib/supabaseClient'
 const SERVICE_STEPS = {
   notary: ['notary'],
   apostille: ['notary', 'sos'],
-  embassy: ['notary', 'sos', 'embassy'],
+  embassy: ['notary', 'sos', 'state_dept', 'embassy'],
 }
 
 const STEP_LABELS = {
   notary: 'Notary',
   sos: 'Secretary of State',
+  state_dept: 'U.S. State Department',
   embassy: 'Embassy Legalization',
 }
 
