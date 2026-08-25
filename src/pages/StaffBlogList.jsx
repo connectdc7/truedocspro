@@ -11,6 +11,7 @@ export default function StaffBlogList() {
   const [selectedDraftIds, setSelectedDraftIds] = useState([])
   const [publishing, setPublishing] = useState(false)
   const [publishResult, setPublishResult] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   const [subscribers, setSubscribers] = useState([])
   const [subscribersLoading, setSubscribersLoading] = useState(true)
@@ -46,6 +47,17 @@ export default function StaffBlogList() {
 
   const toggleDraftSelected = (id) => {
     setSelectedDraftIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  const deletePost = async (post) => {
+    if (!window.confirm(`Delete "${post.title}"? This can't be undone.`)) return
+    setDeletingId(post.id)
+    const { error } = await supabase.from('posts').delete().eq('id', post.id)
+    setDeletingId(null)
+    if (!error) {
+      setPosts((prev) => prev.filter((p) => p.id !== post.id))
+      setSelectedDraftIds((prev) => prev.filter((id) => id !== post.id))
+    }
   }
 
   const publishSelected = async () => {
@@ -187,6 +199,16 @@ export default function StaffBlogList() {
                     {p.published ? 'Published' : 'Draft'}
                   </span>
                 </Link>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    deletePost(p)
+                  }}
+                  disabled={deletingId === p.id}
+                  className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
+                >
+                  {deletingId === p.id ? 'Removing…' : 'Delete'}
+                </button>
               </div>
             ))}
           </div>
