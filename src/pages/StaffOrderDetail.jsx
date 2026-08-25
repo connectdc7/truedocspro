@@ -267,6 +267,7 @@ export default function StaffOrderDetail() {
     if (order.is_expedited) items.push({ label: 'Expedited processing', amount: service.expedite })
     if (order.arrived_notarized) items.push({ label: 'Notary fee (waived — arrived pre-notarized)', amount: 0 })
     if (order.sos_fee_cents > 0) items.push({ label: `Secretary of State fee${order.origin_state ? ` (${order.origin_state})` : ''}`, amount: order.sos_fee_cents / 100 })
+    if (order.state_dept_fee_cents > 0) items.push({ label: 'U.S. State Department fee', amount: order.state_dept_fee_cents / 100 })
     if (order.embassy_fee_cents > 0) items.push({ label: `Embassy fee${order.destination_country ? ` (${order.destination_country})` : ''}`, amount: order.embassy_fee_cents / 100 })
     fees.forEach((fee) => items.push({ label: `${fee.description}${fee.paid ? ' (paid)' : ''}`, amount: fee.amount_cents / 100 }))
     const total = items.reduce((sum, item) => sum + item.amount, 0)
@@ -513,6 +514,9 @@ export default function StaffOrderDetail() {
           {order.origin_state && <InfoBlock label="State of origin" value={order.origin_state} />}
           {order.sos_fee_cents > 0 && (
             <InfoBlock label="SOS fee charged" value={`$${(order.sos_fee_cents / 100).toFixed(2)}`} />
+          )}
+          {order.state_dept_fee_cents > 0 && (
+            <InfoBlock label="State Dept fee charged" value={`$${(order.state_dept_fee_cents / 100).toFixed(2)}`} />
           )}
           <InfoBlock label="Document type" value={order.document_type === 'business' ? 'Business' : 'Personal'} />
           {order.embassy_fee_cents > 0 && (

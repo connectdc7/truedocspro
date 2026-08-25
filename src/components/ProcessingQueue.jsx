@@ -14,6 +14,9 @@ const STEP_LABELS = {
   embassy: 'Embassy Legalization',
 }
 
+// Steps that carry a pass-through fee the client is charged
+const STEP_FEE_KEYS = { sos: 'sos_fee_cents', state_dept: 'state_dept_fee_cents', embassy: 'embassy_fee_cents' }
+
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -58,6 +61,26 @@ export default function ProcessingQueue({ order, onUpdate }) {
 
   const updateDateField = (key, field, value) => {
     saveFields(key, { [`${key}_${field}_date`]: value || null })
+  }
+
+  const [feeDrafts, setFeeDrafts] = useState({})
+
+  const feeDraftFor = (key) => {
+    if (feeDrafts[key] !== undefined) return feeDrafts[key]
+    const cents = order[STEP_FEE_KEYS[key]] || 0
+    return cents > 0 ? (cents / 100).toFixed(2) : ''
+  }
+
+  const saveFeeField = (key) => {
+    const raw = feeDrafts[key]
+    if (raw === undefined) return
+    const cents = raw ? Math.round(parseFloat(raw) * 100) : 0
+    saveFields(key, { [STEP_FEE_KEYS[key]]: cents })
+    setFeeDrafts((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
   }
 
   const handleArrivedNotarized = async (checked) => {
@@ -115,6 +138,11 @@ export default function ProcessingQueue({ order, onUpdate }) {
                 <span className="text-sm text-[var(--ink)]">
                   <span className="text-[var(--brass)]">✓</span> {STEP_LABELS[key]} — completed{' '}
                   {new Date(order[`${key}_complete_date`]).toLocaleDateString()}
+                  {STEP_FEE_KEYS[key] && order[STEP_FEE_KEYS[key]] > 0 && (
+                    <span className="ml-2 font-mono text-xs text-[var(--brass)]">
+                      ${(order[STEP_FEE_KEYS[key]] / 100).toFixed(2)} fee
+                    </span>
+                  )}
                 </span>
                 <button
                   onClick={() => setEditingKey(key)}
@@ -160,6 +188,26 @@ export default function ProcessingQueue({ order, onUpdate }) {
                   />
                 </div>
               </div>
+              {STEP_FEE_KEYS[key] && (
+                <div className="mt-3">
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
+                    {STEP_LABELS[key]} fee
+                  </label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="font-mono text-xs text-[var(--slate)]">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={feeDraftFor(key)}
+                      onChange={(e) => setFeeDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
+                      onBlur={() => saveFeeField(key)}
+                      placeholder="0.00"
+                      className="w-28 rounded-lg border border-[var(--line)] bg-white/80 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
+                    />
+                    <span className="text-xs text-[var(--slate)]">charged to client's invoice</span>
+                  </div>
+                </div>
+              )}
               <div className="mt-3 flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm text-[var(--ink)]">
                   <input
