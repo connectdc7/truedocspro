@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import StatusTracker from '../components/StatusTracker'
 import LegalizationPath from '../components/LegalizationPath'
+import OrderMessages from '../components/OrderMessages'
 import { HAGUE_COUNTRIES } from '../lib/countries'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
@@ -383,6 +384,17 @@ export default function OrderDetail() {
               </button>
             </div>
           )}
+          {order.payment_status === 'paid' && (
+            <div className="mt-6 flex items-center justify-between rounded-lg border border-[var(--line)] px-4 py-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Payment received</span>
+              <Link
+                to={`/portal/orders/${order.id}/receipt`}
+                className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+              >
+                Download receipt
+              </Link>
+            </div>
+          )}
         </div>
 
         {paymentResult === 'success' && (
@@ -581,6 +593,10 @@ export default function OrderDetail() {
               Your original upload is on file. A certified copy will appear here once your document is Ready.
             </p>
           )}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <OrderMessages orderId={order.id} sender="client" title="Have a question about this document?" />
         </div>
       </section>
     </Layout>

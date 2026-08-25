@@ -20,6 +20,7 @@ const Portal = lazy(() => import('./pages/Portal'))
 const Account = lazy(() => import('./pages/Account'))
 const NewOrder = lazy(() => import('./pages/NewOrder'))
 const OrderDetail = lazy(() => import('./pages/OrderDetail'))
+const Receipt = lazy(() => import('./pages/Receipt'))
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard'))
 const StaffOrderDetail = lazy(() => import('./pages/StaffOrderDetail'))
 const BlogList = lazy(() => import('./pages/BlogList'))
@@ -170,6 +171,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <OrderDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/orders/:id/receipt"
+          element={
+            <ProtectedRoute>
+              <Receipt />
             </ProtectedRoute>
           }
         />

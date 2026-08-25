@@ -195,6 +195,17 @@ create table if not exists order_attachments (
   created_at timestamptz not null default now()
 );
 
+-- 2f-c. Per-order messages — lets a client ask a question tied to a
+-- specific order, and staff reply, right there on that order.
+create table if not exists order_messages (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references orders(id) on delete cascade,
+  sender text not null check (sender in ('client', 'staff')),
+  sender_name text,
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
 -- 2f-b. Default shipping fee amounts — admin-set defaults for the three
 -- shipping legs staff commonly need to bill: to/from Secretary of State,
 -- to/from embassy or consulate, and mailing the completed document home.
@@ -412,6 +423,38 @@ create policy "Admins can manage embassy fees"
   on embassy_fees for all
   using (is_admin())
   with check (is_admin());
+
+-- 3c-b-2. Order messages — clients see/send only on their own orders;
+-- staff see/send only on orders assigned to them, admins on any.
+alter table order_messages enable row level security;
+
+drop policy if exists "Clients can view messages on their own orders" on order_messages;
+create policy "Clients can view messages on their own orders"
+  on order_messages for select
+  using (
+    exists (select 1 from orders o where o.id = order_messages.order_id and o.user_id = auth.uid())
+    or is_admin()
+    or exists (select 1 from orders o where o.id = order_messages.order_id and o.assigned_to = auth.uid())
+  );
+
+drop policy if exists "Clients can send messages on their own orders" on order_messages;
+create policy "Clients can send messages on their own orders"
+  on order_messages for insert
+  with check (
+    sender = 'client'
+    and exists (select 1 from orders o where o.id = order_messages.order_id and o.user_id = auth.uid())
+  );
+
+drop policy if exists "Staff can send messages on assigned orders" on order_messages;
+create policy "Staff can send messages on assigned orders"
+  on order_messages for insert
+  with check (
+    sender = 'staff'
+    and (
+      is_admin()
+      or exists (select 1 from orders o where o.id = order_messages.order_id and o.assigned_to = auth.uid())
+    )
+  );
 
 -- 3c-c. Secretary of State fee schedule — same pattern as embassy fees.
 alter table sos_fees enable row level security;
@@ -655,6 +698,12 @@ begin
     where pubname = 'supabase_realtime' and tablename = 'order_fees'
   ) then
     alter publication supabase_realtime add table order_fees;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'order_messages'
+  ) then
+    alter publication supabase_realtime add table order_messages;
   end if;
 end $$;
 

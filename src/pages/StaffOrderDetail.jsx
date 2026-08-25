@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../lib/AuthContext'
 import { supabase, DOCUMENTS_BUCKET } from '../lib/supabaseClient'
 import ProcessingQueue, { isProcessingComplete } from '../components/ProcessingQueue'
+import OrderMessages from '../components/OrderMessages'
 
 const SERVICE_LABEL = { notary: 'Notary', apostille: 'Apostille', embassy: 'Embassy legalization' }
 const SERVICES = [
@@ -632,6 +633,10 @@ export default function StaffOrderDetail() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <OrderMessages orderId={order.id} sender="staff" title="Messages with client" />
         </div>
 
         {/* Return shipping label */}

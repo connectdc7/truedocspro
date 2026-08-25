@@ -228,3 +228,19 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .flip-card-inner { transition: none; }
 }
+
+/* ============================================================
+   Receipt printing — hide site chrome, show only the receipt
+   ============================================================ */
+@media print {
+  header, footer, .print-hide {
+    display: none !important;
+  }
+  body {
+    background: #FFFFFF !important;
+  }
+  .receipt-print {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+}
