@@ -130,7 +130,9 @@ export default function StaffOrderDetail() {
 
   async function loadShippingDefaults() {
     const { data } = await supabase.from('shipping_fees').select('*')
-    setShippingDefaults(data ?? [])
+    const order = ['sos', 'embassy', 'mail_home']
+    const sorted = (data ?? []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
+    setShippingDefaults(sorted)
   }
 
   const [notifyError, setNotifyError] = useState('')
@@ -722,30 +724,46 @@ export default function StaffOrderDetail() {
             </div>
           )}
 
-          {shippingDefaults.length > 0 && (
-            <div className="mt-4">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Quick add: shipping</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {shippingDefaults.map((s) => (
+          {shippingDefaults.length > 0 && (() => {
+            const addedLabels = fees.map((f) => f.description)
+            const nextShipping = shippingDefaults.find((s) => !addedLabels.includes(s.label))
+
+            if (!nextShipping) {
+              return (
+                <p className="mt-4 text-xs text-[var(--brass)]">
+                  ✓ All shipping fees for this order have been added.
+                </p>
+              )
+            }
+
+            return (
+              <div className="mt-4">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
+                  Quick add: shipping{' '}
+                  <span className="normal-case text-[var(--slate)]">
+                    ({shippingDefaults.indexOf(nextShipping) + 1} of {shippingDefaults.length})
+                  </span>
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
                   <button
-                    key={s.key}
                     type="button"
                     onClick={() => {
-                      setNewFeeDesc(s.label)
-                      setNewFeeAmount(s.fee_cents > 0 ? (s.fee_cents / 100).toFixed(2) : '')
+                      setNewFeeDesc(nextShipping.label)
+                      setNewFeeAmount(nextShipping.fee_cents > 0 ? (nextShipping.fee_cents / 100).toFixed(2) : '')
                     }}
                     className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
                   >
-                    {s.label}
-                    {s.fee_cents > 0 && ` — $${(s.fee_cents / 100).toFixed(2)}`}
+                    {nextShipping.label}
+                    {nextShipping.fee_cents > 0 && ` — $${(nextShipping.fee_cents / 100).toFixed(2)}`}
                   </button>
-                ))}
+                </div>
+                <p className="mt-1.5 text-xs text-[var(--slate)]">
+                  Fills in the fields below — adjust the amount if this shipment costs differently, then click Add fee.
+                  The next shipping fee will appear here once this one's added.
+                </p>
               </div>
-              <p className="mt-1.5 text-xs text-[var(--slate)]">
-                Fills in the fields below — adjust the amount if this shipment costs differently, then click Add fee.
-              </p>
-            </div>
-          )}
+            )
+          })()}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <input
