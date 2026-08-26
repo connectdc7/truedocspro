@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 
 export default function SubscribeForm({ compact = false }) {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState('idle') // idle | sending | done | error
+  const [status, setStatus] = useState('idle') // idle | sending | done | already | error
   const [errorMsg, setErrorMsg] = useState('')
 
   const handleSubmit = async (e) => {
@@ -11,25 +11,38 @@ export default function SubscribeForm({ compact = false }) {
     setStatus('sending')
     setErrorMsg('')
     const { error } = await supabase.from('subscribers').insert({ email })
-    // Send the welcome email every time someone submits — whether this
-    // is a brand new subscription or they're entering an email that's
-    // already on the list.
-    supabase.functions.invoke('subscriber-welcome', { body: { email } })
 
-    if (error && error.code !== '23505') {
-      // A real error (not just "already subscribed")
+    if (error && error.code === '23505') {
+      // Already on the list — thank them instead of re-welcoming them
+      supabase.functions.invoke('subscriber-already-thanks', { body: { email } })
+      setStatus('already')
+      setEmail('')
+      return
+    }
+
+    if (error) {
       setStatus('error')
       setErrorMsg(error.message)
-    } else {
-      setStatus('done')
-      setEmail('')
+      return
     }
+
+    supabase.functions.invoke('subscriber-welcome', { body: { email } })
+    setStatus('done')
+    setEmail('')
   }
 
   if (status === 'done') {
     return (
       <p className="font-mono text-sm text-[var(--brass)]">
         You're subscribed — we'll email you when there's a new update.
+      </p>
+    )
+  }
+
+  if (status === 'already') {
+    return (
+      <p className="font-mono text-sm text-[var(--brass)]">
+        You're already a subscriber — thanks for being here! We've sent you an email with our latest posts.
       </p>
     )
   }
