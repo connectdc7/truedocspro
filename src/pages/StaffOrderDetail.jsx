@@ -724,46 +724,33 @@ export default function StaffOrderDetail() {
             </div>
           )}
 
-          {shippingDefaults.length > 0 && (() => {
-            const addedLabels = fees.map((f) => f.description)
-            const nextShipping = shippingDefaults.find((s) => !addedLabels.includes(s.label))
-
-            if (!nextShipping) {
-              return (
-                <p className="mt-4 text-xs text-[var(--brass)]">
-                  ✓ All shipping fees for this order have been added.
-                </p>
-              )
-            }
-
-            return (
-              <div className="mt-4">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
-                  Quick add: shipping{' '}
-                  <span className="normal-case text-[var(--slate)]">
-                    ({shippingDefaults.indexOf(nextShipping) + 1} of {shippingDefaults.length})
-                  </span>
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNewFeeDesc(nextShipping.label)
-                      setNewFeeAmount(nextShipping.fee_cents > 0 ? (nextShipping.fee_cents / 100).toFixed(2) : '')
-                    }}
-                    className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                  >
-                    {nextShipping.label}
-                    {nextShipping.fee_cents > 0 && ` — $${(nextShipping.fee_cents / 100).toFixed(2)}`}
-                  </button>
-                </div>
-                <p className="mt-1.5 text-xs text-[var(--slate)]">
-                  Fills in the fields below — adjust the amount if this shipment costs differently, then click Add fee.
-                  The next shipping fee will appear here once this one's added.
-                </p>
-              </div>
-            )
-          })()}
+          {shippingDefaults.length > 0 && (
+            <div className="mt-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Quick add: shipping</p>
+              <select
+                value=""
+                onChange={(e) => {
+                  const s = shippingDefaults.find((x) => x.key === e.target.value)
+                  if (s) {
+                    setNewFeeDesc(s.label)
+                    setNewFeeAmount(s.fee_cents > 0 ? (s.fee_cents / 100).toFixed(2) : '')
+                  }
+                }}
+                className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)] sm:w-auto"
+              >
+                <option value="">Select a shipping fee…</option>
+                {shippingDefaults.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                    {s.fee_cents > 0 ? ` — $${(s.fee_cents / 100).toFixed(2)}` : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-[var(--slate)]">
+                Fills in the fields below — adjust the amount if this shipment costs differently, then click Add fee.
+              </p>
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <input
