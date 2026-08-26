@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import SubscribeForm from '../components/SubscribeForm'
 import { supabase } from '../lib/supabaseClient'
+import useDocumentHead from '../lib/useDocumentHead'
 
 // Curated external links — update this list periodically to keep the
 // "In the news" section current. Ask your developer (or Claude) to
@@ -31,6 +32,12 @@ const NEWS_LINKS = [
 ]
 
 export default function BlogList() {
+  useDocumentHead({
+    title: 'Blog',
+    description:
+      'Guides and updates on notary, apostille, and embassy legalization — Hague Convention changes, processing times, and document requirements.',
+    path: '/blog',
+  })
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
 

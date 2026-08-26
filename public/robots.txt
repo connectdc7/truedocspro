@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /portal
 Disallow: /staff
-Disallow: /blog
 Disallow: /login
 
 Sitemap: https://truedocpros.com/sitemap.xml

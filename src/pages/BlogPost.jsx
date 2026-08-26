@@ -4,12 +4,19 @@ import ReactMarkdown from 'react-markdown'
 import Layout from '../components/Layout'
 import SubscribeForm from '../components/SubscribeForm'
 import { supabase } from '../lib/supabaseClient'
+import useDocumentHead from '../lib/useDocumentHead'
 
 export default function BlogPost() {
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+  useDocumentHead({
+    title: post?.title,
+    description: post?.excerpt,
+    path: `/blog/${slug}`,
+  })
 
   useEffect(() => {
     setLoading(true)
