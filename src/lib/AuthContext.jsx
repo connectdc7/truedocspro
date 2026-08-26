@@ -9,6 +9,29 @@ export function AuthProvider({ children }) {
   const [isStaff, setIsStaff] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [profile, setProfile] = useState(null) // { full_name, phone, title, email }
+  const [needsMfaVerification, setNeedsMfaVerification] = useState(false)
+
+  const checkMfaLevel = useCallback(async (currentSession) => {
+    if (!currentSession) {
+      setNeedsMfaVerification(false)
+      return
+    }
+    if (sessionStorage.getItem('mfa_verified_via_backup')) {
+      setNeedsMfaVerification(false)
+      return
+    }
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    setNeedsMfaVerification(Boolean(data && data.nextLevel === 'aal2' && data.currentLevel !== 'aal2'))
+  }, [])
+
+  // Backup codes aren't a real cryptographic Supabase factor, so using one
+  // can't elevate the actual session assurance level. This records that
+  // verification happened for this browser session (cleared on sign-out),
+  // so route guards stop asking again until next login.
+  const markMfaVerifiedViaBackupCode = useCallback(() => {
+    sessionStorage.setItem('mfa_verified_via_backup', '1')
+    setNeedsMfaVerification(false)
+  }, [])
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) {
@@ -33,19 +56,26 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
       await loadProfile(data.session?.user?.id)
+      await checkMfaLevel(data.session)
       if (active) setLoading(false)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession)
       await loadProfile(newSession?.user?.id)
+      await checkMfaLevel(newSession)
     })
 
     return () => {
       active = false
       listener.subscription.unsubscribe()
     }
-  }, [loadProfile])
+  }, [loadProfile, checkMfaLevel])
+
+  const refreshMfaStatus = useCallback(async () => {
+    const { data } = await supabase.auth.getSession()
+    await checkMfaLevel(data.session)
+  }, [checkMfaLevel])
 
   const refreshProfile = useCallback(() => loadProfile(session?.user?.id), [loadProfile, session])
 
@@ -56,8 +86,14 @@ export function AuthProvider({ children }) {
     isAdmin,
     profile,
     refreshProfile,
+    needsMfaVerification,
+    refreshMfaStatus,
+    markMfaVerifiedViaBackupCode,
     loading,
-    signOut: () => supabase.auth.signOut(),
+    signOut: () => {
+      sessionStorage.removeItem('mfa_verified_via_backup')
+      return supabase.auth.signOut()
+    },
   }
 
   // Auto sign-out after 3 minutes of inactivity, while logged in.

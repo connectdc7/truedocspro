@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 
 export default function AdminRoute({ children }) {
-  const { user, isAdmin, loading } = useAuth()
+  const { user, isAdmin, loading, needsMfaVerification } = useAuth()
 
   if (loading) {
     return (
@@ -13,6 +13,10 @@ export default function AdminRoute({ children }) {
   }
 
   if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (needsMfaVerification) {
     return <Navigate to="/login" replace />
   }
 

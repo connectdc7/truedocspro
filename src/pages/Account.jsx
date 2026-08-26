@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import useDocumentHead from '../lib/useDocumentHead'
+import TwoStepSetup from '../components/TwoStepSetup'
 
 export default function Account() {
   useDocumentHead({ title: 'Account', description: 'Manage your True Doc Pros account.', path: '/account' })
@@ -127,6 +128,8 @@ export default function Account() {
             )}
           </form>
         </div>
+
+        <TwoStepSetup />
 
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Change password</p>
