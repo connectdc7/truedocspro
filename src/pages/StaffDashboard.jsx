@@ -169,7 +169,12 @@ export default function StaffDashboard() {
             </thead>
             <tbody>
               {filtered.map((o) => (
-                <tr key={o.id} className="border-t border-[var(--line)] hover:bg-white/40">
+                <tr
+                  key={o.id}
+                  className={`border-t border-[var(--line)] transition-colors ${
+                    o.completed ? 'bg-[var(--complete-bg)] hover:bg-[var(--complete-bg)]' : 'hover:bg-white/40'
+                  }`}
+                >
                   <td className="px-4 py-3">
                     <Link to={`/staff/orders/${o.id}`} className="text-[var(--ink)] hover:text-[var(--wax)]">
                       {o.profiles?.email ?? '—'}
@@ -177,6 +182,11 @@ export default function StaffDashboard() {
                   </td>
                   <td className="px-4 py-3">
                     {o.document_name}
+                    {o.completed && (
+                      <span className="ml-2 rounded-full bg-[var(--complete)]/15 px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--complete)]">
+                        Completed
+                      </span>
+                    )}
                     {o.is_expedited && (
                       <span className="ml-2 rounded-full bg-[var(--brass)]/20 px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--brass)]">
                         Expedited

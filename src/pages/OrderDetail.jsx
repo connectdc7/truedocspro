@@ -283,6 +283,11 @@ export default function OrderDetail() {
             <p className="mt-1 font-mono text-xs uppercase tracking-widest text-[var(--slate)]">
               {SERVICE_LABEL[order.service]} · Submitted {new Date(order.created_at).toLocaleDateString()}
             </p>
+            {order.completed && (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--complete)]/15 px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-[var(--complete)]">
+                ✓ Order completed{order.completed_at && ` — ${new Date(order.completed_at).toLocaleDateString()}`}
+              </p>
+            )}
           </div>
           {order.status === 'received' ? (
             <button

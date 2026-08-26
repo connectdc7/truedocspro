@@ -109,11 +109,20 @@ function OrderRow({ order }) {
   return (
     <Link
       to={`/portal/orders/${order.id}`}
-      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-white/40 px-5 py-4 hover:border-[var(--wax)] transition-colors"
+      className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4 transition-colors ${
+        order.completed
+          ? 'border-[var(--complete)]/40 bg-[var(--complete-bg)] hover:border-[var(--complete)]'
+          : 'border-[var(--line)] bg-white/40 hover:border-[var(--wax)]'
+      }`}
     >
       <div>
         <p className="font-medium text-[var(--ink)]">
           {order.document_name}
+          {order.completed && (
+            <span className="ml-2 rounded-full bg-[var(--complete)]/15 px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--complete)]">
+              Completed
+            </span>
+          )}
           {order.is_expedited && (
             <span className="ml-2 rounded-full bg-[var(--brass)]/20 px-2 py-0.5 font-mono text-[10px] uppercase text-[var(--brass)]">
               Expedited

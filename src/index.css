@@ -8,6 +8,8 @@
   --wax: #C9A227;        /* gold - primary accent */
   --wax-dark: #A3821A;   /* darker gold for hover */
   --brass: #B08D57;      /* muted bronze-gold - secondary accents */
+  --complete: #3F6B4A;   /* muted sage green - order completed */
+  --complete-bg: #EEF3EE; /* soft sage tint for row/card backgrounds */
   --slate: #57616F;      /* secondary text */
   --line: #E1E4EA;       /* hairline rule */
 }

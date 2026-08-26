@@ -57,6 +57,8 @@ export default function StaffOrderDetail() {
   const [sendingInvoice, setSendingInvoice] = useState(false)
   const [invoiceSentResult, setInvoiceSentResult] = useState(null)
   const [sendingUnpaidFeesEmail, setSendingUnpaidFeesEmail] = useState(false)
+  const [togglingCompleted, setTogglingCompleted] = useState(false)
+  const [completedToggleResult, setCompletedToggleResult] = useState(null)
   const [unpaidFeesEmailResult, setUnpaidFeesEmailResult] = useState(null)
 
   useEffect(() => {
@@ -306,6 +308,34 @@ export default function StaffOrderDetail() {
         ok: true,
         message: `Sent — the client has been emailed a direct payment link for $${(data.total_cents / 100).toFixed(2)}.`,
       })
+    }
+  }
+
+  const toggleCompleted = async () => {
+    const turningOn = !order.completed
+    setTogglingCompleted(true)
+    setCompletedToggleResult(null)
+    const fields = { completed: turningOn, completed_at: turningOn ? new Date().toISOString() : null }
+    const { error: updateError } = await supabase.from('orders').update(fields).eq('id', id)
+    if (updateError) {
+      setTogglingCompleted(false)
+      setCompletedToggleResult({ ok: false, message: updateError.message })
+      return
+    }
+    setOrder((prev) => ({ ...prev, ...fields }))
+
+    if (turningOn) {
+      const { data, error: notifyError } = await supabase.functions.invoke('notify-order-completed', {
+        body: { order_id: id },
+      })
+      setTogglingCompleted(false)
+      if (notifyError || data?.error) {
+        setCompletedToggleResult({ ok: false, message: `Marked complete, but the client email failed to send: ${data?.error || notifyError.message}` })
+      } else {
+        setCompletedToggleResult({ ok: true, message: 'Marked complete — the client has been emailed.' })
+      }
+    } else {
+      setTogglingCompleted(false)
     }
   }
 
@@ -807,6 +837,43 @@ export default function StaffOrderDetail() {
           ) : (
             <p className="mt-3 text-xs text-[var(--wax)]">Payment pending from client.</p>
           )}
+
+          <div className="mt-5 border-t border-[var(--line)] pt-5">
+            <label className="flex items-center justify-between gap-3">
+              <span>
+                <span className="block text-sm font-medium text-[var(--ink)]">Order completed</span>
+                <span className="block text-xs text-[var(--slate)]">
+                  Marks this order fully done and emails the client a final confirmation.
+                </span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={order.completed}
+                onClick={toggleCompleted}
+                disabled={togglingCompleted}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+                  order.completed ? 'bg-[var(--complete)]' : 'bg-[var(--line)]'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    order.completed ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </label>
+            {order.completed && order.completed_at && (
+              <p className="mt-2 text-xs text-[var(--complete)]">
+                ✓ Completed {new Date(order.completed_at).toLocaleDateString()}
+              </p>
+            )}
+            {completedToggleResult && (
+              <p className={`mt-2 text-sm ${completedToggleResult.ok ? 'text-[var(--complete)]' : 'text-[var(--wax)]'}`}>
+                {completedToggleResult.message}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* 7. Upload completed document */}
