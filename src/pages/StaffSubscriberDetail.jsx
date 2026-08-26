@@ -80,8 +80,8 @@ export default function StaffSubscriberDetail() {
             <div>
               <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Subscribed on</p>
               <p className="mt-1 text-sm text-[var(--ink)]">
-                {new Date(subscriber.created_at).toLocaleDateString(undefined, {
-                  year: 'numeric', month: 'long', day: 'numeric',
+                {new Date(subscriber.created_at).toLocaleString(undefined, {
+                  year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
                 })}
               </p>
             </div>
