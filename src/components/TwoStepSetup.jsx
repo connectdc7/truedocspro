@@ -232,8 +232,53 @@ export default function TwoStepSetup() {
         </div>
       ) : enrolling ? (
         <div className="mt-4">
-          <p className="text-sm text-[var(--ink)]">
-            Scan this with your authenticator app, or enter the code manually.
+          <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Step 1 — Get an authenticator app</p>
+          <p className="mt-1 text-sm text-[var(--ink)]">
+            The QR code below isn't a link — it's meant to be scanned by a dedicated authenticator app, which
+            then generates your login codes. If you don't already have one, get one first:
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <a
+              href="https://apps.apple.com/app/google-authenticator/id388497605"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Google Authenticator — iPhone
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Google Authenticator — Android
+            </a>
+            <a
+              href="https://authy.com/download/"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Authy — Desktop (Mac/Windows/Linux)
+            </a>
+            <a
+              href="https://authy.com/download/"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg border border-[var(--line)] bg-white/70 px-4 py-3 text-sm text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
+            >
+              Authy — iPhone &amp; Android
+            </a>
+          </div>
+          <p className="mt-2 text-xs text-[var(--slate)]">
+            Already use 1Password, Bitwarden, or another password manager? Most of those work too — look for
+            an "add authenticator" or "scan QR code" option.
+          </p>
+
+          <p className="mt-6 font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Step 2 — Scan this code</p>
+          <p className="mt-1 text-sm text-[var(--ink)]">
+            Once you have the app open, scan this with it — not your phone's regular camera.
           </p>
           {qrCode && (
             <div
@@ -241,10 +286,11 @@ export default function TwoStepSetup() {
               dangerouslySetInnerHTML={{ __html: qrCode }}
             />
           )}
-          <p className="mt-2 font-mono text-xs text-[var(--slate)] break-all">{secret}</p>
+          <p className="mt-2 text-xs text-[var(--slate)]">Can't scan? Enter this code manually in the app instead:</p>
+          <p className="mt-1 font-mono text-xs text-[var(--slate)] break-all">{secret}</p>
 
-          <label className="mt-4 block font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
-            Enter the 6-digit code from your app
+          <label className="mt-6 block font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
+            Step 3 — Enter the 6-digit code the app gives you
           </label>
           <input
             value={verifyCode}
