@@ -130,7 +130,7 @@ export default function StaffOrderDetail() {
 
   async function loadShippingDefaults() {
     const { data } = await supabase.from('shipping_fees').select('*')
-    const order = ['sos', 'embassy', 'mail_home']
+    const order = ['sos', 'state_dept', 'embassy', 'mail_home']
     const sorted = (data ?? []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
     setShippingDefaults(sorted)
   }

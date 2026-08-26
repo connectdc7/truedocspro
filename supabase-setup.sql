@@ -208,11 +208,12 @@ create table if not exists order_messages (
 
 -- 2f-b. Default shipping fee amounts — admin-set defaults for the three
 -- shipping legs staff commonly need to bill: to/from Secretary of State,
--- to/from embassy or consulate, and mailing the completed document home.
+-- to/from U.S. State Department, to/from embassy or consulate, and
+-- mailing the completed document home.
 -- Staff use these as one-click starting points when adding a fee to an
 -- order; they aren't charged automatically.
 create table if not exists shipping_fees (
-  key text primary key check (key in ('sos', 'embassy', 'mail_home')),
+  key text primary key check (key in ('sos', 'state_dept', 'embassy', 'mail_home')),
   label text not null,
   fee_cents integer not null default 0,
   updated_at timestamptz not null default now()
@@ -220,9 +221,19 @@ create table if not exists shipping_fees (
 
 insert into shipping_fees (key, label, fee_cents) values
   ('sos', 'Shipping to/from Secretary of State', 0),
+  ('state_dept', 'Shipping to/from U.S. State Department', 0),
   ('embassy', 'Shipping to/from embassy or consulate', 0),
   ('mail_home', 'Mailing completed document home', 0)
 on conflict (key) do nothing;
+
+do $$
+begin
+  if exists (select 1 from pg_constraint where conname = 'shipping_fees_key_check') then
+    alter table shipping_fees drop constraint shipping_fees_key_check;
+  end if;
+  alter table shipping_fees add constraint shipping_fees_key_check
+    check (key in ('sos', 'state_dept', 'embassy', 'mail_home'));
+end $$;
 
 -- 2f. Additional pass-through fees (Secretary of State, embassy, etc.)
 -- added by staff after the order is submitted, since these vary and
