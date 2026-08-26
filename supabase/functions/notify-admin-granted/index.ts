@@ -78,6 +78,26 @@ Deno.serve(async (req) => {
           <li>Write and publish posts on the <strong>blog</strong>, and view the subscriber list</li>
         </ul>
         <p>With this comes access to sensitive client and business information — please take care with it.</p>
+
+        <div style="margin-top: 20px; padding: 16px 18px; background: #FDF6E3; border: 1px solid #E4C766; border-radius: 10px;">
+          <p style="margin: 0; font-family: monospace; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; color: #8F6F1E;">
+            Required for admin access
+          </p>
+          <p style="margin: 8px 0 0; font-size: 14px; color: #0F1B33;">
+            Company policy requires two-step verification on every staff and admin account. If you haven't set
+            it up yet, you'll need to before you can access the staff portal.
+          </p>
+          <p style="margin: 12px 0 0; font-size: 13px; color: #0F1B33;">
+            <strong>How to set it up:</strong><br />
+            1. Log in with your email and password.<br />
+            2. Go to <strong>Account</strong> from the menu.<br />
+            3. Under "Two-step verification," click <strong>Set up two-step verification</strong>.<br />
+            4. Scan the QR code with an authenticator app (Google Authenticator, Authy, or similar) and
+            enter the 6-digit code it gives you.<br />
+            5. Save the backup codes shown afterward somewhere safe, in case you ever lose your phone.
+          </p>
+        </div>
+
         <p style="margin-top: 24px;">
           <a href="${siteUrl}/staff"
              style="background:#0F1B33;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;">

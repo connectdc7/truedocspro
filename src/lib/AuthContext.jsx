@@ -10,12 +10,21 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [profile, setProfile] = useState(null) // { full_name, phone, title, email }
   const [needsMfaVerification, setNeedsMfaVerification] = useState(false)
+  const [hasMfaEnrolled, setHasMfaEnrolled] = useState(false)
+  const [mfaChecked, setMfaChecked] = useState(false)
 
   const checkMfaLevel = useCallback(async (currentSession) => {
     if (!currentSession) {
       setNeedsMfaVerification(false)
+      setHasMfaEnrolled(false)
+      setMfaChecked(true)
       return
     }
+    const { data: factorsData } = await supabase.auth.mfa.listFactors()
+    const verified = factorsData?.totp?.some((f) => f.status === 'verified')
+    setHasMfaEnrolled(Boolean(verified))
+    setMfaChecked(true)
+
     if (sessionStorage.getItem('mfa_verified_via_backup')) {
       setNeedsMfaVerification(false)
       return
@@ -42,7 +51,7 @@ export function AuthProvider({ children }) {
     }
     const { data } = await supabase
       .from('profiles')
-      .select('is_staff, is_admin, full_name, phone, title, email, stripe_customer_id, card_brand, card_last4, card_exp_month, card_exp_year')
+      .select('is_staff, is_admin, full_name, phone, title, email, stripe_customer_id, card_brand, card_last4, card_exp_month, card_exp_year, mfa_exempt')
       .eq('id', userId)
       .maybeSingle()
     setIsStaff(Boolean(data?.is_staff))
@@ -87,6 +96,8 @@ export function AuthProvider({ children }) {
     profile,
     refreshProfile,
     needsMfaVerification,
+    hasMfaEnrolled,
+    mfaChecked,
     refreshMfaStatus,
     markMfaVerifiedViaBackupCode,
     loading,

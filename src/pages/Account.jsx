@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabaseClient'
@@ -9,6 +9,8 @@ import TwoStepSetup from '../components/TwoStepSetup'
 export default function Account() {
   useDocumentHead({ title: 'Account', description: 'Manage your True Doc Pros account.', path: '/account' })
   const { user, profile, isStaff, refreshProfile } = useAuth()
+  const location = useLocation()
+  const mfaRequired = location.state?.mfaRequired
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [savingContact, setSavingContact] = useState(false)
@@ -82,6 +84,16 @@ export default function Account() {
         <p className="mt-1 text-sm text-[var(--slate)]">{user?.email}</p>
         {isStaff && profile?.title && (
           <p className="mt-1 font-mono text-xs uppercase tracking-widest text-[var(--brass)]">{profile.title}</p>
+        )}
+
+        {mfaRequired && (
+          <div className="mt-6 rounded-xl border border-[var(--wax)]/40 bg-[var(--wax)]/5 p-5">
+            <p className="font-mono text-xs uppercase tracking-widest text-[var(--wax)]">Action required</p>
+            <p className="mt-2 text-sm text-[var(--ink)]">
+              Company policy requires two-step verification for all staff and admin accounts. Set it up below
+              before you can access the staff portal.
+            </p>
+          </div>
         )}
 
         <div className="mt-8 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
