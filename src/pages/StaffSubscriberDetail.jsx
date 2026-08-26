@@ -25,7 +25,10 @@ export default function StaffSubscriberDetail() {
   }, [id])
 
   const daysSubscribed = subscriber
-    ? Math.floor((Date.now() - new Date(subscriber.created_at)) / (1000 * 60 * 60 * 24))
+    ? Math.round(
+        (new Date(new Date().toDateString()) - new Date(new Date(subscriber.created_at).toDateString())) /
+          (1000 * 60 * 60 * 24)
+      )
     : null
 
   const handleRemove = async () => {
@@ -85,7 +88,7 @@ export default function StaffSubscriberDetail() {
             <div>
               <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Time subscribed</p>
               <p className="mt-1 text-sm text-[var(--ink)]">
-                {daysSubscribed === 0 ? 'Today' : `${daysSubscribed} day${daysSubscribed === 1 ? '' : 's'}`}
+                {daysSubscribed === 0 ? 'Today' : daysSubscribed === 1 ? 'Yesterday' : `${daysSubscribed} days`}
               </p>
             </div>
           </div>
