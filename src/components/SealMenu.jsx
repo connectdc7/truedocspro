@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { getContextualMenu } from '../lib/sealMenu'
+import useInstallPrompt from '../lib/useInstallPrompt'
 import SealGraphic from './SealGraphic'
 
 const SIZE = 72
@@ -37,6 +38,7 @@ export default function SealMenu() {
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
   const dockTop = useDockTop()
+  const { canInstallDirectly, isStandalone, promptInstall } = useInstallPrompt()
 
   useEffect(() => {
     setOpen(false)
@@ -59,12 +61,22 @@ export default function SealMenu() {
   if (!user) return null
 
   const menu = getContextualMenu(location.pathname, { isStaff, isAdmin })
-  const items = menu.items.filter((item) => item.to !== location.pathname)
+  const items = menu.items.filter((item) => item.to !== location.pathname && !(item.to === '/app' && isStandalone))
 
   const handleSignOut = async () => {
     await signOut()
     setOpen(false)
     navigate('/')
+  }
+
+  const handleItemClick = async (item, e) => {
+    if (item.to === '/app' && canInstallDirectly) {
+      e.preventDefault()
+      await promptInstall()
+      setOpen(false)
+      return
+    }
+    setOpen(false)
   }
 
   return (
@@ -134,10 +146,10 @@ export default function SealMenu() {
             <Link
               key={item.to}
               to={item.to}
-              onClick={() => setOpen(false)}
+              onClick={(e) => handleItemClick(item, e)}
               className="block px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--wax)]/10 hover:text-[var(--wax)] transition-colors"
             >
-              {item.label}
+              {item.to === '/app' && canInstallDirectly ? 'Install app' : item.label}
             </Link>
           ))}
 
