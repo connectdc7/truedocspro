@@ -12,7 +12,7 @@ const SERVICES = [
     id: 'notary',
     name: 'Notary',
     desc: 'A commissioned notary witnesses your signature and confirms your identity, in person or online.',
-    turnaround: 'Same day',
+    turnaround: '2–3 business days',
     definition:
       'A notarization is an official act where a commissioned notary public witnesses you sign a document, verifies your identity, and applies their seal — confirming the signature is genuinely yours. It\'s the foundation nearly every apostille or embassy legalization builds on.',
   },
@@ -28,7 +28,7 @@ const SERVICES = [
     id: 'embassy',
     name: 'Embassy legalization',
     desc: 'Full chain legalization for countries outside the Hague Convention — county, state, and embassy authentication.',
-    turnaround: '2–4 weeks',
+    turnaround: '4–6 weeks',
     definition:
       'For countries that haven\'t joined the Hague Convention, a document needs a full chain of authentication instead of a single apostille: notarization, then state-level authentication, then U.S. State Department authentication, and finally legalization by the destination country\'s own embassy or consulate.',
   },

@@ -7,9 +7,9 @@ import { HAGUE_COUNTRIES, US_STATES } from '../lib/countries'
 import LegalizationPath from '../components/LegalizationPath'
 
 const SERVICES = [
-  { value: 'notary', label: 'Notary', price: 25, expedite: 15, standardTurnaround: 'Same day', expeditedTurnaround: 'Within 2 hours' },
+  { value: 'notary', label: 'Notary', price: 25, expedite: 15, standardTurnaround: '2–3 business days', expeditedTurnaround: 'At least 1 business day' },
   { value: 'apostille', label: 'Apostille', price: 85, expedite: 40, standardTurnaround: '3–7 business days', expeditedTurnaround: '1–2 business days' },
-  { value: 'embassy', label: 'Embassy legalization', price: 150, expedite: 75, standardTurnaround: '2–4 weeks', expeditedTurnaround: '5–7 business days' },
+  { value: 'embassy', label: 'Embassy legalization', price: 150, expedite: 75, standardTurnaround: '4–6 weeks', expeditedTurnaround: '2–4 weeks' },
 ]
 
 // TODO: replace with your real mailing address before going live.
