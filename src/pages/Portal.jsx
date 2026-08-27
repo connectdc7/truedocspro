@@ -46,7 +46,7 @@ export default function Portal() {
 
   return (
     <Layout>
-      <section className="border-b border-[var(--line)] px-6 py-12">
+      <section className="border-b border-[var(--line)] px-6 pt-6 pb-12 sm:pt-12">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
           <div>
             <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Portal</p>
