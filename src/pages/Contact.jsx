@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Layout from '../components/Layout'
 import useDocumentHead from '../lib/useDocumentHead'
 import { supabase } from '../lib/supabaseClient'
+import Turnstile from '../components/Turnstile'
 
 export default function Contact() {
   useDocumentHead({
@@ -12,6 +13,7 @@ export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
   const [errorMsg, setErrorMsg] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
@@ -19,17 +21,16 @@ export default function Contact() {
     e.preventDefault()
     setStatus('sending')
     setErrorMsg('')
-    const { error } = await supabase.from('contact_messages').insert({
-      name: form.name,
-      email: form.email,
-      message: form.message,
+    const { data, error } = await supabase.functions.invoke('submit-contact-message', {
+      body: { ...form, captchaToken },
     })
-    if (error) {
+    if (error || data?.error) {
       setStatus('error')
-      setErrorMsg(error.message)
+      setErrorMsg(data?.error || error.message)
     } else {
       setStatus('sent')
       setForm({ name: '', email: '', message: '' })
+      setCaptchaToken('')
     }
   }
 
@@ -68,6 +69,7 @@ export default function Contact() {
             {status === 'error' && (
               <p className="text-sm text-[var(--wax)]">Something went wrong: {errorMsg}</p>
             )}
+            <Turnstile onVerify={setCaptchaToken} />
             <button
               type="submit"
               disabled={status === 'sending'}

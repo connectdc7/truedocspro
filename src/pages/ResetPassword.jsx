@@ -29,8 +29,8 @@ export default function ResetPassword() {
       setError("Passwords don't match.")
       return
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (password.length < 10) {
+      setError('Password must be at least 10 characters.')
       return
     }
     setLoading(true)
@@ -86,7 +86,7 @@ export default function ResetPassword() {
               id="password"
               type="password"
               required
-              minLength={6}
+              minLength={10}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
@@ -100,7 +100,7 @@ export default function ResetPassword() {
               id="confirmPassword"
               type="password"
               required
-              minLength={6}
+              minLength={10}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"

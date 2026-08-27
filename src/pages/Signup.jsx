@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../lib/supabaseClient'
+import Turnstile from '../components/Turnstile'
 import useDocumentHead from '../lib/useDocumentHead'
 
 export default function Signup() {
@@ -15,6 +16,7 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const navigate = useNavigate()
 
@@ -25,7 +27,7 @@ export default function Signup() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: { data: { full_name: fullName }, captchaToken: captchaToken || undefined },
     })
     setLoading(false)
     if (error) {
@@ -99,14 +101,15 @@ export default function Signup() {
               id="password"
               type="password"
               required
-              minLength={6}
+              minLength={10}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
             />
-            <p className="mt-1.5 text-xs text-[var(--slate)]">At least 6 characters.</p>
+            <p className="mt-1.5 text-xs text-[var(--slate)]">At least 10 characters.</p>
           </div>
           {error && <p className="text-sm text-[var(--wax)]">{error}</p>}
+          <Turnstile onVerify={setCaptchaToken} />
           <button
             type="submit"
             disabled={loading}
