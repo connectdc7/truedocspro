@@ -76,47 +76,9 @@ export default function StaffDashboard() {
   return (
     <Layout>
       <section className="border-b border-[var(--line)] px-6 py-10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Staff</p>
-            <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {isAdmin && (
-              <>
-                <Link
-                  to="/staff/sos-fees"
-                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                >
-                  SOS fees
-                </Link>
-                <Link
-                  to="/staff/embassy-fees"
-                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                >
-                  Embassy fees
-                </Link>
-                <Link
-                  to="/staff/shipping-fees"
-                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                >
-                  Shipping fees
-                </Link>
-                <Link
-                  to="/staff/blog"
-                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                >
-                  Manage blog
-                </Link>
-                <Link
-                  to="/staff/team"
-                  className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
-                >
-                  Team Members
-                </Link>
-              </>
-            )}
-          </div>
+        <div className="mx-auto max-w-6xl">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Staff</p>
+          <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
         </div>
       </section>
 
