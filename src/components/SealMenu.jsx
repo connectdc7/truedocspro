@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { getContextualMenu } from '../lib/sealMenu'
+import { supabase } from '../lib/supabaseClient'
 import useInstallPrompt from '../lib/useInstallPrompt'
 import SealGraphic from './SealGraphic'
 
@@ -23,12 +24,15 @@ function defaultPosition() {
 // as you navigate. Click opens the account menu (same contextual
 // links per page as always); hover grows it slightly for feedback.
 export default function SealMenu() {
-  const { user, isStaff, isAdmin, profile, signOut } = useAuth()
+  const { user, isStaff, isAdmin, profile, signOut, refreshProfile } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [dropdownAlign, setDropdownAlign] = useState({ right: true, below: true })
   const [hovering, setHovering] = useState(false)
+  const [editingNote, setEditingNote] = useState(false)
+  const [noteDraft, setNoteDraft] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
   const { canInstallDirectly, isStandalone, promptInstall } = useInstallPrompt()
@@ -63,6 +67,10 @@ export default function SealMenu() {
   }, [location.pathname])
 
   useEffect(() => {
+    if (!open) setEditingNote(false)
+  }, [open])
+
+  useEffect(() => {
     if (!open) return
     const handleClick = (e) => {
       if (
@@ -95,6 +103,21 @@ export default function SealMenu() {
       return
     }
     setOpen(false)
+  }
+
+  const startEditingNote = () => {
+    setNoteDraft(profile?.quick_note || '')
+    setEditingNote(true)
+  }
+
+  const handleSaveNote = async () => {
+    setSavingNote(true)
+    const { error } = await supabase.rpc('update_own_quick_note', { new_note: noteDraft || null })
+    setSavingNote(false)
+    if (!error) {
+      refreshProfile()
+      setEditingNote(false)
+    }
   }
 
   const handlePointerDown = (e) => {
@@ -205,19 +228,55 @@ export default function SealMenu() {
             Account settings
           </Link>
 
-          {profile?.quick_note && (
+          {editingNote ? (
+            <div className="border-t border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Your note</p>
+              <textarea
+                autoFocus
+                rows={4}
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder="Type or paste anything you want to keep close at hand…"
+                className="mt-1.5 w-full rounded-lg border border-[var(--line)] bg-white/80 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
+              />
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleSaveNote() }}
+                  disabled={savingNote}
+                  className="rounded-full bg-[var(--ink)] px-4 py-1.5 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
+                >
+                  {savingNote ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingNote(false) }}
+                  className="text-xs text-[var(--slate)] hover:text-[var(--wax)]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : profile?.quick_note ? (
             <div className="border-t border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
               <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Your note</p>
               <p className="mt-1.5 max-h-32 overflow-y-auto whitespace-pre-wrap text-sm text-[var(--ink)]">
                 {profile.quick_note}
               </p>
-              <Link
-                to="/account"
-                onClick={() => setOpen(false)}
-                className="mt-1.5 inline-block text-xs text-[var(--wax)] hover:underline"
+              <button
+                onClick={(e) => { e.stopPropagation(); startEditingNote() }}
+                className="mt-1.5 text-xs text-[var(--wax)] hover:underline"
               >
                 Edit note
-              </Link>
+              </button>
+            </div>
+          ) : (
+            <div className="border-t border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
+              <button
+                onClick={(e) => { e.stopPropagation(); startEditingNote() }}
+                className="text-xs text-[var(--wax)] hover:underline"
+              >
+                + Add a quick note
+              </button>
             </div>
           )}
 
