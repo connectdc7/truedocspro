@@ -5,8 +5,8 @@
   --ink-soft: #24365C;   /* lighter navy for hover states */
   --parchment: #FFFFFF;  /* page background */
   --parchment-dim: #FAFAFB;
-  --wax: #C9A227;        /* gold - primary accent */
-  --wax-dark: #A3821A;   /* darker gold for hover */
+  --wax: #9A6B0F;        /* rich gold - primary accent */
+  --wax-dark: #7A5510;   /* darker gold for hover */
   --brass: #B08D57;      /* muted bronze-gold - secondary accents */
   --complete: #3F6B4A;   /* muted sage green - order completed */
   --complete-bg: #EEF3EE; /* soft sage tint for row/card backgrounds */
