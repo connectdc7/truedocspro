@@ -6,7 +6,7 @@ import useInstallPrompt from '../lib/useInstallPrompt'
 import SealGraphic from './SealGraphic'
 
 const SIZE = 72
-const DOCK_TOP_DESKTOP = 16
+const DOCK_TOP_DESKTOP = 100 // aligns with the page header row (e.g. "All documents"), not the navbar itself
 const DOCK_TOP_MOBILE = 76 // clears the header row entirely, so it never overlaps the hamburger button
 const DOCK_RIGHT = 16
 const DRAG_THRESHOLD = 4
