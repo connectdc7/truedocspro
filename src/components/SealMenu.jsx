@@ -205,6 +205,22 @@ export default function SealMenu() {
             Account settings
           </Link>
 
+          {profile?.quick_note && (
+            <div className="border-t border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">Your note</p>
+              <p className="mt-1.5 max-h-32 overflow-y-auto whitespace-pre-wrap text-sm text-[var(--ink)]">
+                {profile.quick_note}
+              </p>
+              <Link
+                to="/account"
+                onClick={() => setOpen(false)}
+                className="mt-1.5 inline-block text-xs text-[var(--wax)] hover:underline"
+              >
+                Edit note
+              </Link>
+            </div>
+          )}
+
           {menu.section && (
             <p className="border-y border-[var(--line)] px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-[var(--slate)]">
               {menu.section}

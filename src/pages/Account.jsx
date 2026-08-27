@@ -21,6 +21,7 @@ export default function Account() {
     if (profile) {
       setFullName(profile.full_name || '')
       setPhone(profile.phone || '')
+      setQuickNote(profile.quick_note || '')
     }
   }, [profile])
 
@@ -40,6 +41,27 @@ export default function Account() {
       setContactSaved(true)
       refreshProfile()
       setTimeout(() => setContactSaved(false), 3000)
+    }
+  }
+
+  const [quickNote, setQuickNote] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
+  const [noteError, setNoteError] = useState('')
+
+  const handleSaveNote = async (e) => {
+    e.preventDefault()
+    setSavingNote(true)
+    setNoteError('')
+    setNoteSaved(false)
+    const { error } = await supabase.rpc('update_own_quick_note', { new_note: quickNote || null })
+    setSavingNote(false)
+    if (error) {
+      setNoteError(error.message)
+    } else {
+      setNoteSaved(true)
+      refreshProfile()
+      setTimeout(() => setNoteSaved(false), 3000)
     }
   }
 
@@ -142,6 +164,34 @@ export default function Account() {
         </div>
 
         <TwoStepSetup />
+
+        <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Quick note</p>
+          <p className="mt-1 text-xs text-[var(--slate)]">
+            Save anything you want handy — a reference number, an address, a reminder — and it'll show up in
+            the seal's menu on every page, so it's there whenever you need it.
+          </p>
+          <form onSubmit={handleSaveNote} className="mt-4">
+            <textarea
+              rows={4}
+              value={quickNote}
+              onChange={(e) => setQuickNote(e.target.value)}
+              placeholder="Paste or type anything you want to keep close at hand…"
+              className="w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
+            />
+            {noteError && <p className="mt-2 text-sm text-[var(--wax)]">{noteError}</p>}
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={savingNote}
+                className="rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-60"
+              >
+                {savingNote ? 'Saving…' : 'Save note'}
+              </button>
+              {noteSaved && <p className="font-mono text-xs text-[var(--brass)]">Saved.</p>}
+            </div>
+          </form>
+        </div>
 
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Change password</p>
