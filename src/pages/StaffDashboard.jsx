@@ -75,7 +75,7 @@ export default function StaffDashboard() {
 
   return (
     <Layout>
-      <section className="border-b border-[var(--line)] px-6 py-10">
+      <section className="border-b border-[var(--line)] px-6 pt-6 pb-10 sm:pt-10">
         <div className="mx-auto max-w-6xl">
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Staff</p>
           <h1 className="font-display mt-1 text-3xl font-semibold text-[var(--ink)]">All documents</h1>
