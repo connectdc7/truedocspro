@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import QRCode from 'qrcode'
+import useInstallPrompt from '../lib/useInstallPrompt'
 import useDocumentHead from '../lib/useDocumentHead'
 
 function detectPlatform() {
@@ -17,8 +18,11 @@ export default function InstallApp() {
     path: '/app',
   })
   const canvasRef = useRef(null)
+  const instructionsRef = useRef(null)
   const [platform, setPlatform] = useState('desktop')
   const [url, setUrl] = useState('')
+  const [installResult, setInstallResult] = useState('')
+  const { canInstallDirectly, isStandalone, promptInstall } = useInstallPrompt()
 
   useEffect(() => {
     setPlatform(detectPlatform())
@@ -32,6 +36,15 @@ export default function InstallApp() {
       })
     }
   }, [])
+
+  const handleQuickInstallClick = async () => {
+    if (canInstallDirectly) {
+      const outcome = await promptInstall()
+      setInstallResult(outcome === 'accepted' ? 'installed' : '')
+      return
+    }
+    instructionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <Layout>
@@ -52,9 +65,22 @@ export default function InstallApp() {
             <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Scan with your phone camera</p>
             <p className="mt-1 break-all font-mono text-xs text-[var(--slate)]">{url}</p>
           </div>
+
+          {isStandalone ? (
+            <p className="font-mono text-sm text-[var(--brass)]">✓ Already installed on this device.</p>
+          ) : installResult === 'installed' ? (
+            <p className="font-mono text-sm text-[var(--brass)]">✓ Installed — check your home screen.</p>
+          ) : (
+            <button
+              onClick={handleQuickInstallClick}
+              className="rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors"
+            >
+              {canInstallDirectly ? 'Install now' : 'Show me how to install'}
+            </button>
+          )}
         </div>
 
-        <div className="mt-10 space-y-8">
+        <div ref={instructionsRef} className="mt-10 space-y-8">
           <PlatformBlock
             active={platform === 'ios'}
             title="On iPhone (Safari)"
