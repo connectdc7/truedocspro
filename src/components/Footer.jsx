@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-12 grid gap-10 md:grid-cols-4">
         <div>
           <span className="font-display text-lg font-semibold text-[var(--ink)]">
-            True Doc <span className="text-[var(--wax)]">Pros</span>
+            True Doc <span className="text-[var(--wax)]" style={{ filter: 'drop-shadow(0px 0.6px 0.4px rgba(0,0,0,0.25))' }}>Pros</span>
           </span>
           <p className="mt-3 text-sm text-[var(--slate)] max-w-xs">
             Notary, apostille, and embassy legalization, handled document by document, with a paper trail you can see.

@@ -92,7 +92,7 @@ export default function Receipt() {
           <div className="flex items-center justify-between border-b border-[var(--line)] pb-6">
             <div>
               <p className="font-display text-2xl font-semibold text-[var(--ink)]">
-                True Doc <span className="text-[var(--wax)]">Pros</span>
+                True Doc <span className="text-[var(--wax)]" style={{ filter: 'drop-shadow(0px 0.6px 0.4px rgba(0,0,0,0.25))' }}>Pros</span>
               </p>
               <p className="mt-1 text-xs text-[var(--slate)]">truedocpros.com</p>
             </div>

@@ -17,7 +17,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
           <span className="logo-entrance font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
-            True Doc <span className="text-[var(--wax)]">Pros</span>
+            True Doc <span className="text-[var(--wax)]" style={{ filter: 'drop-shadow(0px 0.6px 0.4px rgba(0,0,0,0.25))' }}>Pros</span>
           </span>
         </Link>
 
