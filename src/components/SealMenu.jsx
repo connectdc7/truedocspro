@@ -9,36 +9,54 @@ const SIZE = 72
 const DOCK_TOP_DESKTOP = 16
 const DOCK_TOP_MOBILE = 76 // clears the header row entirely, so it never overlaps the hamburger button
 const DOCK_RIGHT = 16
+const DRAG_THRESHOLD = 4
 
-function useDockTop() {
-  const [dockTop, setDockTop] = useState(
-    typeof window !== 'undefined' && window.innerWidth < 768 ? DOCK_TOP_MOBILE : DOCK_TOP_DESKTOP
-  )
-  useEffect(() => {
-    const handleResize = () => {
-      setDockTop(window.innerWidth < 768 ? DOCK_TOP_MOBILE : DOCK_TOP_DESKTOP)
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-  return dockTop
+function defaultPosition() {
+  const top = typeof window !== 'undefined' && window.innerWidth < 768 ? DOCK_TOP_MOBILE : DOCK_TOP_DESKTOP
+  const right = DOCK_RIGHT
+  const x = typeof window !== 'undefined' ? window.innerWidth - SIZE - right : 0
+  return { x, y: top }
 }
 
-// Static seal in the same top-right spot on every page, once logged
-// in. Click opens the account menu; hover grows it slightly for
-// feedback. No dragging or movement — stays put consistently. Sits
-// just below the header on mobile so it never overlaps the hamburger
-// menu button.
+// Sits in the same top-right spot by default on every page, once
+// logged in — but can be dragged anywhere on screen and stays there
+// as you navigate. Click opens the account menu (same contextual
+// links per page as always); hover grows it slightly for feedback.
 export default function SealMenu() {
   const { user, isStaff, isAdmin, profile, signOut } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [dropdownAlign, setDropdownAlign] = useState({ right: true, below: true })
   const [hovering, setHovering] = useState(false)
   const wrapRef = useRef(null)
   const menuRef = useRef(null)
-  const dockTop = useDockTop()
   const { canInstallDirectly, isStandalone, promptInstall } = useInstallPrompt()
+
+  const posRef = useRef(defaultPosition())
+  const draggingRef = useRef(false)
+  const draggedRef = useRef(false)
+  const dragOffsetRef = useRef({ x: 0, y: 0 })
+  const [, forceRender] = useState(0)
+
+  useEffect(() => {
+    if (wrapRef.current) {
+      wrapRef.current.style.transform = `translate(${posRef.current.x}px, ${posRef.current.y}px)`
+    }
+    const handleResize = () => {
+      const maxX = window.innerWidth - SIZE
+      const maxY = window.innerHeight - SIZE
+      posRef.current = {
+        x: Math.min(posRef.current.x, maxX),
+        y: Math.min(posRef.current.y, maxY),
+      }
+      if (wrapRef.current) {
+        wrapRef.current.style.transform = `translate(${posRef.current.x}px, ${posRef.current.y}px)`
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     setOpen(false)
@@ -79,26 +97,74 @@ export default function SealMenu() {
     setOpen(false)
   }
 
+  const handlePointerDown = (e) => {
+    draggingRef.current = true
+    draggedRef.current = false
+    const rect = wrapRef.current.getBoundingClientRect()
+    dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+
+  const handlePointerMove = (e) => {
+    if (!draggingRef.current) return
+    const dx = e.clientX - (dragOffsetRef.current.x + posRef.current.x)
+    const dy = e.clientY - (dragOffsetRef.current.y + posRef.current.y)
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      draggedRef.current = true
+      setHovering(false)
+    }
+    const nextX = Math.min(Math.max(e.clientX - dragOffsetRef.current.x, 0), window.innerWidth - SIZE)
+    const nextY = Math.min(Math.max(e.clientY - dragOffsetRef.current.y, 0), window.innerHeight - SIZE)
+    posRef.current = { x: nextX, y: nextY }
+    if (wrapRef.current) wrapRef.current.style.transform = `translate(${nextX}px, ${nextY}px)`
+  }
+
+  const handlePointerUp = () => {
+    draggingRef.current = false
+  }
+
+  const handleClick = () => {
+    if (draggedRef.current) {
+      draggedRef.current = false
+      return
+    }
+    if (!open) {
+      const { x, y } = posRef.current
+      setDropdownAlign({
+        right: x > window.innerWidth / 2,
+        below: y < window.innerHeight - SIZE - 320, // ~dropdown height
+      })
+    }
+    setOpen((o) => !o)
+  }
+
   return (
     <div
       ref={wrapRef}
       style={{
         position: 'fixed',
-        top: dockTop,
-        right: DOCK_RIGHT,
+        top: 0,
+        left: 0,
+        width: SIZE,
+        height: SIZE,
         zIndex: 60,
+        touchAction: 'none',
+        willChange: 'transform',
       }}
     >
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClick={handleClick}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
-        aria-label="Account menu"
+        aria-label="Account menu — drag to move"
         aria-expanded={open}
-        title="Account menu"
+        title="Account menu — drag to move"
         className="drop-shadow-lg transition-transform"
-        style={{ transform: hovering ? 'scale(1.25)' : 'scale(1)' }}
+        style={{ cursor: 'grab', transform: hovering ? 'scale(1.25)' : 'scale(1)' }}
       >
         <SealGraphic size={SIZE} label="MENU" />
       </button>
@@ -106,7 +172,9 @@ export default function SealMenu() {
       {open && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-[84px] w-72 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl"
+          className={`absolute w-72 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--parchment)] shadow-xl ${
+            dropdownAlign.right ? 'right-0' : 'left-0'
+          } ${dropdownAlign.below ? 'top-[84px]' : 'bottom-[84px]'}`}
         >
           <div className="border-b border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
             <p className="font-display text-sm font-semibold text-[var(--ink)]">
