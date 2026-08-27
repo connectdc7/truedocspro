@@ -448,6 +448,10 @@ export default function StaffOrderDetail() {
 
   return (
     <Layout>
+      <div
+        className={order.completed ? 'min-h-full' : undefined}
+        style={order.completed ? { backgroundColor: 'var(--complete-bg)' } : undefined}
+      >
       <section className="mx-auto max-w-2xl px-6 py-16">
         <Link to="/staff" className="font-mono text-xs uppercase tracking-widest text-[var(--slate)] hover:text-[var(--wax)]">
           ← All documents
@@ -1016,6 +1020,7 @@ export default function StaffOrderDetail() {
           })()}
         </div>
       </section>
+      </div>
     </Layout>
   )
 }

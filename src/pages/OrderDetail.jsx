@@ -265,10 +265,14 @@ export default function OrderDetail() {
 
   return (
     <Layout>
-      <section className="mx-auto max-w-3xl px-6 py-16">
-        <Link to="/portal" className="font-mono text-xs uppercase tracking-widest text-[var(--slate)] hover:text-[var(--wax)]">
-          ← Your documents
-        </Link>
+      <div
+        className={order.completed ? 'min-h-full' : undefined}
+        style={order.completed ? { backgroundColor: 'var(--complete-bg)' } : undefined}
+      >
+        <section className="mx-auto max-w-3xl px-6 py-16">
+          <Link to="/portal" className="font-mono text-xs uppercase tracking-widest text-[var(--slate)] hover:text-[var(--wax)]">
+            ← Your documents
+          </Link>
 
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -603,7 +607,8 @@ export default function OrderDetail() {
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white/40 p-6">
           <OrderMessages orderId={order.id} sender="client" title="Have a question about this document?" />
         </div>
-      </section>
+        </section>
+      </div>
     </Layout>
   )
 }
