@@ -23,11 +23,14 @@ export default function BouncingSeal() {
         right: DOCK_RIGHT,
         zIndex: 60,
       }}
-      className="drop-shadow-lg transition-transform hover:scale-125"
+      className="relative block drop-shadow-lg transition-transform hover:scale-125"
       aria-label="Submit a document"
       title="Submit a document"
     >
-      <SealGraphic size={SIZE} label="SUBMIT" />
+      <div className="seal-shine-ring" />
+      <div className="relative z-[1]">
+        <SealGraphic size={SIZE} label="SUBMIT" />
+      </div>
     </Link>
   )
 }

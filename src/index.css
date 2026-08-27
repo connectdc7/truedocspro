@@ -246,3 +246,35 @@ body {
     max-width: 100% !important;
   }
 }
+
+/* ============================================================
+   Seal shine — a rotating gold highlight around the seal's rim,
+   inviting a click. Sits behind the seal graphic, slightly larger,
+   so only the trim peeking past the edge is visible.
+   ============================================================ */
+@keyframes seal-shine-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.seal-shine-ring {
+  position: absolute;
+  inset: -7px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 70%,
+    rgba(243, 224, 160, 0.5) 82%,
+    #F3E0A0 88%,
+    #FFFFFF 91%,
+    #F3E0A0 94%,
+    rgba(243, 224, 160, 0.5) 98%,
+    transparent 100%
+  );
+  animation: seal-shine-rotate 3.5s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .seal-shine-ring { animation: none; }
+}

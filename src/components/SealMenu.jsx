@@ -175,22 +175,25 @@ export default function SealMenu() {
         willChange: 'transform',
       }}
     >
-      <button
-        type="button"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onClick={handleClick}
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-        aria-label="Account menu — drag to move"
-        aria-expanded={open}
-        title="Account menu — drag to move"
-        className="drop-shadow-lg transition-transform"
-        style={{ cursor: 'grab', transform: hovering ? 'scale(1.25)' : 'scale(1)' }}
-      >
-        <SealGraphic size={SIZE} label="MENU" />
-      </button>
+      <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
+        <div className="seal-shine-ring" />
+        <button
+          type="button"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onClick={handleClick}
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+          aria-label="Account menu — drag to move"
+          aria-expanded={open}
+          title="Account menu — drag to move"
+          className="relative z-[1] drop-shadow-lg transition-transform"
+          style={{ cursor: 'grab', transform: hovering ? 'scale(1.25)' : 'scale(1)' }}
+        >
+          <SealGraphic size={SIZE} label="MENU" />
+        </button>
+      </div>
 
       {open && (
         <div
