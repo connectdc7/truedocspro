@@ -245,6 +245,7 @@ export default function SealMenu() {
               />
               <div className="mt-2 flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); handleSaveNote() }}
                   disabled={savingNote}
                   className="rounded-full bg-[var(--ink)] px-4 py-1.5 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
@@ -252,6 +253,7 @@ export default function SealMenu() {
                   {savingNote ? 'Saving…' : 'Save'}
                 </button>
                 <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); setEditingNote(false) }}
                   className="text-xs text-[var(--slate)] hover:text-[var(--wax)]"
                 >
@@ -266,6 +268,7 @@ export default function SealMenu() {
                 {profile.quick_note}
               </p>
               <button
+                type="button"
                 onClick={(e) => { e.stopPropagation(); startEditingNote() }}
                 className="mt-1.5 text-xs text-[var(--wax)] hover:underline"
               >
@@ -275,6 +278,7 @@ export default function SealMenu() {
           ) : (
             <div className="border-t border-[var(--line)] bg-[var(--parchment-dim)] px-4 py-3">
               <button
+                type="button"
                 onClick={(e) => { e.stopPropagation(); startEditingNote() }}
                 className="text-xs text-[var(--wax)] hover:underline"
               >
@@ -300,6 +304,7 @@ export default function SealMenu() {
           ))}
 
           <button
+            type="button"
             onClick={handleSignOut}
             className="block w-full border-t border-[var(--line)] px-4 py-2.5 text-left text-sm text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors"
           >

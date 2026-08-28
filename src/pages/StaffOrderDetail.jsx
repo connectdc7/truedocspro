@@ -468,6 +468,7 @@ export default function StaffOrderDetail() {
                   className="font-display flex-1 min-w-[200px] rounded-lg border border-[var(--wax)] bg-white/70 px-3 py-2 text-2xl font-semibold text-[var(--ink)] outline-none"
                 />
                 <button
+                  type="button"
                   onClick={saveDocumentName}
                   disabled={savingName || !nameDraft.trim()}
                   className="rounded-full bg-[var(--ink)] px-4 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
@@ -475,6 +476,7 @@ export default function StaffOrderDetail() {
                   {savingName ? 'Saving…' : 'Save'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setEditingName(false)}
                   className="text-sm text-[var(--slate)] hover:text-[var(--wax)]"
                 >
@@ -490,6 +492,7 @@ export default function StaffOrderDetail() {
                   </span>
                 )}
                 <button
+                  type="button"
                   onClick={() => { setNameDraft(order.document_name); setEditingName(true) }}
                   className="ml-3 align-middle font-mono text-xs uppercase tracking-wide text-[var(--slate)] hover:text-[var(--wax)]"
                 >
@@ -499,6 +502,7 @@ export default function StaffOrderDetail() {
             )}
           </div>
           <button
+            type="button"
             onClick={handleDelete}
             disabled={deleting}
             className="rounded-full border border-[var(--wax)]/40 px-4 py-2 font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors disabled:opacity-50"
@@ -607,6 +611,7 @@ export default function StaffOrderDetail() {
               <p className="text-sm text-[var(--ink)]">{order.requested_documents}</p>
               <p className="mt-2 font-mono text-xs uppercase text-[var(--brass)]">Waiting on client</p>
               <button
+                type="button"
                 onClick={clearRequest}
                 disabled={sendingRequest}
                 className="mt-3 rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
@@ -624,6 +629,7 @@ export default function StaffOrderDetail() {
                 className="w-full rounded-lg border border-[var(--line)] bg-white/60 px-4 py-3 text-sm outline-none focus:border-[var(--wax)]"
               />
               <button
+                type="button"
                 onClick={sendRequest}
                 disabled={sendingRequest || !requestNote.trim()}
                 className="mt-3 rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
@@ -657,6 +663,7 @@ export default function StaffOrderDetail() {
                           {new Date(a.created_at).toLocaleDateString()}
                         </span>
                         <button
+                          type="button"
                           onClick={() => deleteClientAttachment(a)}
                           disabled={deletingAttachmentId === a.id}
                           className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
@@ -725,12 +732,14 @@ export default function StaffOrderDetail() {
                       className="w-24 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
                     />
                     <button
+                      type="button"
                       onClick={() => saveEditFee(fee.id)}
                       className="rounded-full bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)]"
                     >
                       Save
                     </button>
                     <button
+                      type="button"
                       onClick={() => setEditingFeeId(null)}
                       className="rounded-full border border-[var(--line)] px-3 py-2 text-xs text-[var(--ink)]"
                     >
@@ -748,8 +757,8 @@ export default function StaffOrderDetail() {
                     </div>
                     {!fee.paid && (
                       <div className="flex gap-2">
-                        <button onClick={() => startEditFee(fee)} className="text-xs text-[var(--ink)] hover:text-[var(--wax)]">Edit</button>
-                        <button onClick={() => deleteFee(fee.id)} className="text-xs text-[var(--wax)] hover:underline">Remove</button>
+                        <button type="button" onClick={() => startEditFee(fee)} className="text-xs text-[var(--ink)] hover:text-[var(--wax)]">Edit</button>
+                        <button type="button" onClick={() => deleteFee(fee.id)} className="text-xs text-[var(--wax)] hover:underline">Remove</button>
                       </div>
                     )}
                   </div>
@@ -802,6 +811,7 @@ export default function StaffOrderDetail() {
               className="w-32 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2.5 text-sm outline-none focus:border-[var(--wax)]"
             />
             <button
+              type="button"
               onClick={addFee}
               disabled={addingFee || !newFeeDesc.trim() || !newFeeAmount}
               className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
@@ -816,7 +826,7 @@ export default function StaffOrderDetail() {
           <p className="font-mono text-xs uppercase tracking-widest text-[var(--slate)]">Update status</p>
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {STATUSES.map((s) => (
-              <button
+              <button type="button"
                 key={s.value}
                 onClick={() => updateStatus(s.value)}
                 disabled={saving}
@@ -899,6 +909,7 @@ export default function StaffOrderDetail() {
                       {new Date(a.created_at).toLocaleDateString()}
                     </span>
                     <button
+                      type="button"
                       onClick={() => deleteCompletedDocument(a)}
                       disabled={deletingAttachmentId === a.id}
                       className="font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline disabled:opacity-50"
@@ -928,6 +939,7 @@ export default function StaffOrderDetail() {
                     document can be delivered — see Additional fees below.
                   </p>
                   <button
+                    type="button"
                     onClick={emailUnpaidFees}
                     disabled={sendingUnpaidFeesEmail}
                     className="mt-3 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
@@ -954,6 +966,7 @@ export default function StaffOrderDetail() {
                     className="text-sm text-[var(--ink)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--parchment-dim)] file:px-4 file:py-2 file:text-xs file:font-medium file:text-[var(--ink)] hover:file:bg-[var(--line)]"
                   />
                   <button
+                    type="button"
                     onClick={uploadCompletedDocument}
                     disabled={!completedFile || uploadingCompletedFile}
                     className="rounded-full bg-[var(--wax)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
@@ -980,12 +993,14 @@ export default function StaffOrderDetail() {
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
+              type="button"
               onClick={() => setShowInvoice((v) => !v)}
               className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
             >
               {showInvoice ? 'Hide invoice' : 'View preliminary invoice'}
             </button>
             <button
+              type="button"
               onClick={emailInvoice}
               disabled={sendingInvoice}
               className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"

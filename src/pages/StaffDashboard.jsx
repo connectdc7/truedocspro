@@ -86,7 +86,7 @@ export default function StaffDashboard() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2">
             {TABS.map((t) => (
-              <button
+              <button type="button"
                 key={t}
                 onClick={() => setTab(t)}
                 className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wide transition-colors ${

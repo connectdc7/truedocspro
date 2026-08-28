@@ -74,6 +74,7 @@ export default function StaffShippingFees() {
                   className="w-28 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
                 />
                 <button
+                  type="button"
                   onClick={() => saveFee(fee.key)}
                   disabled={savingKey === fee.key}
                   className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"

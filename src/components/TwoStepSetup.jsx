@@ -163,6 +163,7 @@ export default function TwoStepSetup() {
           ))}
         </div>
         <button
+          type="button"
           onClick={() => setNewBackupCodes(null)}
           className="mt-4 rounded-full bg-[var(--ink)] px-6 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors"
         >
@@ -199,6 +200,7 @@ export default function TwoStepSetup() {
               {confirmError && <p className="mt-2 text-sm text-[var(--wax)]">{confirmError}</p>}
               <div className="mt-3 flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={runConfirmedAction}
                   disabled={confirming || !confirmCode.trim()}
                   className="rounded-full bg-[var(--ink)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
@@ -206,6 +208,7 @@ export default function TwoStepSetup() {
                   {confirming ? 'Confirming…' : 'Confirm'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => { setConfirmingAction(null); setConfirmCode(''); setConfirmError('') }}
                   className="text-sm text-[var(--slate)] hover:text-[var(--wax)]"
                 >
@@ -216,12 +219,14 @@ export default function TwoStepSetup() {
           ) : (
             <div className="mt-3 flex flex-wrap gap-3">
               <button
+                type="button"
                 onClick={() => setConfirmingAction('regenerate')}
                 className="rounded-full border border-[var(--ink)]/25 px-5 py-2 text-sm font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
               >
                 Generate new backup codes
               </button>
               <button
+                type="button"
                 onClick={() => setConfirmingAction('disable')}
                 className="rounded-full border border-[var(--wax)]/40 px-5 py-2 text-sm font-medium text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors"
               >
@@ -301,19 +306,21 @@ export default function TwoStepSetup() {
           {error && <p className="mt-2 text-sm text-[var(--wax)]">{error}</p>}
           <div className="mt-3 flex items-center gap-3">
             <button
+              type="button"
               onClick={confirmEnroll}
               disabled={verifying || !verifyCode.trim()}
               className="rounded-full bg-[var(--ink)] px-6 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
             >
               {verifying ? 'Verifying…' : 'Turn on'}
             </button>
-            <button onClick={cancelEnroll} className="text-sm text-[var(--slate)] hover:text-[var(--wax)]">
+            <button type="button" onClick={cancelEnroll} className="text-sm text-[var(--slate)] hover:text-[var(--wax)]">
               Cancel
             </button>
           </div>
         </div>
       ) : (
         <button
+          type="button"
           onClick={startEnroll}
           className="mt-4 rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors"
         >

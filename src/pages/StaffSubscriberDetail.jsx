@@ -94,6 +94,7 @@ export default function StaffSubscriberDetail() {
           </div>
 
           <button
+            type="button"
             onClick={handleRemove}
             disabled={deleting}
             className="mt-8 rounded-full border border-[var(--wax)]/40 px-4 py-2 font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors disabled:opacity-50"

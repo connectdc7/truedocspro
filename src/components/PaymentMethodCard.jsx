@@ -117,6 +117,7 @@ export default function PaymentMethodCard({ profile, onSaved }) {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setEditing(true)}
             className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors"
           >
@@ -127,6 +128,7 @@ export default function PaymentMethodCard({ profile, onSaved }) {
 
       {!hasCard && !editing && (
         <button
+          type="button"
           onClick={() => setEditing(true)}
           className="mt-4 rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors"
         >

@@ -81,6 +81,7 @@ export default function Receipt() {
             ← Back to order
           </Link>
           <button
+            type="button"
             onClick={() => window.print()}
             className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors"
           >

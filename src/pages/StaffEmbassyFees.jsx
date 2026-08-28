@@ -105,6 +105,7 @@ export default function StaffEmbassyFees() {
                             className="w-24 rounded-lg border border-[var(--line)] bg-white/70 px-2 py-1.5 text-sm outline-none focus:border-[var(--wax)]"
                           />
                           <button
+                            type="button"
                             onClick={() => saveFee(country, docType)}
                             disabled={savingKey === key}
                             className="rounded-full border border-[var(--ink)]/25 px-3 py-1.5 text-xs text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"

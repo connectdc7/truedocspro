@@ -145,6 +145,7 @@ export default function ProcessingQueue({ order, onUpdate }) {
                   )}
                 </span>
                 <button
+                  type="button"
                   onClick={() => setEditingKey(key)}
                   className="font-mono text-xs uppercase tracking-wide text-[var(--slate)] hover:text-[var(--wax)]"
                 >
@@ -221,6 +222,7 @@ export default function ProcessingQueue({ order, onUpdate }) {
                 {savingKey === key && <span className="font-mono text-xs text-[var(--slate)]">Saving…</span>}
                 {isBeingEdited && (
                   <button
+                    type="button"
                     onClick={() => setEditingKey(null)}
                     className="ml-auto font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:underline"
                   >

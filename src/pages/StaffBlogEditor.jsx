@@ -152,6 +152,7 @@ export default function StaffBlogEditor() {
 
           <div className="flex items-center justify-between pt-2">
             <button
+              type="button"
               onClick={handleSave}
               disabled={saving || !title || !slug || !content}
               className="rounded-full bg-[var(--wax)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
@@ -159,7 +160,7 @@ export default function StaffBlogEditor() {
               {saving ? 'Saving…' : published ? (isNew ? 'Publish post' : 'Save changes') : 'Save draft'}
             </button>
             {!isNew && !initialPublished && (
-              <button onClick={handleDelete} className="text-sm text-[var(--wax)] hover:underline">
+              <button type="button" onClick={handleDelete} className="text-sm text-[var(--wax)] hover:underline">
                 Delete post
               </button>
             )}

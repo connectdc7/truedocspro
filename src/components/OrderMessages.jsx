@@ -108,6 +108,7 @@ export default function OrderMessages({ orderId, sender, title = 'Messages' }) {
           className="flex-1 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm outline-none focus:border-[var(--wax)]"
         />
         <button
+          type="button"
           onClick={handleSend}
           disabled={sending || !draft.trim()}
           className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"

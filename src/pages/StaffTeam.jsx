@@ -240,6 +240,7 @@ export default function StaffTeam() {
                       </span>
                     )}
                     <button
+                      type="button"
                       onClick={() => toggleStaff(p)}
                       disabled={isSelf}
                       title={isSelf ? "You can't remove your own staff access" : 'Remove this person from staff'}
@@ -248,6 +249,7 @@ export default function StaffTeam() {
                       Remove staff access
                     </button>
                     <button
+                      type="button"
                       onClick={() => toggleAdmin(p)}
                       disabled={isSelf && p.is_admin}
                       title={isSelf && p.is_admin ? "You can't remove your own admin access" : ''}
@@ -295,6 +297,7 @@ export default function StaffTeam() {
                   </div>
                   <div className="flex items-end gap-2">
                     <button
+                      type="button"
                       onClick={() => saveDetails(p.id)}
                       disabled={!dirty || savingId === p.id}
                       className="rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-40"

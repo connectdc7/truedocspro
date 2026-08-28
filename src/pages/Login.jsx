@@ -161,6 +161,7 @@ export default function Login() {
 
           <p className="mt-6 text-center text-sm text-[var(--slate)]">
             <button
+              type="button"
               onClick={() => { setUseBackupCode((v) => !v); setCode(''); setVerifyError('') }}
               className="text-[var(--wax)] hover:underline"
             >

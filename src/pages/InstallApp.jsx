@@ -72,6 +72,7 @@ export default function InstallApp() {
             <p className="font-mono text-sm text-[var(--brass)]">✓ Installed — check your home screen.</p>
           ) : (
             <button
+              type="button"
               onClick={handleQuickInstallClick}
               className="rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors"
             >

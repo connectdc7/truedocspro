@@ -295,6 +295,7 @@ export default function OrderDetail() {
           </div>
           {order.status === 'received' ? (
             <button
+              type="button"
               onClick={() => setConfirmingDelete(true)}
               className="rounded-full border border-[var(--wax)]/40 px-4 py-2 font-mono text-xs uppercase tracking-wide text-[var(--wax)] hover:bg-[var(--wax)]/10 transition-colors"
             >
@@ -315,6 +316,7 @@ export default function OrderDetail() {
             </p>
             <div className="mt-4 flex gap-3">
               <button
+                type="button"
                 onClick={() => setConfirmingDelete(false)}
                 disabled={deleting}
                 className="rounded-full border border-[var(--ink)]/25 px-5 py-2.5 text-sm font-medium text-[var(--ink)] hover:border-[var(--ink)] transition-colors disabled:opacity-50"
@@ -322,6 +324,7 @@ export default function OrderDetail() {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleDelete}
                 disabled={deleting}
                 className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
@@ -358,6 +361,7 @@ export default function OrderDetail() {
                 className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
               />
               <button
+                type="button"
                 onClick={uploadResponseFile}
                 disabled={!responseFile || uploadingResponse}
                 className="rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-50"
@@ -385,6 +389,7 @@ export default function OrderDetail() {
             <div className="mt-6 flex items-center justify-between rounded-lg border border-[var(--brass)]/40 bg-[var(--parchment-dim)] px-4 py-3">
               <span className="font-mono text-xs uppercase tracking-widest text-[var(--brass)]">Payment pending</span>
               <button
+                type="button"
                 onClick={handlePayNow}
                 disabled={retrying}
                 className="rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-60"
@@ -421,6 +426,7 @@ export default function OrderDetail() {
               Your document was uploaded, but checkout was cancelled before payment finished.
             </p>
             <button
+              type="button"
               onClick={handlePayNow}
               disabled={retrying}
               className="mt-4 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
@@ -451,6 +457,7 @@ export default function OrderDetail() {
             </div>
             {fees.some((f) => !f.paid) && (
               <button
+                type="button"
                 onClick={payFees}
                 disabled={payingFees}
                 className="mt-4 rounded-full bg-[var(--wax)] px-5 py-2.5 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax-dark)] transition-colors disabled:opacity-60"
@@ -563,6 +570,7 @@ export default function OrderDetail() {
               className="flex-1 text-xs text-[var(--slate)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--ink)] file:px-3 file:py-1.5 file:text-[var(--parchment)] file:text-xs"
             />
             <button
+              type="button"
               onClick={uploadReturnLabel}
               disabled={!returnLabelFile || uploadingReturnLabel}
               className="rounded-full border border-[var(--ink)]/25 px-4 py-2 text-xs font-medium text-[var(--ink)] hover:border-[var(--wax)] hover:text-[var(--wax)] transition-colors disabled:opacity-50"

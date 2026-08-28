@@ -43,7 +43,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 md:hidden">
           {user && <SealMenu />}
-          <button
+          <button type="button"
             className="text-[var(--ink)]"
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"

@@ -110,6 +110,7 @@ export default function StaffBlogList() {
 
           <div className="mt-5 flex gap-2">
             <button
+              type="button"
               onClick={() => setTab('posts')}
               className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wide transition-colors ${
                 tab === 'posts'
@@ -120,6 +121,7 @@ export default function StaffBlogList() {
               Posts ({posts.length})
             </button>
             <button
+              type="button"
               onClick={() => setTab('subscribers')}
               className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wide transition-colors ${
                 tab === 'subscribers'
@@ -154,6 +156,7 @@ export default function StaffBlogList() {
                 {selectedDraftIds.length} of {draftPosts.length} draft{draftPosts.length === 1 ? '' : 's'} selected
               </span>
               <button
+                type="button"
                 onClick={publishSelected}
                 disabled={selectedDraftIds.length === 0 || publishing}
                 className="rounded-full bg-[var(--ink)] px-5 py-2 text-sm font-medium text-[var(--parchment)] hover:bg-[var(--wax)] transition-colors disabled:opacity-50"
@@ -201,6 +204,7 @@ export default function StaffBlogList() {
                 </Link>
                 {!p.published && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.preventDefault()
                       deletePost(p)
