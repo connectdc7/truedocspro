@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import SealGraphic from './SealGraphic'
 
-const SIZE = 72
+const SIZE = 88
 const DOCK_TOP = 16
 const DOCK_RIGHT = 24
 

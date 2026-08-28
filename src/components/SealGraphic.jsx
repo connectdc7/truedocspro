@@ -42,10 +42,10 @@ export default function SealGraphic({ size = 132, label }) {
       })}
 
       <text
-        x="110" y={label ? '102' : '116'}
+        x="110" y={label ? '100' : '116'}
         textAnchor="middle"
         fontFamily="Fraunces, Georgia, serif"
-        fontSize="36"
+        fontSize="42"
         fontWeight="600"
         fill="#E4C766"
         style={{ filter: 'drop-shadow(0.5px 1px 0 #7A5E1C) drop-shadow(1px 2px 1px rgba(0,0,0,0.35))' }}
@@ -53,7 +53,7 @@ export default function SealGraphic({ size = 132, label }) {
         TDP
       </text>
       {label && (
-        <text x="110" y="130" textAnchor="middle" fontFamily="'IBM Plex Mono', monospace" fontSize="13" letterSpacing="2.5" fill="#C9A227">
+        <text x="110" y="132" textAnchor="middle" fontFamily="'IBM Plex Mono', monospace" fontSize="16" letterSpacing="2" fill="#C9A227">
           {label}
         </text>
       )}
